@@ -1,0 +1,7 @@
+# Ignore development logs and internal documentation
+logs/
+technical/
+user/
+
+# Ignore IDE settings
+.vscode/
