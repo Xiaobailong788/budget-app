@@ -8,7 +8,7 @@
 
 ## 📸 Screenshots
 
-> Screenshots coming soon. Open `money-wise-v1.0.0.html` in your browser to see the app in action.
+> Screenshots coming soon. Open `money-wise-v1.0.2.html` in your browser to see the app in action.
 
 ---
 
@@ -117,7 +117,7 @@ Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fix
 
 ## 🚀 Quick Start
 
-1. Download `money-wise-v1.0.0.html`
+1. Download `money-wise-v1.0.2.html`
 2. Open it in any modern browser (Chrome, Firefox, Edge, Safari)
 3. Start tracking your expenses — everything is saved automatically in your browser
 
@@ -158,7 +158,7 @@ No installation, no server, no internet connection required after download.
 
 ```
 budget-app/
-├── money-wise-v1.0.0.html   # Single-file application (~6,759 lines)
+├── money-wise-v1.0.2.html   # Single-file application (~6,759 lines)
 ├── features/                # Feature documentation
 ├── technical/               # Technical development logs
 ├── user/                    # User-facing changelogs
