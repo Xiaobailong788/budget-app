@@ -525,6 +525,10 @@ ul, ol { list-style: none; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 .grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+@media (max-width: 600px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
 @media (min-width: 481px) {
   .grid-4 { grid-template-columns: 1fr 1fr; }
 }
@@ -959,7 +963,7 @@ ul, ol { list-style: none; }
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--card-bg);
-  color: var(--text);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.15s;
   line-height: 1.2;
@@ -1034,7 +1038,7 @@ ul, ol { list-style: none; }
   position: relative;
   z-index: 2;
   transition: color 0.15s;
-  color: var(--text);
+  color: var(--text-primary);
 }
 .budget-view-toggle .bvt-label.active {
   color: #fff;
@@ -2410,6 +2414,14 @@ function renderOverview() {
   const overspent = StatsEngine.getOverspentCategories(month);
   const catTotals = StatsEngine.getCategoryTotals(month);
 
+  // Today's and yesterday's spending
+  const todayKey = now.toISOString().substr(0, 10);
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = yesterday.toISOString().substr(0, 10);
+  const todayTotal = DataStore.getRecords().filter(r => (r.date || r.createdAt).substr(0, 10) === todayKey).reduce((s, r) => s + r.amount, 0);
+  const yesterdayTotal = DataStore.getRecords().filter(r => (r.date || r.createdAt).substr(0, 10) === yesterdayKey).reduce((s, r) => s + r.amount, 0);
+
   // Compute savings target monetary value
   const targetAmount = (() => {
     const t = savingsTarget;
@@ -2443,7 +2455,7 @@ function renderOverview() {
     const rootId = getRootAncestorId(id);
     if (rootId) rootCatTotals[rootId] = (rootCatTotals[rootId] || 0) + total;
   });
-  const topCats = Object.entries(rootCatTotals.length ? rootCatTotals : catTotals)
+  const topCats = Object.entries(Object.keys(rootCatTotals).length > 0 ? rootCatTotals : catTotals)
     .map(([id, total]) => ({ cat: DataStore.getCategory(id), total }))
     .filter(x => x.cat)
     .sort((a,b) => b.total - a.total)
@@ -2477,6 +2489,18 @@ function renderOverview() {
       <div class="card">
         <div class="card-title">预测月总支出</div>
         <div class="text-xl font-bold">${formatMoney(predicted)}</div>
+      </div>
+    </div>
+
+    <!-- Daily spending row -->
+    <div class="grid-2 mb-16">
+      <div class="card">
+        <div class="card-title">昨日消费 (${yesterdayKey})</div>
+        <div class="text-xl font-bold" style="color:var(--text-secondary)">${yesterdayTotal > 0 ? formatMoney(yesterdayTotal) : '—'}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">今日消费 (${todayKey})</div>
+        <div class="text-xl font-bold" style="color:${todayTotal > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${todayTotal > 0 ? formatMoney(todayTotal) : '暂无'}</div>
       </div>
     </div>
 
@@ -2536,12 +2560,12 @@ function renderOverview() {
           <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
             <div class="text-xs text-secondary">总额日均（未扣储蓄）</div>
             <div class="font-bold" style="font-size:1rem;color:${remainingLimit > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${remainingLimit > 0 ? formatMoney(remainingLimit) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">零花钱 RM${formatMoney(budget)} ÷ 剩余天数</div>
+            <div class="text-xs text-muted" style="margin-top:2px">零花钱 ${formatMoney(budget)} ÷ 剩余天数</div>
           </div>
           <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
             <div class="text-xs text-secondary">可用日均（已扣储蓄）</div>
             <div class="font-bold" style="font-size:1rem;color:${remainingLimitSpendable > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${remainingLimitSpendable > 0 ? formatMoney(remainingLimitSpendable) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">可支配 RM${formatMoney(spendableBudget)} ÷ 剩余天数</div>
+            <div class="text-xs text-muted" style="margin-top:2px">可支配 ${formatMoney(spendableBudget)} ÷ 剩余天数</div>
           </div>
         </div>
       ` : ''}
@@ -2833,6 +2857,7 @@ function renderBudgetProgressCardInner(month) {
     if (rootId) catSpent[rootId] = (catSpent[rootId] || 0) + r.amount;
   });
 
+  // Build parent rows only; children with budgets stay grouped under parent
   let rows = [];
   rootCats.forEach(cat => {
     const budgetKey = cat.id + ':' + month;
@@ -2840,9 +2865,7 @@ function renderBudgetProgressCardInner(month) {
     let budget = 0, budgetType = 'fixed';
     if (typeof rawBudget === 'number') { budget = rawBudget; budgetType = 'fixed'; }
     else if (rawBudget && typeof rawBudget === 'object') { budget = rawBudget.value || 0; budgetType = rawBudget.type || 'fixed'; }
-      // If percentage budget, compute actual monetary value from parent or total budget
       if (budgetType === 'percent' && budget > 0) {
-        // For root categories: percentage of total monthly budget
         const monthlyBudget = DataStore.getBudget(month);
         budget = monthlyBudget > 0 ? (budget / 100) * monthlyBudget : 0;
       }
@@ -2851,13 +2874,14 @@ function renderBudgetProgressCardInner(month) {
     const spent = catSpent[cat.id] || 0;
     const pct = Math.min((spent / budget) * 100, 200);
     const children = DataStore.getChildren(cat.id);
+    // Child spending data (for segmented bar)
     const childData = [];
     children.forEach(child => {
       const childTotal = records.filter(r => r.categoryId === child.id).reduce((s, r) => s + r.amount, 0);
       if (childTotal > 0) childData.push({ cat: child, total: childTotal });
     });
-    rows.push({ cat, budget, spent, pct, childData, isChild: false });
-    // Also add children that have their own budgets
+    // Children that have their own budgets (shown as separate indented rows under parent)
+    const childBudgetRows = [];
     children.forEach(child => {
       const childKey = child.id + ':' + month;
       const childRaw = catBudgets[childKey];
@@ -2871,66 +2895,62 @@ function renderBudgetProgressCardInner(month) {
       }
       const childSpent = records.filter(r => r.categoryId === child.id).reduce((s, r) => s + r.amount, 0);
       const childPct = Math.min((childSpent / childBudget) * 100, 200);
-      rows.push({ cat: child, budget: childBudget, spent: childSpent, pct: childPct, childData: [], isChild: true, parentName: cat.name });
+      childBudgetRows.push({ cat: child, budget: childBudget, spent: childSpent, pct: childPct, parentName: cat.name });
     });
+    rows.push({ cat, budget, spent, pct, childData, childBudgetRows });
   });
 
+  // Sort only parent rows — children stay with their parent
   if (budgetProgressSort === 'usage') rows.sort((a, b) => b.pct - a.pct);
   else if (budgetProgressSort === 'amount') rows.sort((a, b) => b.spent - a.spent);
   else if (budgetProgressSort === 'name') rows.sort((a, b) => a.cat.name.localeCompare(b.cat.name));
 
+  // Total: parent budgets already include child budget share (no double-count)
   const totalBudget = rows.reduce((s, r) => s + r.budget, 0);
   const totalSpent = rows.reduce((s, r) => s + r.spent, 0);
   const totalPct = totalBudget > 0 ? (totalSpent / totalBudget * 100) : 0;
 
   let html = '';
   rows.forEach(r => {
-    const status = r.pct >= 100 ? 'danger' : (r.pct >= 80 ? 'warning' : 'success');
-    const barColor = r.pct >= 100 ? '#EF4444' : (r.pct >= 80 ? '#F59E0B' : '#10B981');
-    const barW = Math.min(r.pct, 100);
-    
-    html += '<div style="margin-bottom:' + (r.isChild ? '6' : '10') + 'px' + (r.isChild ? ';margin-left:16px' : '') + '">';
-    // Row header
+    // ── Render parent row ──
+    const pStatus = r.pct >= 100 ? 'danger' : (r.pct >= 80 ? 'warning' : 'success');
+    const pBarColor = r.pct >= 100 ? '#EF4444' : (r.pct >= 80 ? '#F59E0B' : '#10B981');
+
+    html += '<div style="margin-bottom:10px">';
     html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">';
-    if (r.isChild) html += '<span class="text-xs text-muted" style="flex-shrink:0">↳</span>';
     html += '<span>' + r.cat.icon + '</span>';
-    html += '<span class="font-semibold" style="font-size:' + (r.isChild ? '0.78' : '0.85') + 'rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.cat.name + '</span>';
-    if (r.isChild) html += '<span class="text-xs text-muted" style="flex-shrink:0">(' + r.parentName + ')</span>';
+    html += '<span class="font-semibold" style="font-size:0.85rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.cat.name + '</span>';
     html += '<span style="font-size:0.78rem;font-weight:600">' + formatMoney(r.spent) + '</span>';
     html += '<span class="text-xs text-muted">/ ' + formatMoney(r.budget) + '</span>';
-    html += '<span style="font-size:0.8rem;font-weight:700;color:' + barColor + ';width:48px;text-align:right">' + r.pct.toFixed(0) + '%</span>';
+    html += '<span style="font-size:0.8rem;font-weight:700;color:' + pBarColor + ';width:48px;text-align:right">' + r.pct.toFixed(0) + '%</span>';
     if (r.pct > 100) html += '<span class="badge badge-danger" style="font-size:0.6rem">超支</span>';
     html += '</div>';
-    
+
     // Progress bar
-    if (r.isChild || budgetProgressView === 'solid') {
-      // Solid bar
+    if (budgetProgressView === 'solid') {
       html += '<div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">';
-      html += '<div style="height:100%;width:' + Math.min(r.pct, 100) + '%;background:' + barColor + ';border-radius:4px;transition:width 0.3s"></div>';
+      html += '<div style="height:100%;width:' + Math.min(r.pct, 100) + '%;background:' + pBarColor + ';border-radius:4px;transition:width 0.3s"></div>';
       html += '</div>';
     } else {
       // Segmented bar - show children
-      const totalFillPct = Math.min(r.pct, 100); // same total as solid bar
+      const totalFillPct = Math.min(r.pct, 100);
       html += '<div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;display:flex;gap:1px">';
       if (r.childData.length > 0) {
         r.childData.forEach((cd, ci) => {
           const segFillRatio = r.spent > 0 ? cd.total / r.spent : 0;
           const segW = segFillRatio * totalFillPct;
           if (segW > 0) {
-            // Use distinct color if child shares parent's color
             const segColor = (cd.cat.color === r.cat.color) ? COLORS[ci % COLORS.length] : cd.cat.color;
             html += '<div style="height:100%;width:' + segW + '%;background:' + segColor + ';border-radius:2px;min-width:4px" title="' + cd.cat.name + ': ' + formatMoney(cd.total) + '"></div>';
           }
         });
-        // Direct spending (not assigned to any child)
         const directSpent = r.spent - r.childData.reduce((s, cd) => s + cd.total, 0);
         if (directSpent > 0.01) {
           const directFillRatio = directSpent / r.spent;
           const directW = directFillRatio * totalFillPct;
-          html += '<div style="height:100%;width:' + directW + '%;background:' + barColor + ';border-radius:2px;min-width:4px;opacity:0.5" title="直接: ' + formatMoney(directSpent) + '"></div>';
+          html += '<div style="height:100%;width:' + directW + '%;background:' + pBarColor + ';border-radius:2px;min-width:4px;opacity:0.5" title="直接: ' + formatMoney(directSpent) + '"></div>';
         }
       }
-      // Fill remaining with empty
       let filledSum = 0;
       if (r.childData.length > 0) {
         r.childData.forEach(cd => { filledSum += r.spent > 0 ? (cd.total / r.spent) * totalFillPct : 0; });
@@ -2941,7 +2961,6 @@ function renderBudgetProgressCardInner(month) {
         html += '<div style="flex:1;height:100%;background:var(--border);border-radius:2px"></div>';
       }
       html += '</div>';
-      // Child labels
       if (r.childData.length > 0) {
         html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:3px">';
         r.childData.forEach((cd, ci) => {
@@ -2952,6 +2971,27 @@ function renderBudgetProgressCardInner(month) {
       }
     }
     html += '</div>';
+
+    // ── Render child budget rows right after parent ──
+    r.childBudgetRows.forEach(cr => {
+      const cBarColor = cr.pct >= 100 ? '#EF4444' : (cr.pct >= 80 ? '#F59E0B' : '#10B981');
+      html += '<div style="margin-bottom:6px;margin-left:16px">';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">';
+      html += '<span class="text-xs text-muted" style="flex-shrink:0">↳</span>';
+      html += '<span>' + cr.cat.icon + '</span>';
+      html += '<span class="font-semibold" style="font-size:0.78rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cr.cat.name + '</span>';
+      html += '<span class="text-xs text-muted" style="flex-shrink:0">(' + cr.parentName + ')</span>';
+      html += '<span style="font-size:0.78rem;font-weight:600">' + formatMoney(cr.spent) + '</span>';
+      html += '<span class="text-xs text-muted">/ ' + formatMoney(cr.budget) + '</span>';
+      html += '<span style="font-size:0.8rem;font-weight:700;color:' + cBarColor + ';width:48px;text-align:right">' + cr.pct.toFixed(0) + '%</span>';
+      if (cr.pct > 100) html += '<span class="badge badge-danger" style="font-size:0.6rem">超支</span>';
+      html += '</div>';
+      // Child solid bar
+      html += '<div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">';
+      html += '<div style="height:100%;width:' + Math.min(cr.pct, 100) + '%;background:' + cBarColor + ';border-radius:4px;transition:width 0.3s"></div>';
+      html += '</div>';
+      html += '</div>';
+    });
   });
 
   // Total row
@@ -5219,12 +5259,12 @@ function renderStats() {
           <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
             <div class="text-xs text-secondary">总额日均（未扣储蓄）</div>
             <div class="font-bold" style="font-size:1rem;color:${remainingLimit > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${remainingLimit > 0 ? formatMoney(remainingLimit) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">零花钱 RM${formatMoney(budget)} ÷ 剩余天数</div>
+            <div class="text-xs text-muted" style="margin-top:2px">零花钱 ${formatMoney(budget)} ÷ 剩余天数</div>
           </div>
           <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
             <div class="text-xs text-secondary">可用日均（已扣储蓄）</div>
             <div class="font-bold" style="font-size:1rem;color:${remainingLimitSpendableStats > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${remainingLimitSpendableStats > 0 ? formatMoney(remainingLimitSpendableStats) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">可支配 RM${formatMoney(spendableBudgetStats)} ÷ 剩余天数</div>
+            <div class="text-xs text-muted" style="margin-top:2px">可支配 ${formatMoney(spendableBudgetStats)} ÷ 剩余天数</div>
             </div>
           </div>
         ` : ''}
@@ -5247,9 +5287,6 @@ function renderStats() {
         <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>分类支出 (饼图)</span>
           <span class="pie-drill-bar" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:0.82rem"></span>
-          ${!isCustom ? `<button class="view-toggle-btn ${showMonthCompare ? 'active' : ''}" onclick="toggleMonthCompare()" style="margin-left:auto;font-size:0.72rem">
-            ${showMonthCompare ? '📊 隐藏对比' : '📊 显示上月对比'}
-          </button>` : ''}
           <button class="view-toggle-btn" onclick="expandPie()" title="放大" style="font-size:0.7rem">⛶ 展开</button>
         </div>
         <canvas id="pieChart" width="400" height="300" style="width:100%;height:250px"></canvas>
@@ -5474,7 +5511,7 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
   }
 
   // --- Geometry ---
-  const cx = w * 0.35, cy = h / 2, r = Math.min(w * 0.25, h * 0.35);
+  const cx = w * 0.35, cy = h / 2, r = Math.min(w * 0.25, h * 0.38);
   const total = data.reduce((s, d) => s + d.total, 0);
 
   // Pre-calculate slices
@@ -5537,9 +5574,10 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
 
     // --- Labels (pie slice labels in chart area, with background for readability) ---
     const labelMargin = 4;
-    slices.forEach(slice => {
+    // First pass: compute all label positions for overlap detection
+    const labelPositions = slices.map(slice => {
       const midAngle = slice.angleStart + slice.sliceAngle / 2;
-      const labelR = r * 1.55; // further out to avoid chart overlap
+      const labelR = r * 1.55;
       let lx = cx + Math.cos(midAngle) * labelR;
       let ly = cy + Math.sin(midAngle) * labelR;
       ctx.font = '11px sans-serif';
@@ -5547,17 +5585,40 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
       const textWidth = ctx.measureText(labelText).width;
       const textHeight = 14;
       const align = midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5 ? 'right' : 'left';
-      // Clamp to canvas bounds
       if (align === 'right') {
         lx = Math.max(textWidth + labelMargin, Math.min(w - labelMargin, lx));
       } else {
         lx = Math.max(labelMargin, Math.min(w - textWidth - labelMargin, lx));
       }
       ly = Math.max(textHeight, Math.min(h - labelMargin, ly));
+      return { slice, lx, ly, labelText, textWidth, textHeight, align, midAngle };
+    });
+    // Second pass: resolve vertical overlap between adjacent labels (same side only)
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < labelPositions.length; i++) {
+        for (let j = i + 1; j < labelPositions.length; j++) {
+          const a = labelPositions[i], b = labelPositions[j];
+          if (a.align !== b.align) continue; // different sides won't collide
+          const minGap = 2;
+          const overlap = Math.max(0, minGap - (b.ly - a.ly));
+          if (overlap > 0) {
+            const shift = overlap / 2;
+            a.ly -= shift;
+            b.ly += shift;
+            // Clamp again
+            a.ly = Math.max(a.textHeight, Math.min(h - labelMargin, a.ly));
+            b.ly = Math.max(b.textHeight, Math.min(h - labelMargin, b.ly));
+          }
+        }
+      }
+    }
+    // Third pass: draw labels
+    labelPositions.forEach(({ slice, lx, ly, labelText, textWidth, textHeight, align }) => {
       ctx.textAlign = align;
-      // Semi-transparent background for readability
       const textX = align === 'right' ? lx - textWidth : lx;
-      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      // Semi-transparent background for readability (dark mode → dark bg)
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      ctx.fillStyle = isDark ? 'rgba(15,23,42,0.82)' : 'rgba(255,255,255,0.75)';
       ctx.fillRect(textX - 2, ly - textHeight + 2, textWidth + 4, textHeight + 2);
       // Draw text
       const hasChildren = DataStore.getChildren(slice.id).length > 0;
@@ -5592,37 +5653,8 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
       const label = slice.cat.name + ' ' + formatMoney(slice.total);
       const textWidth = ctx.measureText(label).width;
       ctx.fillText(label, textX, legendY + 10);
-      // Draw budget progress bar if budget is set for this root category
-      let catBudget = 0;
-      if (budgetMonth && !drillCategory && slice.id) {
-        const catBudgetObj = DataStore.getCategoryBudget(slice.id, budgetMonth);
-        catBudget = catBudgetObj.value;
-        if (catBudget > 0) {
-          const ratio = slice.total / catBudget;
-          const barW = 80;
-          const barH = 5;
-          const barX = colorBoxX;
-          const barY = legendY + 14;
-          // Background bar
-          ctx.fillStyle = tc.border;
-          ctx.fillRect(barX, barY, barW, barH);
-          // Progress fill
-          const fillW = Math.min(barW, barW * ratio);
-          let barColor;
-          if (ratio < 0.8) barColor = '#10B981';
-          else if (ratio <= 1.0) barColor = '#F59E0B';
-          else barColor = '#EF4444';
-          ctx.fillStyle = barColor;
-          ctx.fillRect(barX, barY, fillW, barH);
-          // Budget label
-          ctx.fillStyle = tc.textMuted;
-          ctx.font = '8px sans-serif';
-          const pctStr = (ratio * 100).toFixed(0) + '%';
-          ctx.fillText(pctStr, barX + barW + 4, barY + 4);
-        }
-      }
       // Store legend item bounding box (for click/hover)
-      const itemH = catBudget > 0 && budgetMonth && !drillCategory && slice.id ? 26 : 18;
+      const itemH = 18;
       legendRects.push({
         sliceIndex: i,
         x: colorBoxX,
@@ -5630,7 +5662,7 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
         w: textX + textWidth - colorBoxX,
         h: itemH
       });
-      legendY += catBudget > 0 && budgetMonth && !drillCategory && slice.id ? 26 : 20;
+      legendY += 20;
     });
     // Store legend rects on canvas for interaction handlers
     canvas._legendRects = legendRects;

@@ -1,7 +1,7 @@
 # Budget App — Comprehensive Feature Catalog
 
 > **File:** `/home/xbl2602/budget-app.html`  
-> **Size:** 6,393 lines  
+> **Size:** 6,759 lines  
 > **Language:** Chinese (UI) / English (code)  
 > **Currency:** RM (Malaysian Ringgit)  
 > **Storage:** localStorage  
@@ -30,18 +30,18 @@
 
 ## 1. Architecture Overview
 
-The entire app is a single self-contained HTML file (~6,393 lines) with no external dependencies:
+The entire app is a single self-contained HTML file (~6,759 lines) with no external dependencies:
 
 | Layer | Lines | Description |
 |---|---|---|
-| CSS Design System | ~1,050 | CSS variables, layout, dark mode, animations, responsive, print styles |
+| CSS Design System | ~1,070 | CSS variables, layout, dark mode, animations, responsive, print styles |
 | Default Categories | ~40 lines | 8 root categories with child subcategories, emoji icons, colors |
 | DataStore | ~300 lines | localStorage CRUD for records, categories, budgets, savings target |
 | StatsEngine | ~160 lines | Aggregation, prediction, filtering logic |
 | Excel Export | ~460 lines | XML Spreadsheet 2003 generator with formulas |
 | HTML Structure | ~60 lines | 7 page sections + sidebar + bottom nav |
-| Render Functions | ~1,200 lines | Per-page renderers (overview, add, records, categories, stats, report, settings) |
-| Chart Drawing | ~900 lines | Canvas-based pie, line, bar, ring, sparkline, savings, comparison charts |
+| Render Functions | ~1,350 lines | Per-page renderers (overview, add, records, categories, stats, report, settings) |
+| Chart Drawing | ~950 lines | Canvas-based pie, line, bar, ring, sparkline, savings, comparison charts |
 | UI Helpers | ~200 lines | Toast, modal, navigation, theme toggle, format helpers |
 | Initialization | ~50 lines | Hash routing, resize handling, roundRect polyfill |
 
@@ -474,8 +474,8 @@ All charts are Canvas-based, drawn with `getContext('2d')`, with DPR-aware sizin
 - Animated elastic pie chart (spring-like bounce animation using `requestAnimationFrame`)
 - Hover pop-out: slice shifts out 8px with shadow + white border
 - Click-driven drill-down: click a slice → drill into subcategories
-- Labels: text with semi-transparent background, position clamped
-- Legend: color boxes + names + amounts + budget progress bars
+- Labels: text with semi-transparent background, position clamped, overlap detection (multi-pass) avoids label collision
+- Legend: color boxes + names + amounts
 - Touch support: `touchstart`/`touchend` mapped to mousemove/click
 - No-animation mode for expand modal
 - `roundRect` polyfill for older browsers
@@ -595,7 +595,7 @@ These are the standout capabilities that differentiate this app from typical bud
 
 | # | Feature | Page | What makes it special |
 |---|---|---|---|
-| 1 | **Elastic Animated Pie Chart** | Stats | Spring-bounce animation on draw, hover pop-out with shadow, click-drill-down, labels with backgrounds, legend with budget progress bars — all in pure Canvas |
+| 1 | **Elastic Animated Pie Chart** | Stats | Spring-bounce animation on draw, hover pop-out with shadow, click-drill-down, labels with backgrounds and overlap detection, legend with color boxes and amounts — all in pure Canvas |
 | 2 | **Budget Progress Card (Solid / Segmented)** | Overview, Stats, Categories | Toggle between single-color bars and segmented bars showing child-category breakdown visually within each parent bar |
 | 3 | **Budget Monitor Selection** | Overview, Stats | Choose which budgeted categories to display (checkbox UI with select all/invert), persisted in localStorage |
 | 4 | **Three-Mode Savings Target** | Settings | Fixed amount, % of budget, or both combined — feeds into spendable budget concept |

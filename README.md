@@ -158,7 +158,7 @@ No installation, no server, no internet connection required after download.
 
 ```
 budget-app/
-├── money-wise-v1.0.0.html   # Single-file application (~6,700 lines)
+├── money-wise-v1.0.0.html   # Single-file application (~6,759 lines)
 ├── features/                # Feature documentation
 ├── technical/               # Technical development logs
 ├── user/                    # User-facing changelogs
