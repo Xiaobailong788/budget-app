@@ -4726,7 +4726,7 @@ function submitRecord(e) {
 let recordsFilter = { keyword: '', categoryId: '', dateStart: '', dateEnd: '', amountMin: '', amountMax: '', overspentOnly: false };
 let recordsPage = 0;
 let compactRecordsView = JSON.parse(localStorage.getItem('budgetCompactView') || 'false');
-let recordsPerPage = parseInt(localStorage.getItem('budgetRecordsPerPage') || '20');
+let recordsPerPage = window.recordsPerPage = parseInt(localStorage.getItem('budgetRecordsPerPage') || '20');
 let batchMode = false;
 let selectedRecordIds = new Set();
 
@@ -4782,7 +4782,7 @@ function renderRecords() {
         </button>
         <span class="text-sm text-secondary" style="align-self:center" id="recordsCount"></span>
         <span class="text-xs text-muted" style="display:inline-flex;align-items:center;gap:4px">
-          每页 <input type="number" id="recordsPageSizeInput" value="${recordsPerPage}" min="5" max="200" 
+          每页 <input type="number" id="recordsPageSizeInput" value="${window.recordsPerPage || recordsPerPage}" min="5" max="200" 
           onchange="
             var v = parseInt(this.value) || 20;
             if (v < 5) v = 5;
@@ -4790,8 +4790,8 @@ function renderRecords() {
             this.value = v;
             localStorage.setItem('budgetRecordsPerPage', v);
             recordsPerPage = v;
-            recordsPage = 0;
-            renderRecordsList();
+  window.recordsPage = 0;
+  renderRecordsList();
           " style="width:50px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-align:center;background:var(--card-bg);color:var(--text)"> 条
         </span>
       </div>
@@ -4806,7 +4806,7 @@ function renderRecords() {
     </div>
   `;
 
-  recordsPage = 0;
+  window.recordsPage = 0;
   renderRecordsList();
   updateBatchCount();
 }
@@ -4882,7 +4882,7 @@ function getFilteredRecords() {
 
 function toggleOverspentFilter() {
   recordsFilter.overspentOnly = !recordsFilter.overspentOnly;
-  recordsPage = 0;
+  window.recordsPage = 0;
   renderRecords();
 }
 
@@ -4892,7 +4892,7 @@ function applyRecordsFilter() {
   recordsFilter.dateEnd = document.getElementById('filterDateEnd').value;
   recordsFilter.amountMin = document.getElementById('filterAmountMin').value;
   recordsFilter.amountMax = document.getElementById('filterAmountMax').value;
-  recordsPage = 0;
+  window.recordsPage = 0;
   renderRecordsList();
 }
 
@@ -4959,10 +4959,13 @@ function renderRecordsList() {
   const filtered = getFilteredRecords();
   countEl.textContent = filtered.length + ' 条记录';
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / recordsPerPage));
-  if (recordsPage >= totalPages) recordsPage = Math.max(0, totalPages - 1);
-  const start = recordsPage * recordsPerPage;
-  const end = Math.min(start + recordsPerPage, filtered.length);
+  const perPage = window.recordsPerPage || parseInt(localStorage.getItem('budgetRecordsPerPage') || '20');
+  let page = window.recordsPage || 0;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  if (page >= totalPages) page = Math.max(0, totalPages - 1);
+  const start = page * perPage;
+  const end = Math.min(start + perPage, filtered.length);
+  window.recordsPage = page;
   const pageRecords = filtered.slice(start, end);
 
   if (!pageRecords.length) {
@@ -5030,7 +5033,7 @@ function renderRecordsList() {
 
   // Pagination controls
   if (totalPages > 1) {
-    const p = recordsPage;
+    const p = page;
     const btnStyle = 'padding:4px 10px;font-size:0.78rem;border:1px solid var(--border);border-radius:4px;background:var(--card-bg);color:var(--text);cursor:pointer';
     const btnActive = 'padding:4px 10px;font-size:0.78rem;border:1px solid var(--primary);border-radius:4px;background:var(--primary);color:#fff;cursor:pointer';
     const btnDisabled = 'padding:4px 10px;font-size:0.78rem;border:1px solid var(--border);border-radius:4px;background:var(--card-bg);color:var(--text-muted);cursor:default;opacity:0.4';
