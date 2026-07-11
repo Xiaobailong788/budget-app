@@ -1,6 +1,6 @@
 # Budget App — Comprehensive Feature Catalog
 
-> **File:** `/home/xbl2602/budget-app.html`  
+> **File:** `money-wise-v2.0.0.html`  
 > **Size:** 6,759 lines  
 > **Language:** Chinese (UI) / English (code)  
 > **Currency:** RM (Malaysian Ringgit)  

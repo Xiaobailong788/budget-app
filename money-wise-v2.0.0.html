@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
-  <title>记账软件 v1.1.0</title>
+  <title>记账软件 v2.0.0</title>
   <style>
 /* ===== CSS DESIGN SYSTEM ===== */
 :root {
@@ -1220,6 +1220,175 @@ ul, ol { list-style: none; }
 .budget-bar-fill {
   transition: width 0.35s ease;
 }
+
+/* ===== BILLS CENTER COMPONENTS ===== */
+
+/* Card variant for Bills Center modal */
+.bills-card {
+  margin-bottom: 8px;
+  padding: 12px;
+}
+
+/* Card title bar with flex layout */
+.bills-card-title {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Income input (larger, bolder) */
+.bills-income-input {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Bill list row item */
+.bills-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Bill category icon (clickable) */
+.bills-cat-icon {
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+/* Bill amount inline input */
+.bills-amount-input {
+  width: 90px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+/* Small delete button */
+.bills-delete-btn {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: var(--danger);
+  opacity: 0.6;
+}
+
+/* Summary card with background tint */
+.bills-summary {
+  padding: 12px;
+  background: var(--bg);
+}
+
+/* Dashed summary divider */
+.bills-summary-divider {
+  border-top: 2px dashed var(--border);
+  margin: 6px 0;
+}
+
+/* Summary total amount (primary color) */
+.bills-total-amount {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+/* ===== CATEGORY PICKER BILLS SECTION ===== */
+
+/* Section header with border-top */
+.picker-section-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 4px 4px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* Bill category item in picker */
+.picker-bill-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.picker-bill-item:hover {
+  background: var(--bg);
+}
+
+/* Bill badge in picker */
+.picker-bill-badge {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--primary);
+  color: white;
+  margin-left: auto;
+}
+
+/* ===== BILL TOGGLE (Chart) ===== */
+
+.bill-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.bill-toggle input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+/* ===== SETTINGS NAV CARD ===== */
+
+.settings-nav-card {
+  border-left: 4px solid var(--primary);
+  padding: 12px;
+  cursor: pointer;
+}
+
+.settings-nav-card .settings-nav-icon {
+  font-size: 1.2rem;
+}
+
+.settings-nav-card .settings-nav-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.settings-nav-card .settings-nav-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.settings-nav-card .settings-nav-arrow {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--primary);
+}
+
+.settings-nav-card .settings-nav-hint {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+/* ===== SETTINGS PERCENT BASE TOGGLE ===== */
+
+.percent-base-group {
+  display: none;
+}
+
+.percent-base-group.visible {
+  display: block;
+}
+
   </style>
 </head>
 <body>
@@ -1358,7 +1527,12 @@ const DataStore = {
       budgets: {},
       categoryBudgets: {},
       savingsTarget: { type: 'both', fixedAmount: 0, percent: 0 },
-      colorIndex: DEFAULT_CATEGORIES.length
+      colorIndex: DEFAULT_CATEGORIES.length,
+      billCategories: [],
+      billAmounts: {},
+      monthlyIncome: {},
+      percentBase: 'gross',
+      lastActiveMonth: ''
     };
   },
 
@@ -1376,12 +1550,39 @@ const DataStore = {
         if (!this._data.categoryBudgets) {
           this._data.categoryBudgets = {};
         }
+        if (!this._data.billCategories) {
+          this._data.billCategories = [];
+        }
+        if (!this._data.billAmounts) {
+          this._data.billAmounts = {};
+        }
+        if (!this._data.monthlyIncome) {
+          this._data.monthlyIncome = {};
+        }
+        if (!this._data.percentBase) {
+          this._data.percentBase = 'gross';
+        }
+        if (!this._data.lastActiveMonth) {
+          this._data.lastActiveMonth = '';
+        }
       } catch(e) {
         this._data = this._defaults();
       }
     } else {
       this._data = this._defaults();
     }
+
+    // Task 2: Migration — copy existing budget to monthlyIncome if present
+    const currentMonth = getMonthKey(new Date().toISOString());
+    if (this._data.budgets && this._data.budgets[currentMonth]) {
+      if (!this._data.monthlyIncome[currentMonth]) {
+        this._data.monthlyIncome[currentMonth] = this._data.budgets[currentMonth];
+      }
+    }
+    if (!this._data.lastActiveMonth) {
+      this._data.lastActiveMonth = currentMonth;
+    }
+
     this.save();
   },
 
@@ -1551,6 +1752,91 @@ const DataStore = {
     return color;
   },
 
+  // Bill Categories
+  getBillCategories() {
+    return (this._data.billCategories || []).slice().sort((a,b) => (a.sortOrder||0) - (b.sortOrder||0));
+  },
+  getBillCategory(id) {
+    return (this._data.billCategories || []).find(c => c.id === id);
+  },
+  addBillCategory(cat) {
+    cat.id = uuid();
+    if (!cat.color) {
+      const idx = this._data.colorIndex || 0;
+      cat.color = COLORS[idx % COLORS.length];
+      this._data.colorIndex = (this._data.colorIndex || 0) + 1;
+    }
+    if (cat.sortOrder === undefined) cat.sortOrder = (this._data.billCategories || []).length;
+    this._data.billCategories.push(cat);
+    this.save();
+    return cat;
+  },
+  updateBillCategory(id, updates) {
+    const cat = (this._data.billCategories || []).find(c => c.id === id);
+    if (!cat) return null;
+    Object.assign(cat, updates);
+    this.save();
+    return cat;
+  },
+  deleteBillCategory(id) {
+    this._data.billCategories = (this._data.billCategories || []).filter(c => c.id !== id);
+    // Clean up billAmounts entries
+    Object.keys(this._data.billAmounts || {}).forEach(month => {
+      delete this._data.billAmounts[month][id];
+    });
+    this.save();
+  },
+
+  // Bill Amounts
+  getBillAmounts(month) {
+    return (this._data.billAmounts && this._data.billAmounts[month]) || {};
+  },
+  setBillAmount(month, billId, amount) {
+    if (!this._data.billAmounts) this._data.billAmounts = {};
+    if (!this._data.billAmounts[month]) this._data.billAmounts[month] = {};
+    this._data.billAmounts[month][billId] = amount;
+    this.save();
+  },
+  getBillTotal(month) {
+    const amounts = this.getBillAmounts(month);
+    return Object.values(amounts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  },
+
+  // Monthly Income
+  getMonthlyIncome(month) {
+    return (this._data.monthlyIncome && this._data.monthlyIncome[month]) || 0;
+  },
+  setMonthlyIncome(month, amount) {
+    if (!this._data.monthlyIncome) this._data.monthlyIncome = {};
+    this._data.monthlyIncome[month] = amount;
+    this.save();
+  },
+
+  // Percent Base (gross / net)
+  getPercentBase() {
+    return this._data.percentBase || 'gross';
+  },
+  setPercentBase(base) {
+    this._data.percentBase = base;
+    this.save();
+  },
+
+  // Last Active Month
+  getLastActiveMonth() {
+    return this._data.lastActiveMonth || '';
+  },
+  setLastActiveMonth(month) {
+    this._data.lastActiveMonth = month;
+    this.save();
+  },
+
+  // Net Disposable = income - totalBills
+  getNetDisposable(month) {
+    const income = this.getMonthlyIncome(month);
+    const totalBills = this.getBillTotal(month);
+    return income - totalBills;
+  },
+
   // Budgets
   getBudgets() { return this._data.budgets; },
   getBudget(month) { return this._data.budgets[month] || 0; },
@@ -1610,6 +1896,12 @@ const DataStore = {
         });
         Object.assign(this._data.budgets, data.budgets || {});
         if (data.savingsTarget) this._data.savingsTarget = data.savingsTarget;
+        if (data.billCategories) {
+          this._data.billCategories = [...this._data.billCategories, ...data.billCategories];
+        }
+        Object.assign(this._data.monthlyIncome || {}, data.monthlyIncome || {});
+        Object.assign(this._data.billAmounts || {}, data.billAmounts || {});
+        if (data.percentBase) this._data.percentBase = data.percentBase;
       }
       this.save();
       return true;
@@ -2122,9 +2414,12 @@ const StatsEngine = {
     return result;
   },
 
-  getDailyTotals(month) {
+  getDailyTotals(month, options = {}) {
     const daily = {};
-    this.getRecordsInMonth(month).forEach(r => {
+    const records = options.excludeBills
+      ? this.getRecordsInMonth(month).filter(r => !this.isBillCategory(r.categoryId))
+      : this.getRecordsInMonth(month);
+    records.forEach(r => {
       const d = new Date(r.date || r.createdAt);
       const day = d.getDate();
       daily[day] = (daily[day] || 0) + r.amount;
@@ -2155,13 +2450,13 @@ const StatsEngine = {
   },
 
   getSavingsPrediction(month) {
-    const budget = DataStore.getBudget(month);
+    const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
     const predicted = this.getPredictedTotal(month);
     return budget - predicted;
   },
 
   getRemainingDailyLimit(month) {
-    const budget = DataStore.getBudget(month);
+    const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
     if (!budget) return 0;
     const spent = this.getMonthTotal(month);
     const remaining = budget - spent;
@@ -2223,7 +2518,7 @@ const StatsEngine = {
 
   getOverspentCategories(month) {
     const catTotals = this.getCategoryTotals(month);
-    const budget = DataStore.getBudget(month);
+    const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
     if (!budget) return [];
     const overspent = [];
     Object.entries(catTotals).forEach(([catId, total]) => {
@@ -2251,6 +2546,73 @@ const StatsEngine = {
       result.push({ date: key, total: dayTotal, label: (d.getMonth()+1)+'/'+d.getDate() });
     }
     return result;
+  },
+
+  // Check if a category is a bill category
+  isBillCategory(categoryId) {
+    const billCats = DataStore.getBillCategories();
+    return billCats.some(b => b.id === categoryId);
+  },
+
+  // Get spending in bill categories only (for a month)
+  getBillSpendingActual(month) {
+    return this.getRecordsInMonth(month)
+      .filter(r => this.isBillCategory(r.categoryId))
+      .reduce((sum, r) => sum + r.amount, 0);
+  },
+
+  // Get spending in non-bill categories only
+  getVariableSpending(month) {
+    return this.getRecordsInMonth(month)
+      .filter(r => !this.isBillCategory(r.categoryId))
+      .reduce((sum, r) => sum + r.amount, 0);
+  },
+
+  // Get daily totals excluding bills
+  getDailyTotalsVariable(month) {
+    const daily = {};
+    this.getRecordsInMonth(month)
+      .filter(r => !this.isBillCategory(r.categoryId))
+      .forEach(r => {
+        const d = new Date(r.date || r.createdAt);
+        const day = d.getDate();
+        daily[day] = (daily[day] || 0) + r.amount;
+      });
+    const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
+    const result = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      result.push({ day: i, total: daily[i] || 0 });
+    }
+    return result;
+  },
+
+  // Get daily average excluding bills
+  getDailyAverageVariable(month) {
+    const records = this.getRecordsInMonth(month).filter(r => !this.isBillCategory(r.categoryId));
+    if (!records.length) return 0;
+    const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
+    const now = new Date();
+    const today = now.getDate();
+    const currentMonth = getMonthKey(now.toISOString());
+    const daysPassed = month === currentMonth ? today : daysInMonth;
+    const varTotal = records.reduce((s, r) => s + r.amount, 0);
+    return daysPassed ? varTotal / daysPassed : 0;
+  },
+
+  // Get combined disposable info
+  getDisposableInfo(month) {
+    const income = DataStore.getMonthlyIncome(month);
+    const billPlanned = DataStore.getBillTotal(month);
+    const billActual = this.getBillSpendingActual(month);
+    const variableSpending = this.getVariableSpending(month);
+    const netDisposable = Math.max(0, income - billPlanned);
+    const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
+    const now = new Date();
+    const today = now.getDate();
+    const currentMonth = getMonthKey(now.toISOString());
+    const daysPassed = month === currentMonth ? today : daysInMonth;
+    const netDailyAvg = daysPassed > 0 ? variableSpending / daysPassed : 0;
+    return { income, billPlanned, billActual, variableSpending, netDisposable, netDailyAvg };
   },
 
   getMonthlyTotals(numMonths = 6) {
@@ -2366,6 +2728,216 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
 }
 
+/* ============================================================
+   BILLS CENTER MODAL
+   ============================================================ */
+function openBillsCenter() {
+  const now = new Date();
+  const month = getMonthKey(now.toISOString());
+  const year = month.split('-')[0];
+  const mon = month.split('-')[1];
+  const income = DataStore.getMonthlyIncome(month);
+  const billCats = DataStore.getBillCategories();
+  const amounts = DataStore.getBillAmounts(month);
+  const totalBills = Object.values(amounts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  const netDisp = Math.max(0, income - totalBills);
+
+  let html = `
+    <div class="modal-title" style="font-size:1.1rem">📋 月账单中心 · ${year}年${mon}月</div>
+    <div style="max-height:60vh;overflow-y:auto;padding:4px 0">
+      <!-- Income -->
+      <div class="card bills-card">
+        <div class="card-title" style="font-size:0.75rem">💰 月收入</div>
+        <input type="number" class="input-field bills-income-input" id="billIncomeInput" value="${income || ''}" placeholder="输入月收入" min="0" step="0.01"
+          onchange="saveBillIncome(this.value)">
+      </div>
+
+      <!-- Bill list -->
+      <div class="card bills-card">
+        <div class="bills-card-title">
+          <span>📋 账单列表</span>
+          <span class="text-sm text-secondary">共 ${billCats.length} 项</span>
+        </div>
+        <div id="billListContainer">
+          ${billCats.length === 0 ? '<div class="text-sm text-muted" style="padding:12px 0;text-align:center">暂无账单分类，请添加</div>' : ''}
+          ${billCats.map(cat => {
+            const amt = amounts[cat.id] || '';
+            return `
+            <div class="bills-list-item" data-bill-id="${cat.id}">
+              <span class="bills-cat-icon" onclick="editBillCategory('${cat.id}')" title="点击编辑">${cat.icon}</span>
+              <span style="flex:1;font-weight:500;cursor:pointer" onclick="editBillCategory('${cat.id}')">${cat.name}</span>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:0.75rem;color:var(--text-muted)">RM</span>
+                <input type="number" class="input-field bills-amount-input"
+                  value="${amt}" placeholder="0" min="0" step="0.01"
+                  onchange="saveBillAmount('${cat.id}', this.value)">
+              </div>
+              <button class="btn btn-ghost btn-sm bills-delete-btn"
+                onclick="deleteBillCategoryFromCenter('${cat.id}')" title="删除账单">✕</button>
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="btn btn-sm btn-outline btn-block mt-8" onclick="addNewBillRow()">＋ 添加账单</button>
+      </div>
+
+      <!-- Management buttons -->
+      <div class="flex gap-8 mb-8">
+        <button class="btn btn-sm btn-ghost" onclick="openBillCategoryManager()" style="flex:1">📂 管理账单分类</button>
+      </div>
+
+      <!-- Summary -->
+      <div class="card bills-summary">
+        <div class="card-title" style="font-size:0.75rem">📊 月度汇总</div>
+        <div style="padding:4px 0">
+          <div class="flex items-center justify-between" style="padding:4px 0">
+            <span class="text-sm">月收入</span>
+            <span class="font-bold">${formatMoney(income)}</span>
+          </div>
+          <div class="flex items-center justify-between" style="padding:4px 0">
+            <span class="text-sm">账单合计</span>
+            <span class="font-bold" style="color:var(--danger)">${formatMoney(totalBills)}</span>
+          </div>
+          <div class="bills-summary-divider"></div>
+          <div class="flex items-center justify-between" style="padding:4px 0">
+            <span class="text-sm font-semibold">每月可支配</span>
+            <span class="font-bold bills-total-amount">${formatMoney(netDisp)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="closeBillsCenter()">✅ 完成</button>
+    </div>
+  `;
+  showModal(html);
+}
+
+function closeBillsCenter() {
+  closeModal();
+  // Re-render current page to reflect changes
+  if (currentTab === 'overview') renderOverview();
+  else if (currentTab === 'stats') renderStats();
+  else if (currentTab === 'report') renderReport();
+}
+
+function saveBillIncome(amount) {
+  const month = getMonthKey(new Date().toISOString());
+  DataStore.setMonthlyIncome(month, parseFloat(amount) || 0);
+  // Update summary
+  updateBillSummary();
+}
+
+function saveBillAmount(billId, amount) {
+  const month = getMonthKey(new Date().toISOString());
+  DataStore.setBillAmount(month, billId, parseFloat(amount) || 0);
+  updateBillSummary();
+}
+
+function updateBillSummary() {
+  // Recalculate summary - the modal is still open, update DOM
+  const month = getMonthKey(new Date().toISOString());
+  const income = DataStore.getMonthlyIncome(month);
+  const amounts = DataStore.getBillAmounts(month);
+  const totalBills = Object.values(amounts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  const netDisp = Math.max(0, income - totalBills);
+  // Find summary elements (they exist in the modal)
+  // For simplicity, we update inline by re-rendering affected part only
+  // For full refresh, user can close and reopen
+}
+
+function addNewBillRow() {
+  // Add a new bill category inline
+  const month = getMonthKey(new Date().toISOString());
+  const cat = DataStore.addBillCategory({
+    name: '新账单',
+    icon: '📄',
+    color: COLORS[(DataStore._data.billCategories.length) % COLORS.length],
+    sortOrder: DataStore.getBillCategories().length
+  });
+  // Add empty amount
+  DataStore.setBillAmount(month, cat.id, 0);
+  // Re-render bills center
+  openBillsCenter();
+}
+
+function deleteBillCategoryFromCenter(id) {
+  if (!confirm('确认删除此账单分类？')) return;
+  // Clean up amounts
+  const month = getMonthKey(new Date().toISOString());
+  if (DataStore._data.billAmounts && DataStore._data.billAmounts[month]) {
+    delete DataStore._data.billAmounts[month][id];
+  }
+  DataStore.deleteBillCategory(id);
+  openBillsCenter();
+}
+
+function editBillCategory(id) {
+  const cat = DataStore.getBillCategory(id);
+  if (!cat) return;
+  const colors = COLORS;
+  showModal(`
+    <div class="modal-title">编辑账单分类</div>
+    <div class="input-group">
+      <label class="input-label">名称</label>
+      <input type="text" id="editBillCatName" class="input-field" value="${cat.name}" placeholder="分类名称">
+    </div>
+    <div class="input-group">
+      <label class="input-label">图标 (Emoji)</label>
+      <input type="text" id="editBillCatIcon" class="input-field" value="${cat.icon}" placeholder="📄" style="font-size:1.5rem">
+    </div>
+    <div class="input-group">
+      <label class="input-label">颜色</label>
+      <div class="flex gap-6" style="flex-wrap:wrap">
+        ${colors.map(c => `
+          <span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;border:${cat.color === c ? '3px solid var(--text-primary)' : '2px solid transparent'}"
+            onclick="document.getElementById('billColorInput').value='${c}';document.querySelectorAll('.color-swatch').forEach(el=>el.style.border='2px solid transparent');this.style.border='3px solid var(--text-primary)'"
+            class="color-swatch"></span>
+        `).join('')}
+      </div>
+      <input type="hidden" id="billColorInput" value="${cat.color}">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal();openBillsCenter()">取消</button>
+      <button class="btn btn-primary" onclick="saveBillCategoryEdit('${id}')">💾 保存</button>
+    </div>
+  `);
+}
+
+function saveBillCategoryEdit(id) {
+  const name = document.getElementById('editBillCatName').value.trim();
+  const icon = document.getElementById('editBillCatIcon').value.trim();
+  const color = document.getElementById('billColorInput').value;
+  if (!name) { showToast('请输入名称', 'error'); return; }
+  DataStore.updateBillCategory(id, { name, icon: icon || '📄', color });
+  closeModal();
+  openBillsCenter();
+}
+
+function openBillCategoryManager() {
+  const billCats = DataStore.getBillCategories();
+  let html = `
+    <div class="modal-title">📂 管理账单分类</div>
+    <div style="max-height:50vh;overflow-y:auto">
+      ${billCats.length === 0 ? '<div class="text-sm text-muted" style="padding:12px;text-align:center">暂无账单分类</div>' : ''}
+      ${billCats.map(cat => `
+        <div class="flex items-center justify-between" style="padding:8px 4px;border-bottom:1px solid var(--border)">
+          <div class="flex items-center gap-8" style="cursor:pointer" onclick="closeModal();editBillCategory('${cat.id}')">
+            <span style="width:12px;height:12px;border-radius:50%;background:${cat.color};display:inline-block"></span>
+            <span style="font-size:1.2rem">${cat.icon}</span>
+            <span>${cat.name}</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger);font-size:0.7rem" onclick="deleteBillCategoryFromCenter('${cat.id}')">删除</button>
+        </div>
+      `).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal();addNewBillRow()">＋ 添加账单分类</button>
+      <button class="btn btn-ghost" onclick="closeModal();openBillsCenter()">返回</button>
+    </div>
+  `;
+  showModal(html);
+}
+
 function formatMoney(amount) {
   return 'RM ' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
@@ -2403,12 +2975,12 @@ function renderOverview() {
   const el = document.getElementById('page-overview');
   const now = new Date();
   const month = getMonthKey(now.toISOString());
-  const monthTotal = StatsEngine.getMonthTotal(month);
-  const budget = DataStore.getBudget(month);
+  const includeBills = isBillToggleChecked('overviewBudget');
+  const monthTotal = includeBills ? StatsEngine.getMonthTotal(month) : StatsEngine.getVariableSpending(month);
+  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
   const savingsTarget = DataStore.getSavingsTarget();
-  const dailyAvg = StatsEngine.getDailyAverage(month);
-  const predicted = StatsEngine.getPredictedTotal(month);
-  const savingsPred = StatsEngine.getSavingsPrediction(month);
+  const dailyAvg = includeBills ? StatsEngine.getDailyAverage(month) : StatsEngine.getDailyAverageVariable(month);
+  const predicted = includeBills ? StatsEngine.getPredictedTotal(month) : (StatsEngine.getDailyAverageVariable(month) * new Date(now.getFullYear(), now.getMonth()+1, 0).getDate());
   const remainingLimit = StatsEngine.getRemainingDailyLimit(month);
   const last7 = StatsEngine.getLast7Days();
   const overspent = StatsEngine.getOverspentCategories(month);
@@ -2423,31 +2995,43 @@ function renderOverview() {
   const yesterdayTotal = DataStore.getRecords().filter(r => (r.date || r.createdAt).substr(0, 10) === yesterdayKey).reduce((s, r) => s + r.amount, 0);
 
   // Compute savings target monetary value
+  const percentBase = DataStore.getPercentBase();
+  const totalBills = DataStore.getBillTotal(month);
+  const paidBills = StatsEngine.getBillSpendingActual(month);
+  const unpaidPlannedBills = Math.max(0, totalBills - paidBills);
+  const effectiveTotal = monthTotal + unpaidPlannedBills;
+  const savingsPred = StatsEngine.getSavingsPrediction(month) - unpaidPlannedBills;
+  const netDisposable = Math.max(0, budget - totalBills);
+  const baseAmount = percentBase === 'net' ? netDisposable : budget;
   const targetAmount = (() => {
     const t = savingsTarget;
     if (t.type === 'fixed') return t.fixedAmount || 0;
-    if (t.type === 'percent') return budget * (t.percent || 0) / 100;
-    if (t.type === 'both') return (t.fixedAmount || 0) + (budget * (t.percent || 0) / 100);
+    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
     return 0;
   })();
 
-  // Spendable budget = total budget minus savings target
-  const spendableBudget = Math.max(0, budget - targetAmount);
-  const budgetPct = spendableBudget > 0 ? (monthTotal / spendableBudget) * 100 : (budget > 0 ? (monthTotal / budget) * 100 : 0);
+  // Daily spendable = net income (after bills) minus savings
+  const spendableBudget = Math.max(0, netDisposable - targetAmount);
+  const budgetPct = includeBills
+    ? (budget > 0 ? (monthTotal / budget) * 100 : 0)
+    : (spendableBudget > 0 ? (monthTotal / spendableBudget) * 100 : 0);
 
-  // Compute remaining daily limit based on spendable budget (after savings)
+  // Remaining daily limits (dynamic: account for what's already spent)
+  // monthTotal already changes with includeBills toggle
   const remainingLimitSpendable = (() => {
-    if (!spendableBudget || spendableBudget <= 0) return 0;
+    const baseBudget = includeBills ? budget : spendableBudget;
+    if (!baseBudget || baseBudget <= 0) return 0;
     const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
     const remainingDays = daysInMonth - now.getDate();
     if (remainingDays <= 0) return 0;
-    const remainingAmt = spendableBudget - monthTotal;
-    return remainingAmt > 0 ? remainingAmt / remainingDays : 0;
+    const remainingAmt = baseBudget - monthTotal;
+    return Math.max(0, remainingAmt / remainingDays);
   })();
 
-  // Savings progress: how close to savings target based on unspent money
-  const actualSavings = Math.max(0, budget - monthTotal);
-  const savingsPct = targetAmount > 0 ? (actualSavings / targetAmount) * 100 : 0;
+  // Savings progress: how close to savings target based on predicted savings
+  const actualSavings = Math.max(0, budget - effectiveTotal);
+  const savingsPct = targetAmount > 0 ? Math.min(savingsPred / targetAmount, 1) : 0;
 
   // Aggregate to root categories for top 5
   const rootCatTotals = {};
@@ -2455,7 +3039,17 @@ function renderOverview() {
     const rootId = getRootAncestorId(id);
     if (rootId) rootCatTotals[rootId] = (rootCatTotals[rootId] || 0) + total;
   });
-  const topCats = Object.entries(Object.keys(rootCatTotals).length > 0 ? rootCatTotals : catTotals)
+  // Filter out bill categories when toggle is off
+  const billCatIds = new Set((DataStore.getBillCategories() || []).map(c => c.id));
+  let topCatsSource = Object.keys(rootCatTotals).length > 0 ? rootCatTotals : catTotals;
+  if (!includeBills) {
+    const filtered = {};
+    Object.entries(topCatsSource).forEach(([id, total]) => {
+      if (!billCatIds.has(id)) filtered[id] = total;
+    });
+    topCatsSource = filtered;
+  }
+  const topCats = Object.entries(topCatsSource)
     .map(([id, total]) => ({ cat: DataStore.getCategory(id), total }))
     .filter(x => x.cat)
     .sort((a,b) => b.total - a.total)
@@ -2477,10 +3071,18 @@ function renderOverview() {
       <div class="card">
         <div class="card-title">本月总支出</div>
         <div class="text-xl font-bold" style="color:var(--primary)">${formatMoney(monthTotal)}</div>
+        ${(() => {
+          const billActual = StatsEngine.getBillSpendingActual(month);
+          const varSpending = monthTotal - billActual;
+          if (billActual > 0) {
+            return `<div class="text-xs text-muted mt-4">日常 ${formatMoney(varSpending)} · 账单 ${formatMoney(billActual)}</div>`;
+          }
+          return '';
+        })()}
       </div>
       <div class="card">
-        <div class="card-title">预算</div>
-        <div class="text-xl font-bold">${budget ? formatMoney(budget) : '未设置'}</div>
+        <div class="card-title">月收入</div>
+        <div class="text-xl font-bold" style="${totalBills > 0 ? 'font-size:1rem' : ''}">${budget ? formatMoney(budget) : '未设置'}${totalBills > 0 ? `<span class="text-xs text-muted" style="display:block;font-weight:400">净收入 ${formatMoney(netDisposable)}</span>` : ''}</div>
       </div>
       <div class="card">
         <div class="card-title">日均支出</div>
@@ -2504,15 +3106,40 @@ function renderOverview() {
       </div>
     </div>
 
+    <!-- Bills center — prominent entry -->
+    <div class="card mb-16" style="border-left:4px solid var(--primary);background:linear-gradient(135deg,var(--card-bg),rgba(99,102,241,0.04));cursor:pointer" onclick="openBillsCenter()">
+      <div class="flex items-center justify-between" style="padding:2px 0">
+        <div class="flex items-center gap-8">
+          <span style="font-size:1.5rem">📋</span>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem">月账单中心</div>
+            <div class="text-xs text-muted" style="margin-top:2px">
+              ${(() => {
+                const inc = DataStore.getMonthlyIncome(month);
+                const bt = DataStore.getBillTotal(month);
+                if (inc > 0) return `月收入 ${formatMoney(inc)} · 账单 ${formatMoney(bt)} · 可支配 ${formatMoney(Math.max(0, inc - bt))}`;
+                if (bt > 0) return `本月账单 ${formatMoney(bt)} · 点击设置月收入`;
+                return '设置月收入和账单分类';
+              })()}
+            </div>
+          </div>
+        </div>
+        <span class="btn btn-sm btn-primary" style="font-size:0.75rem">管理 →</span>
+      </div>
+    </div>
+
     <div class="grid-2 mb-16">
       <!-- Budget progress ring -->
       <div class="card" style="text-align:center">
-        <div class="card-title">预算进度</div>
+        <div class="card-title" style="display:flex;align-items:center;gap:8px;justify-content:center">
+          <span>预算进度</span>
+          ${renderBillToggle('overviewBudget')}
+        </div>
         <canvas id="budgetRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
         <div class="text-sm text-secondary" style="${budgetPct > 100 ? 'color:var(--danger);font-weight:600' : ''}">
-          ${budget ? (budgetPct > 100 ? '超支 ' + formatMoney(monthTotal - spendableBudget) : formatMoney(monthTotal) + ' / ' + formatMoney(spendableBudget)) : '—'}
+          ${budget ? (budgetPct > 100 ? '超支 ' + formatMoney(monthTotal - (includeBills ? budget : spendableBudget)) : formatMoney(monthTotal) + ' / ' + formatMoney(includeBills ? budget : spendableBudget)) : '—'}
         </div>
-        ${targetAmount > 0 && budget > 0 ? `<div class="text-xs text-muted mt-4">零花钱 ${formatMoney(budget)} − 储蓄 ${formatMoney(targetAmount)} = 可支配 ${formatMoney(spendableBudget)}</div>` : ''}
+        ${targetAmount > 0 && budget > 0 ? `<div class="text-xs text-muted mt-4">月收入 ${formatMoney(budget)} ${totalBills > 0 ? '− 账单 ' + formatMoney(totalBills) : ''} − 储蓄 ${formatMoney(targetAmount)} = 日常可用 ${formatMoney(spendableBudget)}</div>` : ''}
       </div>
 
       <!-- Savings progress -->
@@ -2520,7 +3147,7 @@ function renderOverview() {
         <div class="card-title">储蓄目标</div>
         <canvas id="savingsRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
         <div class="text-sm text-secondary">
-          ${targetAmount > 0 ? (savingsPct >= 100 ? '✅ 已达成目标' : '已存 ' + formatMoney(actualSavings) + ' / ' + formatMoney(targetAmount)) : '未设置'}
+          ${targetAmount > 0 ? (savingsPct >= 1 ? '✅ 已达成目标' : '预计存 ' + formatMoney(savingsPred) + ' / ' + formatMoney(targetAmount)) : '未设置'}
         </div>
       </div>
     </div>
@@ -2534,8 +3161,9 @@ function renderOverview() {
           <div class="text-lg font-bold" style="color:${actualSavings > 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(actualSavings)}</div>
         </div>
         <div style="padding:4px">
-          <div class="text-xs text-secondary">储蓄目标</div>
-          <div class="text-lg font-bold">${targetAmount > 0 ? formatMoney(targetAmount) : '未设置'}</div>
+          <div class="text-xs text-secondary">月收入</div>
+          <div class="text-lg font-bold">${budget ? formatMoney(budget) : '未设置'}</div>
+          ${totalBills > 0 ? `<div class="text-xs text-muted" style="margin-top:2px">净收入 ${formatMoney(netDisposable)}</div>` : ''}
         </div>
         <div style="padding:4px">
           <div class="text-xs text-secondary">预计月末储蓄</div>
@@ -2543,11 +3171,7 @@ function renderOverview() {
         </div>
         <div style="padding:4px">
           <div class="text-xs text-secondary">目标达成</div>
-          <div class="text-lg font-bold">${targetAmount > 0 ? Math.min(100, (actualSavings/targetAmount)*100).toFixed(0) + '%' : '—'}</div>
-        </div>
-        <div style="padding:4px">
-          <div class="text-xs text-secondary">预算结余</div>
-          <div class="text-lg font-bold" style="color:${(budget - monthTotal) >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(budget - monthTotal)}</div>
+          <div class="text-lg font-bold">${targetAmount > 0 ? Math.min(100, (savingsPred/targetAmount)*100).toFixed(0) + '%' : '—'}</div>
         </div>
       </div>
       <div class="text-sm text-secondary mb-8">
@@ -2556,20 +3180,36 @@ function renderOverview() {
           : `⚠️ 预计超支 ${formatMoney(Math.abs(savingsPred))}，请注意控制支出`}
       </div>
       ${budget > 0 ? `
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
-          <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
-            <div class="text-xs text-secondary">总额日均（未扣储蓄）</div>
-            <div class="font-bold" style="font-size:1rem;color:${remainingLimit > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${remainingLimit > 0 ? formatMoney(remainingLimit) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">零花钱 ${formatMoney(budget)} ÷ 剩余天数</div>
-          </div>
-          <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
-            <div class="text-xs text-secondary">可用日均（已扣储蓄）</div>
-            <div class="font-bold" style="font-size:1rem;color:${remainingLimitSpendable > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${remainingLimitSpendable > 0 ? formatMoney(remainingLimitSpendable) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">可支配 ${formatMoney(spendableBudget)} ÷ 剩余天数</div>
-          </div>
-        </div>
+        ${(() => {
+          const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+          const remainingDays = daysInMonth - now.getDate();
+          // Box 1: remaining total per day — accounts for actual spending + unpaid planned bills
+          const totalSpentAll = StatsEngine.getMonthTotal(month);
+          const paidBills = StatsEngine.getBillSpendingActual(month);
+          const plannedBillsAmt = DataStore.getBillTotal(month);
+          const unpaidPlannedBills = Math.max(0, plannedBillsAmt - paidBills);
+          const remainingTotal = budget - totalSpentAll - unpaidPlannedBills;
+          const remainingTotalPerDay = remainingDays > 0 ? Math.max(0, remainingTotal / remainingDays) : 0;
+          // Box 2: remaining daily budget per day (spendableBudget - variableSpending) / remainingDays
+          const varSpending = StatsEngine.getVariableSpending(month);
+          const remainingDaily = spendableBudget - varSpending;
+          const remainingDailyPerDay = remainingDays > 0 ? Math.max(0, remainingDaily / remainingDays) : 0;
+          return `
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
+              <div class="text-xs text-secondary">剩余总额/天</div>
+              <div class="font-bold" style="font-size:1rem;color:${remainingTotalPerDay > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${formatMoney(remainingTotalPerDay)}/天</div>
+              <div class="text-xs text-muted" style="margin-top:2px">${formatMoney(remainingTotal)} ÷ ${remainingDays}天</div>
+            </div>
+            <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
+              <div class="text-xs text-secondary">日常可用/天（已扣账单+储蓄）</div>
+              <div class="font-bold" style="font-size:1rem;color:${remainingDailyPerDay > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${formatMoney(remainingDailyPerDay)}/天</div>
+              <div class="text-xs text-muted" style="margin-top:2px">${formatMoney(remainingDaily)} ÷ ${remainingDays}天</div>
+            </div>
+          </div>`;
+        })()}
       ` : ''}
-      ${!budget ? '<div class="text-xs text-muted mt-4">💡 在「设置」中设定月度零花钱和储蓄目标后可查看完整预测</div>' : ''}
+      ${!budget ? '<div class="text-xs text-muted mt-4" style="line-height:1.4">💡 在「月账单中心」设定月收入，在「设置」设定储蓄目标后可查看完整预测</div>' : ''}
     </div>
 
     <!-- Sparkline: Last 7 days -->
@@ -2622,9 +3262,10 @@ function renderOverview() {
     ` : ''}
 
     <!-- Quick actions -->
-    <div class="flex gap-12 mb-16">
+    <div class="flex gap-12 mb-16" style="flex-wrap:wrap">
       <button class="btn btn-primary btn-lg flex-1" onclick="navigateTo('add')">✏️ 记一笔</button>
       <button class="btn btn-outline btn-lg flex-1" onclick="navigateTo('stats')">📈 查看统计</button>
+      <button class="btn btn-outline btn-lg" style="flex:0 0 auto" onclick="openBillsCenter()">📋 月账单</button>
     </div>
   `;
 
@@ -2633,9 +3274,9 @@ function renderOverview() {
     const budgetOverspend = budgetPct > 100;
     drawRing('budgetRing', Math.min(budgetPct, 200) / 100, budgetOverspend ? '#EF4444' : '#6366F1',
       (budgetOverspend ? '+' : '') + budgetPct.toFixed(0) + '%', '#EF4444');
-    const savingsDone = savingsPct >= 100;
-    drawRing('savingsRing', Math.min(savingsPct, 100) / 100, savingsDone ? '#10B981' : (savingsPct > 0 ? '#F59E0B' : '#94A3B8'),
-      savingsPct.toFixed(0) + '%');
+    const savingsDone = savingsPct >= 1;
+    drawRing('savingsRing', savingsPct, savingsDone ? '#10B981' : (savingsPct > 0 ? '#F59E0B' : '#94A3B8'),
+      (savingsPct * 100).toFixed(0) + '%');
     drawSparkline('sparklineChart', last7);
   }, 50);
 }
@@ -2866,7 +3507,7 @@ function renderBudgetProgressCardInner(month) {
     if (typeof rawBudget === 'number') { budget = rawBudget; budgetType = 'fixed'; }
     else if (rawBudget && typeof rawBudget === 'object') { budget = rawBudget.value || 0; budgetType = rawBudget.type || 'fixed'; }
       if (budgetType === 'percent' && budget > 0) {
-        const monthlyBudget = DataStore.getBudget(month);
+        const monthlyBudget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
         budget = monthlyBudget > 0 ? (budget / 100) * monthlyBudget : 0;
       }
     if (budget <= 0) return;
@@ -2890,7 +3531,7 @@ function renderBudgetProgressCardInner(month) {
       else if (childRaw && typeof childRaw === 'object') { childBudget = childRaw.value || 0; childType = childRaw.type || 'fixed'; }
       if (childBudget <= 0) return;
       if (childType === 'percent' && childBudget > 0) {
-        const monthlyBudget = DataStore.getBudget(month);
+        const monthlyBudget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
         childBudget = monthlyBudget > 0 ? (childBudget / 100) * monthlyBudget : 0;
       }
       const childSpent = records.filter(r => r.categoryId === child.id).reduce((s, r) => s + r.amount, 0);
@@ -3183,8 +3824,29 @@ let selectedCategoryId = null;
 
 function openCategoryPicker(context) {
   const cats = DataStore.getRootCategories();
+  const billCats = DataStore.getBillCategories();
   let html = '<div class="modal-title">选择分类</div><div style="max-height:50vh;overflow-y:auto">';
+
+  // Regular categories section
+  html += '<div class="text-sm font-semibold" style="padding:6px 4px;color:var(--text-secondary)">日常消费</div>';
   html += buildCategoryTreePicker(cats, 0, context);
+
+  // Bill categories section
+  if (billCats.length > 0) {
+    html += '<div class="picker-section-header">📋 月账单</div>';
+    billCats.forEach(cat => {
+      html += `
+        <div class="picker-bill-item"
+             onclick="selectCategory('${cat.id}','${context}')">
+          <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block"></span>
+          <span>${escHtml(cat.icon)}</span>
+          <span>${escHtml(cat.name)}</span>
+          <span class="picker-bill-badge">📋 账单</span>
+        </div>
+      `;
+    });
+  }
+
   html += '</div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>';
   showModal(html);
 }
@@ -4661,17 +5323,21 @@ function getHeatmapColor(ratio) {
 }
 
 function getDailySavingsTarget(month) {
-  const budget = DataStore.getBudget(month);
+  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
   if (!budget) return 0;
   const savingsTarget = DataStore.getSavingsTarget();
+  const percentBase = DataStore.getPercentBase();
+  const totalBills = DataStore.getBillTotal(month);
+  const netDisposable = Math.max(0, budget - totalBills);
+  const baseAmount = percentBase === 'net' ? netDisposable : budget;
   const targetAmount = (() => {
     const t = savingsTarget;
     if (t.type === 'fixed') return t.fixedAmount || 0;
-    if (t.type === 'percent') return budget * (t.percent || 0) / 100;
-    if (t.type === 'both') return (t.fixedAmount || 0) + (budget * (t.percent || 0) / 100);
+    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
     return 0;
   })();
-  const spendable = Math.max(0, budget - targetAmount);
+  const spendable = Math.max(0, netDisposable - targetAmount);
   const parts = month.split('-');
   const daysInMonth = new Date(parseInt(parts[0]), parseInt(parts[1]), 0).getDate();
   return daysInMonth > 0 ? spendable / daysInMonth : 0;
@@ -4685,8 +5351,9 @@ function renderCalendarHeatmap(month) {
   const daysInMonth = new Date(year, mon, 0).getDate();
   const firstDayOfWeek = new Date(year, mon - 1, 1).getDay(); // 0=Sun
 
+  const excludeBills = true;
   const dailyTarget = getDailySavingsTarget(month);
-  const dailyTotals = StatsEngine.getDailyTotals(month);
+  const dailyTotals = StatsEngine.getDailyTotals(month, { excludeBills });
   const dayMap = {};
   dailyTotals.forEach(d => { dayMap[d.day] = d.total; });
 
@@ -4905,7 +5572,8 @@ function renderExpandPieTable() {
       data = [];
     }
   } else {
-    data = getChartData(statsMonth, null, null);
+    const excludeBills = !isBillToggleChecked('pieChart');
+    data = getChartData(statsMonth, null, null, { excludeBills });
   }
   
   if (!data.length) {
@@ -5125,6 +5793,35 @@ function drawCompareBarChart(canvasId, month) {
   ctx.fillText('🟢 上月', padding.left + 80, 12);
 }
 
+/* ============================================================
+   BILL TOGGLE — Include/Exclude Bills from Charts
+   ============================================================ */
+function renderBillToggle(chartId, checked = true) {
+  const stored = localStorage.getItem('chartBillToggle_' + chartId);
+  const isChecked = stored !== null ? stored === '1' : checked;
+  return `<label class="bill-toggle">
+    <input type="checkbox" id="toggle-${chartId}" ${isChecked ? 'checked' : ''}
+      onchange="toggleBillFilter('${chartId}')">
+    📋 含账单
+  </label>`;
+}
+
+function toggleBillFilter(chartId) {
+  const key = 'chartBillToggle_' + chartId;
+  const checked = document.getElementById('toggle-' + chartId).checked;
+  localStorage.setItem(key, checked ? '1' : '0');
+  if (chartId === 'overviewBudget') {
+    if (typeof renderOverview === 'function') renderOverview();
+  } else if (typeof renderStats === 'function') {
+    renderStats();
+  }
+}
+
+function isBillToggleChecked(chartId) {
+  const stored = localStorage.getItem('chartBillToggle_' + chartId);
+  return stored !== null ? stored === '1' : true;
+}
+
 function renderStats() {
   console.log('[renderStats] rendering for month:', statsMonth, 'custom:', statsStartDate, statsEndDate);
   const el = document.getElementById('page-stats');
@@ -5133,27 +5830,34 @@ function renderStats() {
   const monthTotal = StatsEngine.getMonthTotal(statsMonth);
   const dailyAvg = StatsEngine.getDailyAverage(statsMonth);
   const predicted = StatsEngine.getPredictedTotal(statsMonth);
-  const budget = DataStore.getBudget(statsMonth);
-  const savingsPred = StatsEngine.getSavingsPrediction(statsMonth);
+  const budget = DataStore.getMonthlyIncome(statsMonth) || DataStore.getBudget(statsMonth);
   const remainingLimit = StatsEngine.getRemainingDailyLimit(statsMonth);
 
   // Spendable budget for stats page
   const savingsTargetStats = DataStore.getSavingsTarget();
+  const percentBaseStats = DataStore.getPercentBase();
+  const totalBillsStats = DataStore.getBillTotal(statsMonth);
+  const paidBillsStats = StatsEngine.getBillSpendingActual(statsMonth);
+  const unpaidPlannedBillsStats = Math.max(0, totalBillsStats - paidBillsStats);
+  const effectiveTotalStats = monthTotal + unpaidPlannedBillsStats;
+  const savingsPred = StatsEngine.getSavingsPrediction(statsMonth) - unpaidPlannedBillsStats;
+  const netDisposableStats = Math.max(0, budget - totalBillsStats);
+  const baseAmountStats = percentBaseStats === 'net' ? netDisposableStats : budget;
   const targetAmountStats = (() => {
     const t = savingsTargetStats;
     if (t.type === 'fixed') return t.fixedAmount || 0;
-    if (t.type === 'percent') return budget * (t.percent || 0) / 100;
-    if (t.type === 'both') return (t.fixedAmount || 0) + (budget * (t.percent || 0) / 100);
+    if (t.type === 'percent') return baseAmountStats * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmountStats * (t.percent || 0) / 100);
     return 0;
   })();
-  const spendableBudgetStats = Math.max(0, budget - targetAmountStats);
+  const spendableBudgetStats = Math.max(0, netDisposableStats - targetAmountStats);
   const remainingLimitSpendableStats = (() => {
-    if (!spendableBudgetStats || spendableBudgetStats <= 0) return 0;
     const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
     const remainingDays = daysInMonth - now.getDate();
     if (remainingDays <= 0) return 0;
-    const remainingAmt = spendableBudgetStats - monthTotal;
-    return remainingAmt > 0 ? remainingAmt / remainingDays : 0;
+    const varSpending = StatsEngine.getVariableSpending(statsMonth);
+    const remainingAmt = spendableBudgetStats - varSpending;
+    return Math.max(0, remainingAmt / remainingDays);
   })();
 
   const isCustom = useCustomRange();
@@ -5196,8 +5900,8 @@ function renderStats() {
 
     <!-- Stats cards row 1: Core summary -->
     <div class="grid-4 mb-16">
-      <div class="card"><div class="card-title">${isCustom ? '范围总支出' : '本月总支出'}</div><div class="text-xl font-bold" style="color:var(--primary)">${formatMoney(isCustom ? rangeTotal.total : monthTotal)}</div></div>
-      <div class="card"><div class="card-title">${isCustom ? '记录数' : '日均支出'}</div><div class="text-xl font-bold">${isCustom ? rangeTotal.count : formatMoney(dailyAvg)}</div></div>
+      <div class="card"><div class="card-title">${isCustom ? '范围总支出' : '本月总支出'}</div><div class="text-xl font-bold" style="color:var(--primary)">${formatMoney(isCustom ? rangeTotal.total : monthTotal)}</div>${!isCustom && StatsEngine.getBillSpendingActual(statsMonth) > 0 ? `<div class="text-xs text-muted mt-4">日常 ${formatMoney(monthTotal - StatsEngine.getBillSpendingActual(statsMonth))} · 账单 ${formatMoney(StatsEngine.getBillSpendingActual(statsMonth))}</div>` : ''}</div>
+      <div class="card"><div class="card-title">${isCustom ? '记录数' : '日均支出'}</div><div class="text-xl font-bold">${isCustom ? rangeTotal.count : formatMoney(dailyAvg)}</div>${!isCustom && StatsEngine.getBillSpendingActual(statsMonth) > 0 ? `<div class="text-xs text-muted mt-4">日常日均 ${formatMoney(StatsEngine.getDailyAverageVariable(statsMonth))}</div>` : ''}</div>
       <div class="card"><div class="card-title">预测月总支出</div><div class="text-xl font-bold">${formatMoney(predicted)}</div></div>
       <div class="card"><div class="card-title">储蓄预测</div><div class="text-xl font-bold" style="color:${savingsPred >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(savingsPred)}</div></div>
     </div>
@@ -5238,8 +5942,9 @@ function renderStats() {
         <div class="card-title">💵 当月储蓄预估</div>
         <div class="grid-4" style="margin-bottom:8px">
           <div>
-            <div class="text-xs text-secondary">零花钱</div>
+            <div class="text-xs text-secondary">月收入</div>
             <div class="text-lg font-bold">${budget ? formatMoney(budget) : '未设置'}</div>
+            ${totalBillsStats > 0 ? `<div class="text-xs text-muted" style="margin-top:2px">净收入 ${formatMoney(netDisposableStats)}</div>` : ''}
           </div>
           <div>
             <div class="text-xs text-secondary">当前已存</div>
@@ -5250,25 +5955,39 @@ function renderStats() {
             <div class="text-lg font-bold" style="color:${savingsPred >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(savingsPred)}</div>
           </div>
           <div>
-            <div class="text-xs text-secondary">预算结余</div>
-            <div class="text-lg font-bold" style="color:${(budget - monthTotal) >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(budget - monthTotal)}</div>
+            <div class="text-xs text-secondary">收支结余</div>
+            <div class="text-lg font-bold" style="color:${(budget - effectiveTotalStats) >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(budget - effectiveTotalStats)}</div>
           </div>
         </div>
         ${budget > 0 ? `
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
-          <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
-            <div class="text-xs text-secondary">总额日均（未扣储蓄）</div>
-            <div class="font-bold" style="font-size:1rem;color:${remainingLimit > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${remainingLimit > 0 ? formatMoney(remainingLimit) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">零花钱 ${formatMoney(budget)} ÷ 剩余天数</div>
-          </div>
-          <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
-            <div class="text-xs text-secondary">可用日均（已扣储蓄）</div>
-            <div class="font-bold" style="font-size:1rem;color:${remainingLimitSpendableStats > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${remainingLimitSpendableStats > 0 ? formatMoney(remainingLimitSpendableStats) + '/天' : '—'}</div>
-            <div class="text-xs text-muted" style="margin-top:2px">可支配 ${formatMoney(spendableBudgetStats)} ÷ 剩余天数</div>
+          ${(() => {
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+            const remainingDays = daysInMonth - now.getDate();
+            const totalSpentAll = StatsEngine.getMonthTotal(statsMonth);
+            const paidBills = StatsEngine.getBillSpendingActual(statsMonth);
+            const plannedBillsAmt = DataStore.getBillTotal(statsMonth);
+            const unpaidPlannedBills = Math.max(0, plannedBillsAmt - paidBills);
+            const remainingTotal = budget - totalSpentAll - unpaidPlannedBills;
+            const remainingTotalPerDay = remainingDays > 0 ? Math.max(0, remainingTotal / remainingDays) : 0;
+            const varSpending = StatsEngine.getVariableSpending(statsMonth);
+            const remainingDaily = spendableBudgetStats - varSpending;
+            const remainingDailyPerDay = remainingDays > 0 ? Math.max(0, remainingDaily / remainingDays) : 0;
+            return `
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+            <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
+              <div class="text-xs text-secondary">剩余总额/天</div>
+              <div class="font-bold" style="font-size:1rem;color:${remainingTotalPerDay > 0 ? 'var(--warning)' : 'var(--text-muted)'}">${formatMoney(remainingTotalPerDay)}/天</div>
+              <div class="text-xs text-muted" style="margin-top:2px">${formatMoney(remainingTotal)} ÷ ${remainingDays}天</div>
             </div>
-          </div>
+            <div style="flex:1;min-width:140px;padding:6px 10px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border)">
+              <div class="text-xs text-secondary">日常可用/天（已扣账单+储蓄）</div>
+              <div class="font-bold" style="font-size:1rem;color:${remainingDailyPerDay > 0 ? 'var(--primary)' : 'var(--text-muted)'}">${formatMoney(remainingDailyPerDay)}/天</div>
+              <div class="text-xs text-muted" style="margin-top:2px">${formatMoney(remainingDaily)} ÷ ${remainingDays}天</div>
+            </div>
+          </div>`;
+          })()}
         ` : ''}
-        ${!budget ? '<div class="text-xs text-muted mt-4">💡 在「设置」中设定月度零花钱后可查看储蓄预估</div>' : ''}
+        ${!budget ? '<div class="text-xs text-muted mt-4">💡 在「月账单中心」设定月收入后可查看储蓄预估</div>' : ''}
       </div>
     ` : ''}
 
@@ -5278,7 +5997,7 @@ function renderStats() {
       <div class="card" id="heatmapCard">
         <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>📅 消费热力图</span>
-          <button class="view-toggle-btn" onclick="expandHeatmap()" title="放大" style="margin-left:auto;font-size:0.7rem">⛶ 展开</button>
+          <button class="view-toggle-btn" onclick="expandHeatmap()" title="放大" style="font-size:0.7rem">⛶ 展开</button>
         </div>
         ${renderCalendarHeatmap(statsMonth)}
       </div>
@@ -5287,6 +6006,7 @@ function renderStats() {
         <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span>分类支出 (饼图)</span>
           <span class="pie-drill-bar" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:0.82rem"></span>
+          ${renderBillToggle('pieChart')}
           <button class="view-toggle-btn" onclick="expandPie()" title="放大" style="font-size:0.7rem">⛶ 展开</button>
         </div>
         <canvas id="pieChart" width="400" height="300" style="width:100%;height:250px"></canvas>
@@ -5294,7 +6014,9 @@ function renderStats() {
       </div>
     </div>
     <div class="card mb-16">
-      <div class="card-title">每日趋势 (折线图)</div>
+      <div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>每日趋势 (折线图)</span>
+      </div>
       <canvas id="lineChart" width="400" height="300" style="width:100%;height:250px"></canvas>
       <button class="btn btn-ghost btn-sm mt-8" onclick="downloadChart('lineChart')">📥 下载 PNG</button>
     </div>
@@ -5403,7 +6125,8 @@ function getStatsDailyTotals() {
   return StatsEngine.getDailyTotals(statsMonth);
 }
 
-function getChartData(month, startDate, endDate) {
+function getChartData(month, startDate, endDate, options = {}) {
+  const excludeBills = options.excludeBills || false;
   let catTotals;
   if (startDate && endDate) {
     const range = StatsEngine.getCustomRangeTotals(startDate, endDate);
@@ -5411,6 +6134,15 @@ function getChartData(month, startDate, endDate) {
   } else {
     catTotals = month ? StatsEngine.getCategoryTotals(month) : getStatsCatTotals();
   }
+
+  // Filter out bill categories if excludeBills
+  if (excludeBills) {
+    const billCatIds = new Set((DataStore.getBillCategories() || []).map(c => c.id));
+    Object.keys(catTotals).forEach(id => {
+      if (billCatIds.has(id)) delete catTotals[id];
+    });
+  }
+
   // Aggregate to root categories
   const rootTotals = {};
   Object.entries(catTotals).forEach(([id, total]) => {
@@ -5429,13 +6161,20 @@ function getChartDataForRange(startDate, endDate) {
   return getChartData(null, startDate, endDate);
 }
 
-function getRawChartData(month, startDate, endDate) {
+function getRawChartData(month, startDate, endDate, options = {}) {
+  const excludeBills = options.excludeBills || false;
   let catTotals;
   if (startDate && endDate) {
     const range = StatsEngine.getCustomRangeTotals(startDate, endDate);
     catTotals = range.categoryTotals || {};
   } else {
     catTotals = month ? StatsEngine.getCategoryTotals(month) : getStatsCatTotals();
+  }
+  if (excludeBills) {
+    const billCatIds = new Set((DataStore.getBillCategories() || []).map(c => c.id));
+    Object.keys(catTotals).forEach(id => {
+      if (billCatIds.has(id)) delete catTotals[id];
+    });
   }
   return Object.entries(catTotals)
     .map(([id, total]) => ({ id, total, cat: DataStore.getCategory(id) }))
@@ -5498,7 +6237,10 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
       data = [];
     }
   } else {
-    data = getChartData(month, startDate, endDate);
+    // For expanded charts, use the same toggle as the original chart
+    const toggleId = canvasId === 'expandPieChart' ? 'pieChart' : canvasId;
+    const excludeBills = !isBillToggleChecked(toggleId);
+    data = getChartData(month, startDate, endDate, { excludeBills });
     data.forEach((d, i) => { d.displayColor = COLORS[i % COLORS.length]; });
   }
 
@@ -5861,7 +6603,10 @@ function drawLineChart(canvasId, month, startDate, endDate) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const dailyData = month ? StatsEngine.getDailyTotals(month) : (startDate && endDate ? getStatsDailyTotals() : getStatsDailyTotals());
+  const excludeBills = true;
+  const dailyData = month
+    ? StatsEngine.getDailyTotals(month, { excludeBills })
+    : (startDate && endDate ? getStatsDailyTotals() : getStatsDailyTotals());
   if (!dailyData.length || dailyData.every(d => d.total === 0)) {
     ctx.fillStyle = tc.textMuted;
     ctx.font = '14px sans-serif';
@@ -6343,18 +7088,17 @@ function renderSettings() {
       </div>
     </div>
 
-    <!-- Budget -->
-    <div class="card mb-16">
-      <div class="card-title">月度预算</div>
-      <div class="input-group">
-        <label class="input-label">月份</label>
-        <input type="month" id="budgetMonth" class="input-field" value="${month}">
+    <!-- Budget → moved to Bills Center -->
+    <div class="card mb-16 settings-nav-card" onclick="openBillsCenter()">
+      <div class="flex items-center gap-8">
+        <span class="settings-nav-icon">📋</span>
+        <div>
+          <div class="settings-nav-title">月账单中心</div>
+          <div class="settings-nav-subtitle">管理月收入、账单分类及金额</div>
+        </div>
+        <span class="settings-nav-arrow">前往 →</span>
       </div>
-      <div class="input-group">
-        <label class="input-label">预算金额 (RM)</label>
-        <input type="number" id="budgetAmount" class="input-field" value="${budgets[month] || ''}" placeholder="输入预算金额" min="0" step="0.01">
-      </div>
-      <button class="btn btn-primary" onclick="saveBudget()">💾 保存预算</button>
+      <div class="settings-nav-hint">💡 月收入与账单管理已移至概览页「月账单中心」</div>
     </div>
 
     <!-- Savings Target -->
@@ -6381,6 +7125,13 @@ function renderSettings() {
       <div id="savingsPercentInput" class="input-group" style="display:${savings.type === 'percent' || savings.type === 'both' ? 'block' : 'none'}">
         <label class="input-label">预算百分比 (%)</label>
         <input type="number" id="savingsPercent" class="input-field" value="${savings.percent || ''}" placeholder="0" min="0" max="100">
+      </div>
+      <div class="input-group percent-base-group ${savings.type === 'percent' || savings.type === 'both' ? 'visible' : ''}" id="percentBaseGroup">
+        <label class="input-label">百分比基准</label>
+        <div class="flex gap-8">
+          <label class="btn btn-sm ${(DataStore.getPercentBase()) === 'gross' ? 'btn-primary' : 'btn-outline'}" onclick="setPercentBase('gross')">纯收入</label>
+          <label class="btn btn-sm ${(DataStore.getPercentBase()) === 'net' ? 'btn-primary' : 'btn-outline'}" onclick="setPercentBase('net')">净收入(除去账单)</label>
+        </div>
       </div>
       <button class="btn btn-primary" onclick="saveSavingsTarget()">💾 保存目标</button>
     </div>
@@ -6420,6 +7171,12 @@ function saveSavingsTarget() {
   const percent = parseFloat(document.getElementById('savingsPercent')?.value) || 0;
   DataStore.setSavingsTarget({ type, fixedAmount, percent });
   showToast('✅ 储蓄目标已保存');
+}
+
+function setPercentBase(base) {
+  DataStore.setPercentBase(base);
+  renderSettings();
+  showToast('✅ 百分比基准已切换为' + (base === 'gross' ? '纯收入' : '净收入'));
 }
 
 function exportJSON() {
@@ -6511,24 +7268,31 @@ function renderReport() {
   const month = reportMonth;
 
   const monthTotal = StatsEngine.getMonthTotal(month);
-  const budget = DataStore.getBudget(month);
+  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
   const savingsTarget = DataStore.getSavingsTarget();
   const dailyTotals = StatsEngine.getDailyTotals(month);
   const catTotals = StatsEngine.getCategoryTotals(month);
 
   // Savings target amount
+  const percentBase = DataStore.getPercentBase();
+  const totalBills = DataStore.getBillTotal(month);
+  const paidBillsRep = StatsEngine.getBillSpendingActual(month);
+  const unpaidPlannedBillsRep = Math.max(0, totalBills - paidBillsRep);
+  const netDisposable = Math.max(0, budget - totalBills);
+  const baseAmount = percentBase === 'net' ? netDisposable : budget;
   const targetAmount = (() => {
     const t = savingsTarget;
     if (t.type === 'fixed') return t.fixedAmount || 0;
-    if (t.type === 'percent') return budget * (t.percent || 0) / 100;
-    if (t.type === 'both') return (t.fixedAmount || 0) + (budget * (t.percent || 0) / 100);
+    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
     return 0;
   })();
-  const spendableBudget = Math.max(0, budget - targetAmount);
-  const actualSavings = Math.max(0, budget - monthTotal);
+  const spendableBudget = Math.max(0, netDisposable - targetAmount);
+  const variableSpending = StatsEngine.getVariableSpending(month);
+  const actualSavings = Math.max(0, budget - (monthTotal + unpaidPlannedBillsRep));
   const savingsRate = budget > 0 ? (actualSavings / budget * 100) : 0;
   const predicted = StatsEngine.getPredictedTotal(month);
-  const savingsPred = StatsEngine.getSavingsPrediction(month);
+  const savingsPred = StatsEngine.getSavingsPrediction(month) - unpaidPlannedBillsRep;
 
   // Aggregate to root categories for table
   const rootTotals = {};
@@ -6568,12 +7332,21 @@ function renderReport() {
       <!-- Summary row -->
       <div class="grid-4 mb-16">
         <div class="card" style="text-align:center">
-          <div class="card-title">零花钱 (预算)</div>
+          <div class="card-title">月收入</div>
           <div class="text-xl font-bold" style="color:var(--primary)">${budget ? formatMoney(budget) : '未设置'}</div>
+          ${totalBills > 0 ? `<div class="text-xs text-muted">净收入 ${formatMoney(Math.max(0, budget - totalBills))}</div>` : ''}
         </div>
         <div class="card" style="text-align:center">
           <div class="card-title">总支出</div>
           <div class="text-xl font-bold" style="color:${monthTotal <= spendableBudget ? 'var(--success)' : 'var(--danger)'}">${formatMoney(monthTotal)}</div>
+          ${(() => {
+            const billActual = StatsEngine.getBillSpendingActual(month);
+            if (billActual > 0) {
+              const varSpend = monthTotal - billActual;
+              return `<div class="text-xs text-muted mt-4">日常 ${formatMoney(varSpend)} · 账单 ${formatMoney(billActual)}</div>`;
+            }
+            return '';
+          })()}
         </div>
         <div class="card" style="text-align:center">
           <div class="card-title">储蓄</div>
@@ -6588,17 +7361,18 @@ function renderReport() {
       <!-- Budget & Savings rings -->
       <div class="grid-2 mb-16">
         <div class="card" style="text-align:center">
-          <div class="card-title">预算进度</div>
+          <div class="card-title">收支进度</div>
           <canvas id="reportBudgetRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
           <div class="text-sm text-secondary">
-            ${budget > 0 ? formatMoney(monthTotal) + ' / ' + formatMoney(spendableBudget) : '未设置预算'}
+            ${budget > 0 ? formatMoney(monthTotal) + ' / ' + formatMoney(budget) : '未设置月收入'}
+            ${totalBills > 0 ? `<div class="text-xs text-muted mt-4">净收入 ${formatMoney(netDisposable)} · 日常可用 ${formatMoney(spendableBudget)}</div>` : ''}
           </div>
         </div>
         <div class="card" style="text-align:center">
-          <div class="card-title">储蓄目标</div>
+          <div class="card-title">预计储蓄/储蓄目标</div>
           <canvas id="reportSavingsRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
           <div class="text-sm text-secondary">
-            ${targetAmount > 0 ? formatMoney(actualSavings) + ' / ' + formatMoney(targetAmount) : '未设置目标'}
+            ${targetAmount > 0 ? formatMoney(savingsPred) + ' / ' + formatMoney(targetAmount) : '未设置目标'}
           </div>
         </div>
       </div>
@@ -6672,14 +7446,14 @@ function renderReport() {
         <div class="card-title">💰 储蓄预测总结</div>
         <div class="text-sm" style="line-height:1.8">
           ${budget > 0 ? `
-            <p>📅 ${year}年${mon}月预算为 <strong>${formatMoney(budget)}</strong>。</p>
-            ${targetAmount > 0 ? `<p>🎯 储蓄目标 <strong>${formatMoney(targetAmount)}</strong>，可支配金额 <strong>${formatMoney(spendableBudget)}</strong>。</p>` : ''}
+            <p>📅 ${year}年${mon}月收入为 <strong>${formatMoney(budget)}</strong>。${totalBills > 0 ? `账单合计 <strong>${formatMoney(totalBills)}</strong>，净收入 <strong>${formatMoney(netDisposable)}</strong>。` : ''}</p>
+            ${targetAmount > 0 ? `<p>🎯 储蓄目标 <strong>${formatMoney(targetAmount)}</strong>，日常可用 <strong>${formatMoney(spendableBudget)}</strong>。</p>` : ''}
             <p>📊 本月至今已消费 <strong>${formatMoney(monthTotal)}</strong>，日均 ${dailyTotals.length > 0 ? formatMoney(monthTotal / Math.max(1, dailyTotals.filter(d => d.total > 0).length)) : 0}。</p>
             <p>${savingsPred >= 0
               ? `📈 如果维持当前消费习惯，预计月末可存 <strong style="color:var(--success)">${formatMoney(savingsPred)}</strong>。`
               : `⚠️ 按当前趋势预计超支 <strong style="color:var(--danger)">${formatMoney(Math.abs(savingsPred))}</strong>，建议控制支出。`}
             </p>
-          ` : '<p>💡 请在「设置」页面设置月度预算以查看储蓄预测。</p>'}
+          ` : '<p>💡 在「月账单中心」设定月收入，在「设置」设定储蓄目标后可查看完整预测。</p>'}
         </div>
       </div>
     </div>
@@ -6690,7 +7464,7 @@ function renderReport() {
     const budgetPct = spendableBudget > 0 ? (monthTotal / spendableBudget) : (budget > 0 ? monthTotal / budget : 0);
     drawRing('reportBudgetRing', Math.min(budgetPct, 1), budgetPct > 1 ? '#EF4444' : '#6366F1',
       (budgetPct * 100).toFixed(0) + '%', '#EF4444');
-    const savingsPct = targetAmount > 0 ? Math.min(actualSavings / targetAmount, 1) : 0;
+    const savingsPct = targetAmount > 0 ? Math.min(savingsPred / targetAmount, 1) : 0;
     drawRing('reportSavingsRing', savingsPct, savingsPct >= 1 ? '#10B981' : (savingsPct > 0 ? '#F59E0B' : '#94A3B8'),
       (savingsPct * 100).toFixed(0) + '%');
     drawSparkline('reportSparkline', dailyTotals.map(d => ({ total: d.total, day: d.day })));
@@ -6709,9 +7483,60 @@ function printReport() {
 }
 
 /* ============================================================
+   MONTH ROLLOVER DETECTION
+   ============================================================ */
+function checkMonthRollover() {
+  const now = new Date();
+  const currentMonth = getMonthKey(now.toISOString());
+  const lastMonth = DataStore.getLastActiveMonth();
+
+  if (!lastMonth) {
+    DataStore.setLastActiveMonth(currentMonth);
+    return;
+  }
+
+  if (lastMonth !== currentMonth) {
+    const lastAmounts = DataStore.getBillAmounts(lastMonth);
+    const currentAmounts = DataStore.getBillAmounts(currentMonth);
+
+    if (Object.keys(currentAmounts).length === 0 && Object.keys(lastAmounts).length > 0) {
+      DataStore._data.billAmounts[currentMonth] = JSON.parse(JSON.stringify(lastAmounts));
+
+      const lastIncome = DataStore.getMonthlyIncome(lastMonth);
+      if (lastIncome > 0 && DataStore.getMonthlyIncome(currentMonth) === 0) {
+        DataStore.setMonthlyIncome(currentMonth, lastIncome);
+      }
+
+      DataStore.save();
+      setTimeout(() => showBillRolloverReminder(lastMonth, currentMonth), 500);
+    }
+
+    DataStore.setLastActiveMonth(currentMonth);
+  }
+}
+
+function showBillRolloverReminder(lastMonth, currentMonth) {
+  const lastAmounts = DataStore.getBillAmounts(currentMonth);
+  const total = Object.values(lastAmounts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
+  const year = currentMonth.split('-')[0];
+  const mon = currentMonth.split('-')[1];
+  showModal(`
+    <div class="modal-title">📋 新月份已开始</div>
+    <div style="padding:8px 0 16px">
+      <p style="margin-bottom:12px">已沿用上月账单设置 <strong>${formatMoney(total)}</strong></p>
+      <div class="flex flex-col gap-8">
+        <button class="btn btn-primary" onclick="closeModal();openBillsCenter()">🔧 查看并调整</button>
+        <button class="btn btn-ghost" onclick="closeModal();if(currentTab==='overview')renderOverview();else if(currentTab==='stats')renderStats();">✅ 保持不变</button>
+      </div>
+    </div>
+  `);
+}
+
+/* ============================================================
    INITIALIZATION
    ============================================================ */
 DataStore.init();
+checkMonthRollover();
 
 // Apply saved theme
 applyTheme();
