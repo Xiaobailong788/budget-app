@@ -1394,16 +1394,6 @@ ul, ol { list-style: none; }
   max-width: 1200px;
   margin: 0 auto;
 }
-.whatif-params-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-@media (max-width: 600px) {
-  .whatif-params-grid {
-    grid-template-columns: 1fr;
-  }
-}
 .whatif-param-item {
   display: flex;
   flex-direction: column;
@@ -7818,6 +7808,14 @@ function renderWhatIf() {
     daysPassed: new Date().getDate()
   });
 
+  // Strip legacy fields from old saved params (income/bills/savingsTarget no longer customizable)
+  if (savedParams && (savedParams.income !== undefined || savedParams.bills !== undefined || savedParams.savingsTarget !== undefined)) {
+    delete savedParams.income;
+    delete savedParams.bills;
+    delete savedParams.savingsTarget;
+    DataStore.setWhatIfParams(savedParams);
+  }
+
   // Clean stale category references (Fix 3)
   if (savedParams && savedParams.categoryAdjustments) {
     const validCatIds = new Set(DataStore.getCategories().map(c => c.id));
@@ -7863,9 +7861,6 @@ function renderWhatIf() {
 }
 
 function renderWhatIfParams(month, savedParams) {
-  const income = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month) || 0;
-  const bills = DataStore.getBillTotal(month);
-  const savingsTarget = DataStore.getSavingsTarget();
   const rootCats = DataStore.getRootCategories();
   const allCats = DataStore.getCategories();
   const catMap = {}; allCats.forEach(c => catMap[c.id] = c);
@@ -7892,44 +7887,7 @@ function renderWhatIfParams(month, savedParams) {
   const globalAdj = savedParams ? savedParams.globalAdjustment || { mode: null, value: null } : { mode: null, value: null };
   const hypos = savedParams ? savedParams.hypotheticalCategories || [] : [];
 
-  // Savings target text
-  let targetDesc = '';
-  if (savingsTarget.type === 'fixed') targetDesc = `RM ${savingsTarget.fixedAmount}`;
-  else if (savingsTarget.type === 'percent') targetDesc = `${savingsTarget.percent}%`;
-  else if (savingsTarget.type === 'both') targetDesc = `RM ${savingsTarget.fixedAmount} + ${savingsTarget.percent}%`;
-  else targetDesc = '未设置';
-
   let html = '';
-
-  // === 基础参数卡片 ===
-  html += `<div class="card mb-16">
-    <div class="card-title">📐 基础参数</div>
-    <div class="whatif-params-grid">
-      <div class="whatif-param-item">
-        <label class="text-sm">月收入 (RM)</label>
-        <input type="number" class="input-field" id="wi-income" value="${savedParams && savedParams.income != null ? savedParams.income : income}" min="0" step="0.01" placeholder="当前: ${income}">
-        <span class="text-xs text-muted">留空使用当前值 (${formatMoney(income)})</span>
-      </div>
-      <div class="whatif-param-item">
-        <label class="text-sm">账单合计 (RM)</label>
-        <input type="number" class="input-field" id="wi-bills" value="${savedParams && savedParams.bills != null ? savedParams.bills : ''}" min="0" step="0.01" placeholder="当前: ${bills}">
-        <span class="text-xs text-muted">留空使用当前值 (${formatMoney(bills)})</span>
-      </div>
-      <div class="whatif-param-item">
-        <label class="text-sm">储蓄目标</label>
-        <select class="input-field" id="wi-save-type">
-          <option value="fixed" ${(savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.type : savingsTarget.type) === 'fixed' ? 'selected' : ''}>固定金额</option>
-          <option value="percent" ${(savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.type : savingsTarget.type) === 'percent' ? 'selected' : ''}>百分比</option>
-          <option value="both" ${(savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.type : savingsTarget.type) === 'both' ? 'selected' : ''}>两者</option>
-        </select>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <input type="number" class="input-field" id="wi-save-fixed" value="${savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.fixedAmount || '' : savingsTarget.fixedAmount || ''}" min="0" step="0.01" placeholder="固定金额" style="flex:1">
-          <input type="number" class="input-field" id="wi-save-pct" value="${savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.percent || '' : savingsTarget.percent || ''}" min="0" max="100" step="1" placeholder="%" style="width:80px">
-        </div>
-        <span class="text-xs text-muted">留空使用当前设置 (${targetDesc})</span>
-      </div>
-    </div>
-  </div>`;
 
   // === 分类支出调整 ===
   html += `<div class="card mb-16">
@@ -8353,25 +8311,10 @@ function removeWhatIfHypo(index) {
 }
 
 function collectWhatIfParams() {
-  const month = getMonthKey(new Date().toISOString());
-  const income = parseFloat(document.getElementById('wi-income')?.value) || null;
-  const bills = parseFloat(document.getElementById('wi-bills')?.value) || null;
-  const saveType = document.getElementById('wi-save-type')?.value || 'fixed';
-  const saveFixed = parseFloat(document.getElementById('wi-save-fixed')?.value) || 0;
-  const savePct = parseFloat(document.getElementById('wi-save-pct')?.value) || 0;
-
-  // Build savings target only if values differ from current
-  const currentTarget = DataStore.getSavingsTarget();
-  const savingsTarget = {
-    type: saveType,
-    fixedAmount: saveFixed,
-    percent: savePct
-  };
-
   // Category adjustments
   const categoryAdjustments = {};
   document.querySelectorAll('.whatif-mode-select').forEach(sel => {
-    if (sel.disabled) return;  // skip disabled children (parent is zero)
+    if (sel.disabled) return;
     const catId = sel.dataset.cat;
     const mode = sel.value;
     const valInput = sel.parentElement.querySelector('.whatif-value-input');
@@ -8399,9 +8342,6 @@ function collectWhatIfParams() {
   });
 
   return {
-    income: income || null,
-    bills: bills || null,
-    savingsTarget: savingsTarget,
     categoryAdjustments: categoryAdjustments,
     globalAdjustment: globalAdjustment,
     hypotheticalCategories: hypotheticalCategories
