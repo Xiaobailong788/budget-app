@@ -7854,7 +7854,6 @@ function renderWhatIf() {
   html += `</div></div></div>`;
 
   section.innerHTML = html;
-  whatIfExpandStates = {};
 
   // Attach event listeners after rendering
   attachWhatIfListeners(month);
@@ -7913,7 +7912,7 @@ function renderWhatIfParams(month, savedParams) {
       <div class="whatif-cat-body">
         <div class="whatif-cat-row">
           <span class="whatif-cat-label">${root.icon} ${root.name}（整体）</span>
-          <select class="input-field whatif-mode-select" data-cat="${root.id}" data-level="root" onchange="whatifModeChange(this)">
+          <select class="input-field whatif-mode-select" data-cat="${root.id}" data-level="root">
             <option value="trend" ${rootAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
             <option value="daily" ${rootAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
             <option value="total" ${rootAdj.mode === 'total' ? 'selected' : ''}>设剩余月额</option>
@@ -7930,7 +7929,7 @@ function renderWhatIfParams(month, savedParams) {
           const effectiveChildMode = isChildDisabled ? 'zero' : childAdj.mode;
           return `<div class="whatif-cat-row whatif-cat-child">
             <span class="whatif-cat-label">${child.icon} ${child.name}</span>
-            <select class="input-field whatif-mode-select" data-cat="${child.id}" data-level="child" onchange="whatifModeChange(this)" ${isChildDisabled ? 'disabled' : ''}>
+            <select class="input-field whatif-mode-select" data-cat="${child.id}" data-level="child" ${isChildDisabled ? 'disabled' : ''}>
               <option value="trend" ${effectiveChildMode === 'trend' ? 'selected' : ''}>保持趋势</option>
               <option value="daily" ${effectiveChildMode === 'daily' ? 'selected' : ''}>设日均值</option>
               <option value="total" ${effectiveChildMode === 'total' ? 'selected' : ''}>设剩余月额</option>
@@ -8245,10 +8244,7 @@ function drawSimpleRing(canvas, percent, fillColor, bgColor) {
 function toggleWhatIfExpand(rootId) {
   const key = 'wi-expand-' + rootId;
   whatIfExpandStates[key] = !whatIfExpandStates[key];
-  // Preserve expand states across renderWhatIf() which resets them
-  const savedStates = { ...whatIfExpandStates };
   renderWhatIf();
-  whatIfExpandStates = savedStates;
 }
 
 function whatifModeChange(selectEl) {
@@ -8276,6 +8272,9 @@ function whatifModeChange(selectEl) {
       });
     }
   }
+
+  // Auto-save changes
+  runWhatIfSimulation();
 }
 
 function addWhatIfHypo() {
@@ -8294,7 +8293,13 @@ function addWhatIfHypo() {
     </select>
     <button class="btn btn-ghost btn-sm" onclick="removeWhatIfHypo(${idx})" style="color:var(--danger)">✕</button>
   `;
-  if (list) list.appendChild(div);
+  if (list) {
+    list.appendChild(div);
+    // Bind change events on the new inputs so they auto-save
+    div.querySelectorAll('.wi-hypo-icon, .wi-hypo-name, .wi-hypo-amount, .wi-hypo-type').forEach(inp => {
+      inp.addEventListener('change', runWhatIfSimulation);
+    });
+  }
 }
 
 function removeWhatIfHypo(index) {
@@ -8307,6 +8312,7 @@ function removeWhatIfHypo(index) {
       const btn = el.querySelector('button');
       if (btn) btn.onclick = () => removeWhatIfHypo(i);
     });
+    runWhatIfSimulation();
   }
 }
 
@@ -8360,11 +8366,25 @@ function clearWhatIfSimulation() {
 }
 
 function attachWhatIfListeners(month) {
-  // Mode selectors: show/hide value inputs
+  // Mode selectors: toggle value inputs + auto-save
   document.querySelectorAll('.whatif-mode-select').forEach(sel => {
     sel.addEventListener('change', function() {
       whatifModeChange(this);
     });
+  });
+
+  // Value inputs: auto-save on change
+  document.querySelectorAll('.whatif-value-input').forEach(inp => {
+    inp.addEventListener('change', runWhatIfSimulation);
+  });
+
+  // Global adjustment: auto-save on change
+  document.getElementById('wi-global-mode')?.addEventListener('change', runWhatIfSimulation);
+  document.getElementById('wi-global-value')?.addEventListener('change', runWhatIfSimulation);
+
+  // Hypothetical category inputs (rendered from saved params)
+  document.querySelectorAll('.wi-hypo-icon, .wi-hypo-name, .wi-hypo-amount, .wi-hypo-type').forEach(inp => {
+    inp.addEventListener('change', runWhatIfSimulation);
   });
 }
 
