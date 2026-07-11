@@ -2717,12 +2717,16 @@ function showToast(message, type = 'success') {
 function showModal(html) {
   const overlay = document.getElementById('modalOverlay');
   const content = document.getElementById('modalContent');
-  content.innerHTML = html;
+  content.innerHTML = '';
+  // Use insertAdjacentHTML for faster parsing than innerHTML
+  content.insertAdjacentHTML('beforeend', html);
   overlay.classList.add('open');
   overlay.onclick = (e) => {
     if (e.target === overlay) closeModal();
   };
 }
+
+
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
@@ -2742,74 +2746,96 @@ function openBillsCenter() {
   const totalBills = Object.values(amounts).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   const netDisp = Math.max(0, income - totalBills);
 
-  let html = `
-    <div class="modal-title" style="font-size:1.1rem">📋 月账单中心 · ${year}年${mon}月</div>
-    <div style="max-height:60vh;overflow-y:auto;padding:4px 0">
-      <!-- Income -->
-      <div class="card bills-card">
-        <div class="card-title" style="font-size:0.75rem">💰 月收入</div>
-        <input type="number" class="input-field bills-income-input" id="billIncomeInput" value="${income || ''}" placeholder="输入月收入" min="0" step="0.01"
-          onchange="saveBillIncome(this.value)">
-      </div>
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-      <!-- Bill list -->
-      <div class="card bills-card">
-        <div class="bills-card-title">
-          <span>📋 账单列表</span>
-          <span class="text-sm text-secondary">共 ${billCats.length} 项</span>
-        </div>
-        <div id="billListContainer">
-          ${billCats.length === 0 ? '<div class="text-sm text-muted" style="padding:12px 0;text-align:center">暂无账单分类，请添加</div>' : ''}
-          ${billCats.map(cat => {
-            const amt = amounts[cat.id] || '';
-            return `
-            <div class="bills-list-item" data-bill-id="${cat.id}">
-              <span class="bills-cat-icon" onclick="editBillCategory('${cat.id}')" title="点击编辑">${cat.icon}</span>
-              <span style="flex:1;font-weight:500;cursor:pointer" onclick="editBillCategory('${cat.id}')">${cat.name}</span>
-              <div style="display:flex;align-items:center;gap:4px">
-                <span style="font-size:0.75rem;color:var(--text-muted)">RM</span>
-                <input type="number" class="input-field bills-amount-input"
-                  value="${amt}" placeholder="0" min="0" step="0.01"
-                  onchange="saveBillAmount('${cat.id}', this.value)">
-              </div>
-              <button class="btn btn-ghost btn-sm bills-delete-btn"
-                onclick="deleteBillCategoryFromCenter('${cat.id}')" title="删除账单">✕</button>
-            </div>`;
-          }).join('')}
-        </div>
-        <button class="btn btn-sm btn-outline btn-block mt-8" onclick="addNewBillRow()">＋ 添加账单</button>
-      </div>
+  // Build content first, then show overlay — prevents empty flash
+  const bodyId = 'billsCenterBody_' + Date.now();
 
-      <!-- Management buttons -->
-      <div class="flex gap-8 mb-8">
-        <button class="btn btn-sm btn-ghost" onclick="openBillCategoryManager()" style="flex:1">📂 管理账单分类</button>
-      </div>
+  // Title + scrollable wrapper
+  content.innerHTML = '';
+  content.insertAdjacentHTML('beforeend',
+    `<div class="modal-title" style="font-size:1.1rem">📋 月账单中心 · ${year}年${mon}月</div>` +
+    `<div style="max-height:60vh;overflow-y:auto;padding:4px 0" id="${bodyId}"></div>`
+  );
+  const body = document.getElementById(bodyId);
 
-      <!-- Summary -->
-      <div class="card bills-summary">
-        <div class="card-title" style="font-size:0.75rem">📊 月度汇总</div>
-        <div style="padding:4px 0">
-          <div class="flex items-center justify-between" style="padding:4px 0">
-            <span class="text-sm">月收入</span>
-            <span class="font-bold">${formatMoney(income)}</span>
-          </div>
-          <div class="flex items-center justify-between" style="padding:4px 0">
-            <span class="text-sm">账单合计</span>
-            <span class="font-bold" style="color:var(--danger)">${formatMoney(totalBills)}</span>
-          </div>
-          <div class="bills-summary-divider"></div>
-          <div class="flex items-center justify-between" style="padding:4px 0">
-            <span class="text-sm font-semibold">每月可支配</span>
-            <span class="font-bold bills-total-amount">${formatMoney(netDisp)}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-primary" onclick="closeBillsCenter()">✅ 完成</button>
-    </div>
-  `;
-  showModal(html);
+  // Income
+  body.insertAdjacentHTML('beforeend',
+    `<div class="card bills-card">` +
+      `<div class="card-title" style="font-size:0.75rem">💰 月收入</div>` +
+      `<input type="number" class="input-field bills-income-input" id="billIncomeInput" value="${income || ''}" placeholder="输入月收入" min="0" step="0.01" onchange="saveBillIncome(this.value)">` +
+    `</div>`
+  );
+
+  // Bill list
+  let billListHtml = `<div class="card bills-card">` +
+    `<div class="bills-card-title">` +
+      `<span>📋 账单列表</span>` +
+      `<span class="text-sm text-secondary">共 ${billCats.length} 项</span>` +
+    `</div>` +
+    `<div id="billListContainer">`;
+  if (billCats.length === 0) {
+    billListHtml += `<div class="text-sm text-muted" style="padding:12px 0;text-align:center">暂无账单分类，请添加</div>`;
+  } else {
+    billCats.forEach(cat => {
+      const amt = amounts[cat.id] || '';
+      billListHtml +=
+        `<div class="bills-list-item" data-bill-id="${cat.id}">` +
+          `<span class="bills-cat-icon" onclick="editBillCategory('${cat.id}')" title="点击编辑">${cat.icon}</span>` +
+          `<span style="flex:1;font-weight:500;cursor:pointer" onclick="editBillCategory('${cat.id}')">${cat.name}</span>` +
+          `<div style="display:flex;align-items:center;gap:4px">` +
+            `<span style="font-size:0.75rem;color:var(--text-muted)">RM</span>` +
+            `<input type="number" class="input-field bills-amount-input" value="${amt}" placeholder="0" min="0" step="0.01" onchange="saveBillAmount('${cat.id}', this.value)">` +
+          `</div>` +
+          `<button class="btn btn-ghost btn-sm bills-delete-btn" onclick="deleteBillCategoryFromCenter('${cat.id}')" title="删除账单">✕</button>` +
+        `</div>`;
+    });
+  }
+  billListHtml += `</div>` +
+    `<button class="btn btn-sm btn-outline btn-block mt-8" onclick="addNewBillRow()">＋ 添加账单</button>` +
+    `</div>`;
+  body.insertAdjacentHTML('beforeend', billListHtml);
+
+  // Management buttons
+  body.insertAdjacentHTML('beforeend',
+    `<div class="flex gap-8 mb-8">` +
+      `<button class="btn btn-sm btn-ghost" onclick="openBillCategoryManager()" style="flex:1">📂 管理账单分类</button>` +
+    `</div>`
+  );
+
+  // Summary
+  body.insertAdjacentHTML('beforeend',
+    `<div class="card bills-summary">` +
+      `<div class="card-title" style="font-size:0.75rem">📊 月度汇总</div>` +
+      `<div style="padding:4px 0">` +
+        `<div class="flex items-center justify-between" style="padding:4px 0">` +
+          `<span class="text-sm">月收入</span>` +
+          `<span class="font-bold">${formatMoney(income)}</span>` +
+        `</div>` +
+        `<div class="flex items-center justify-between" style="padding:4px 0">` +
+          `<span class="text-sm">账单合计</span>` +
+          `<span class="font-bold" style="color:var(--danger)">${formatMoney(totalBills)}</span>` +
+        `</div>` +
+        `<div class="bills-summary-divider"></div>` +
+        `<div class="flex items-center justify-between" style="padding:4px 0">` +
+          `<span class="text-sm font-semibold">每月可支配</span>` +
+          `<span class="font-bold bills-total-amount">${formatMoney(netDisp)}</span>` +
+        `</div>` +
+      `</div>` +
+    `</div>`
+  );
+
+  // Close button
+  content.insertAdjacentHTML('beforeend',
+    `<div class="modal-actions">` +
+      `<button class="btn btn-primary" onclick="closeBillsCenter()">✅ 完成</button>` +
+    `</div>`
+  );
+
+  // Show overlay AFTER content is ready
+  overlay.classList.add('open');
 }
 
 function closeBillsCenter() {
@@ -5811,9 +5837,79 @@ function toggleBillFilter(chartId) {
   const checked = document.getElementById('toggle-' + chartId).checked;
   localStorage.setItem(key, checked ? '1' : '0');
   if (chartId === 'overviewBudget') {
-    if (typeof renderOverview === 'function') renderOverview();
+    if (typeof refreshOverviewBudget === 'function') refreshOverviewBudget();
+  } else if (chartId === 'pieChart') {
+    if (typeof refreshPieChart === 'function') refreshPieChart();
   } else if (typeof renderStats === 'function') {
     renderStats();
+  }
+}
+
+function refreshOverviewBudget() {
+  const now = new Date();
+  const month = getMonthKey(now.toISOString());
+  const includeBills = isBillToggleChecked('overviewBudget');
+  const monthTotal = includeBills ? StatsEngine.getMonthTotal(month) : StatsEngine.getVariableSpending(month);
+  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
+  if (!budget) return;
+
+  const totalBills = DataStore.getBillTotal(month);
+  const savingsTarget = DataStore.getSavingsTarget();
+  const percentBase = DataStore.getPercentBase();
+  const netDisposable = Math.max(0, budget - totalBills);
+  const baseAmount = percentBase === 'net' ? netDisposable : budget;
+  const targetAmount = (() => {
+    const t = savingsTarget;
+    if (t.type === 'fixed') return t.fixedAmount || 0;
+    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
+    return 0;
+  })();
+  const spendableBudget = Math.max(0, netDisposable - targetAmount);
+  const budgetPct = includeBills
+    ? (budget > 0 ? (monthTotal / budget) * 100 : 0)
+    : (spendableBudget > 0 ? (monthTotal / spendableBudget) * 100 : 0);
+
+  // Redraw ring
+  const budgetOverspend = budgetPct > 100;
+  drawRing('budgetRing', Math.min(budgetPct, 200) / 100, budgetOverspend ? '#EF4444' : '#6366F1',
+    (budgetOverspend ? '+' : '') + budgetPct.toFixed(0) + '%', '#EF4444');
+
+  // Update label below ring
+  const parent = document.getElementById('budgetRing')?.parentElement;
+  if (!parent) return;
+  const labelEl = parent.querySelector('.text-sm.text-secondary');
+  if (labelEl) {
+    labelEl.textContent = budgetPct > 100
+      ? '超支 ' + formatMoney(monthTotal - (includeBills ? budget : spendableBudget))
+      : formatMoney(monthTotal) + ' / ' + formatMoney(includeBills ? budget : spendableBudget);
+    labelEl.style.color = budgetPct > 100 ? 'var(--danger)' : '';
+    labelEl.style.fontWeight = budgetPct > 100 ? '600' : '';
+  }
+
+  // Update bottom formula text
+  const formulaEl = parent.querySelector('.text-xs.text-muted');
+  if (formulaEl) {
+    formulaEl.remove();
+  }
+  if (targetAmount > 0 && budget > 0) {
+    const newFormula = document.createElement('div');
+    newFormula.className = 'text-xs text-muted mt-4';
+    newFormula.textContent = `月收入 ${formatMoney(budget)}` + (totalBills > 0 ? ` − 账单 ${formatMoney(totalBills)}` : '') + ` − 储蓄 ${formatMoney(targetAmount)} = 日常可用 ${formatMoney(spendableBudget)}`;
+    parent.appendChild(newFormula);
+  }
+}
+
+function refreshPieChart() {
+  const isCustom = useCustomRange();
+  const sD = isCustom ? statsStartDate : null;
+  const eD = isCustom ? statsEndDate : null;
+  drawPieChart('pieChart', statsMonth, sD, eD);
+  // Also redraw the expanded chart if it's open
+  const expandCanvas = document.getElementById('expandPieChart');
+  if (expandCanvas) {
+    drawPieChart('expandPieChart', statsMonth, sD, eD, shrinkChart, 360, true);
+    renderExpandPieTable();
   }
 }
 
