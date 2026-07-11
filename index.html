@@ -1714,7 +1714,8 @@ const COLORS = [
 ];
 
 function escHtml(str) {
-  return String(str).replace(/[<>]/g, '');
+  var m = { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;' };
+  return String(str).replace(/[&<>"'`]/g, function(c) { return m[c]; });
 }
 
 const DEFAULT_CATEGORIES = [
@@ -8938,5 +8939,6 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   };
 }
   </script>
+  <script src="lan-sync.js"></script>
 </body>
 </html>
