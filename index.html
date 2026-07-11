@@ -2164,13 +2164,13 @@ const DataStore = {
     const cats = this._data.categories;
     const catMap = {};
     cats.forEach(c => catMap[c.id] = c);
-    const header = 'ID,金额,分类,日期,备注,创建时间';
+    const header = 'ID,金额,分类,日期,备注,创建时间,不计日均';
     const rows = this._data.records.map(r => {
       const cat = catMap[r.categoryId] || { name: '未知', icon: '❓' };
       const amount = r.amount.toFixed(2);
       const date = r.date || '';
       const note = (r.note || '').replace(/"/g, '""');
-      return `${r.id},"${amount}","${cat.icon}${cat.name}","${date}","${note}","${r.createdAt}"`;
+      return `${r.id},"${amount}","${cat.icon}${cat.name}","${date}","${note}","${r.createdAt}","${r.excludeFromAvg ? '是' : ''}"`;
     });
     return '\uFEFF' + header + '\n' + rows.join('\n');
   },
@@ -2281,8 +2281,8 @@ function exportToExcel() {
   xml += ' </Styles>\n';
 
   // ===== SHEET 1: 消费记录 (Records) =====
-  // Columns: A=序号, B=日期, C=金额, D=分类, E=子分类, F=备注, G=月份
-  const nCols = 7;
+  // Columns: A=序号, B=日期, C=金额, D=分类, E=子分类, F=备注, G=月份, H=不计日均
+  const nCols = 8;
   // Prepare records sorted newest first
   const sortedRecords = [...records].sort((a, b) => (b.date || b.createdAt) > (a.date || a.createdAt) ? 1 : -1);
   const dataStartRow = 2; // row 1 = header, data starts row 2
@@ -2297,9 +2297,10 @@ function exportToExcel() {
   xml += '   <Column ss:Width="120"/>\n';  // E: 子分类
   xml += '   <Column ss:Width="200"/>\n';  // F: 备注
   xml += '   <Column ss:Width="80"/>\n';   // G: 月份
+  xml += '   <Column ss:Width="60"/>\n';   // H: 不计日均
   // Header row
   xml += '   <Row>\n';
-  ['序号','日期','金额 (RM)','分类','子分类','备注','月份'].forEach(h => {
+  ['序号','日期','金额 (RM)','分类','子分类','备注','月份','不计日均'].forEach(h => {
     xml += `    <Cell ss:StyleID="header"><Data ss:Type="String">${esc(h)}</Data></Cell>\n`;
   });
   xml += '   </Row>\n';
@@ -2323,6 +2324,7 @@ function exportToExcel() {
     xml += `    <Cell><Data ss:Type="String">${esc(subName)}</Data></Cell>\n`;
     xml += `    <Cell><Data ss:Type="String">${esc(r.note || '')}</Data></Cell>\n`;
     xml += `    <Cell><Data ss:Type="String">${esc(monthKey)}</Data></Cell>\n`;
+    xml += `    <Cell><Data ss:Type="String">${r.excludeFromAvg ? '是' : ''}</Data></Cell>\n`;
     xml += '   </Row>\n';
   });
 
@@ -2696,14 +2698,14 @@ const StatsEngine = {
   },
 
   getDailyAverage(month) {
-    const records = this.getRecordsInMonth(month);
+    const records = this.getRecordsInMonth(month).filter(r => !r.excludeFromAvg);
     if (!records.length) return 0;
     const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
     const now = new Date();
     const today = now.getDate();
     const currentMonth = getMonthKey(now.toISOString());
     const daysPassed = month === currentMonth ? today : daysInMonth;
-    return daysPassed ? this.getMonthTotal(month) / daysPassed : 0;
+    return daysPassed ? records.reduce((s, r) => s + r.amount, 0) / daysPassed : 0;
   },
 
   getPredictedTotal(month) {
@@ -2851,7 +2853,7 @@ const StatsEngine = {
 
   // Get daily average excluding bills
   getDailyAverageVariable(month) {
-    const records = this.getRecordsInMonth(month).filter(r => !this.isBillCategory(r.categoryId));
+    const records = this.getRecordsInMonth(month).filter(r => !this.isBillCategory(r.categoryId) && !r.excludeFromAvg);
     if (!records.length) return 0;
     const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
     const now = new Date();
@@ -4358,6 +4360,13 @@ function renderAddPage() {
           <input type="text" id="addNote" class="input-field" placeholder="例如：Nasi Lemak" maxlength="200">
         </div>
 
+        <div class="input-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0">
+            <input type="checkbox" id="addExcludeAvg" style="width:18px;height:18px;cursor:pointer">
+            <span class="text-sm text-secondary">📌 不计日均（一次性大额消费）</span>
+          </label>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn" style="font-size:1.05rem">
           ✅ 保存记录
         </button>
@@ -4483,6 +4492,7 @@ function submitRecord(e) {
     categoryId,
     date: date || new Date().toISOString().slice(0, 16),
     note,
+    excludeFromAvg: document.getElementById('addExcludeAvg').checked,
     createdAt: new Date().toISOString()
   };
 
@@ -4766,6 +4776,7 @@ function renderRecordsList() {
             <span class="compact-date">${dateStr.slice(0, 10)}</span>
             <span class="compact-cat">${cat ? escHtml(cat.icon) + escHtml(cat.name) : '❓未知'}</span>
             <span class="compact-note">${r.note ? '📝 ' + escHtml(r.note) : ''}</span>
+            ${r.excludeFromAvg ? '<span class="text-xs text-muted" style="font-size:0.6rem;margin-left:2px" title="不计日均">📌</span>' : ''}
             <span class="compact-amount" style="color:var(--primary)">${formatMoney(r.amount)}</span>
             ${!batchMode ? `<button class="btn btn-ghost btn-sm record-del-btn" style="padding:0 4px;font-size:0.7rem;opacity:0.5;flex-shrink:0;background:none;border:none;cursor:pointer"
               onclick="event.stopPropagation();deleteRecordConfirm('${r.id}')" title="删除">🗑️</button>` : ''}
@@ -4786,6 +4797,7 @@ function renderRecordsList() {
               <div class="font-semibold">${cat ? escHtml(cat.name) : '未知分类'}</div>
               <div class="text-sm text-muted">${dateStr.slice(0, 16)}</div>
               ${r.note ? '<div class="text-sm text-secondary">' + escHtml(r.note) + '</div>' : ''}
+              ${r.excludeFromAvg ? '<span class="text-xs text-muted" style="font-size:0.6rem;margin-left:4px" title="不计日均">📌</span>' : ''}
             </div>
           </div>
           <div class="text-right">
@@ -5110,6 +5122,12 @@ function openEditRecord(id) {
         <label class="input-label">备注</label>
         <input type="text" id="editNote" class="input-field" value="${escHtml(record.note || '')}">
       </div>
+      <div class="input-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0">
+          <input type="checkbox" id="editExcludeAvg" ${record.excludeFromAvg ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer">
+          <span class="text-sm text-secondary">📌 不计日均（一次性大额消费）</span>
+        </label>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
         <button type="button" class="btn btn-danger" onclick="closeModal();deleteRecordConfirm('${id}')">🗑️ 删除</button>
@@ -5142,6 +5160,7 @@ function submitEditRecord(e, id) {
     categoryId: selectedCategoryId,
     date: document.getElementById('editDateTime').value,
     note: document.getElementById('editNote').value.trim(),
+    excludeFromAvg: document.getElementById('editExcludeAvg').checked,
     updatedAt: new Date().toISOString()
   });
   selectedCategoryId = null;
