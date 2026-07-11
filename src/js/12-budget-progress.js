@@ -158,10 +158,11 @@ function renderBudgetProgressCard(month, showHeader) {
     });
   });
 
-  // Sort
-  if (budgetProgressSort === 'usage') rows.sort((a, b) => b.pct - a.pct);
-  else if (budgetProgressSort === 'amount') rows.sort((a, b) => b.spent - a.spent);
-  else if (budgetProgressSort === 'name') rows.sort((a, b) => a.cat.name.localeCompare(b.cat.name));
+  // Sort (read from window to pick up inline onchange changes)
+  const _sort = window.budgetProgressSort || budgetProgressSort;
+  if (_sort === 'usage') rows.sort((a, b) => b.pct - a.pct);
+  else if (_sort === 'amount') rows.sort((a, b) => b.spent - a.spent);
+  else if (_sort === 'name') rows.sort((a, b) => a.cat.name.localeCompare(b.cat.name));
 
   if (!rows.length) { console.log('[budgetProgress] no budgeted categories for month:', month); return '<div class="card mb-16"><div class="card-title">📊 预算进度</div><div class="text-sm text-muted" style="padding:12px 0;text-align:center">暂未设置分类预算，前往「分类」页面设置</div></div>'; }
 
@@ -181,7 +182,7 @@ function renderBudgetProgressCard(month, showHeader) {
   // Sort dropdown
   html += '<select class="input-field" style="width:auto;font-size:0.72rem;padding:2px 6px" onchange="budgetProgressSort=this.value;localStorage.setItem(\'budgetProgressSort\',this.value);refreshBudgetCards(\'' + month + '\')">';
   const sortOpts = [['usage','按使用率'],['amount','按金额'],['name','按名称']];
-  sortOpts.forEach(([v,l]) => html += '<option value="' + v + '" ' + (budgetProgressSort === v ? 'selected' : '') + '>' + l + '</option>');
+  sortOpts.forEach(([v,l]) => html += '<option value="' + v + '" ' + ((window.budgetProgressSort || budgetProgressSort) === v ? 'selected' : '') + '>' + l + '</option>');
   html += '</select>';
   // Select button
   html += '<div class="view-toggle-btn" onclick="showBudgetSelector(\'' + month + '\')" style="font-size:0.7rem" title="选择要监控的分类">👁️ 选择</div>';
@@ -248,10 +249,11 @@ function renderBudgetProgressCardInner(month) {
     rows.push({ cat, budget, spent, pct, childData, childBudgetRows });
   });
 
-  // Sort only parent rows — children stay with their parent
-  if (budgetProgressSort === 'usage') rows.sort((a, b) => b.pct - a.pct);
-  else if (budgetProgressSort === 'amount') rows.sort((a, b) => b.spent - a.spent);
-  else if (budgetProgressSort === 'name') rows.sort((a, b) => a.cat.name.localeCompare(b.cat.name));
+  // Sort only parent rows — children stay with their parent (read from window to pick up inline onchange)
+  const _sort2 = window.budgetProgressSort || budgetProgressSort;
+  if (_sort2 === 'usage') rows.sort((a, b) => b.pct - a.pct);
+  else if (_sort2 === 'amount') rows.sort((a, b) => b.spent - a.spent);
+  else if (_sort2 === 'name') rows.sort((a, b) => a.cat.name.localeCompare(b.cat.name));
 
   // Total: parent budgets already include child budget share (no double-count)
   const totalBudget = rows.reduce((s, r) => s + r.budget, 0);

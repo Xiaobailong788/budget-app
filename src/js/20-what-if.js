@@ -259,20 +259,24 @@ function renderWhatIfResults(result) {
   const savingsDiff = projectedSavings - targetAmount;
   const savingsPct = targetAmount > 0 ? projectedSavings / targetAmount : 0;
 
-  // For display: add actual bill spending to totalProjected so comparison with trendTotal is apples-to-apples
-  const actualBills = StatsEngine.getBillSpendingActual(getMonthKey(new Date().toISOString()));
-  const totalProjectedInclBills = totalProjected + actualBills;
-  const projectedDailyAvgInclBills = totalProjectedInclBills / daysInMonth;
-  const projectedSavingsForDisplay = income - totalProjectedInclBills;
-  console.log('[WhatIfResults] display values:', {
-    totalProjected, actualBills, totalProjectedInclBills,
-    trendTotal, diff: totalProjectedInclBills - trendTotal,
-    income, projectedSavingsForDisplay, trendSavings
+  // Adjusted values: base on trend methodology + what-if variable adjustment
+  // This ensures zero adjustments => adjusted = trend (apples-to-apples)
+  const unpaidBillsAdj = Math.max(0, DataStore.getBillTotal(getMonthKey(new Date().toISOString())) - StatsEngine.getBillSpendingActual(getMonthKey(new Date().toISOString())));
+  const varSpentTotal = StatsEngine.getVariableSpending(getMonthKey(new Date().toISOString()));
+  const varTrendTotal = daysPassed > 0 ? varSpentTotal / daysPassed * daysInMonth : 0;
+  const varAdjustment = totalProjected - varTrendTotal;
+  const adjustedTotal = trendTotal + varAdjustment;
+  const adjustedDailyAvg = adjustedTotal / daysInMonth;
+  const adjustedSavings = income - adjustedTotal - unpaidBillsAdj;
+  console.log('[WhatIfResults] adjusted values:', {
+    totalProjected, varTrendTotal, varAdjustment,
+    trendTotal, adjustedTotal, adjustedDailyAvg,
+    adjustedSavings, trendSavings, unpaidBillsAdj
   });
-  // Recompute attainment based on display savings
-  const savingsDiffForDisplay = projectedSavingsForDisplay - targetAmount;
-  const savingsAttainedForDisplay = projectedSavingsForDisplay >= targetAmount;
-  const savingsPctForDisplay = targetAmount > 0 ? projectedSavingsForDisplay / targetAmount : 0;
+  // Recompute attainment
+  const savingsDiffForDisplay = adjustedSavings - targetAmount;
+  const savingsAttainedForDisplay = adjustedSavings >= targetAmount;
+  const savingsPctForDisplay = targetAmount > 0 ? adjustedSavings / targetAmount : 0;
 
   let html = `<div>
 
@@ -288,16 +292,16 @@ function renderWhatIfResults(result) {
         <div class="text-xs ${trendSavings >= 0 ? 'text-success' : 'text-danger'}">可储蓄 ${trendSavings >= 0 ? '+' : ''}${formatMoney(trendSavings)}</div>
       </div>
       <div style="display:flex;flex-direction:column;justify-content:center">
-        <div class="text-lg" style="font-size:1.5rem">${totalProjectedInclBills > trendTotal ? '📈' : '📉'}</div>
-        <div class="text-sm font-bold" style="color:${totalProjectedInclBills > trendTotal ? 'var(--danger)' : 'var(--success)'}">
-          ${Math.abs(totalProjectedInclBills - trendTotal) > 0.01 ? (totalProjectedInclBills > trendTotal ? '+' : '') + formatMoney(totalProjectedInclBills - trendTotal) : '持平'}
+        <div class="text-lg" style="font-size:1.5rem">${adjustedTotal > trendTotal ? '📈' : '📉'}</div>
+        <div class="text-sm font-bold" style="color:${adjustedTotal > trendTotal ? 'var(--danger)' : 'var(--success)'}">
+          ${Math.abs(adjustedTotal - trendTotal) > 0.01 ? (adjustedTotal > trendTotal ? '+' : '') + formatMoney(adjustedTotal - trendTotal) : '持平'}
         </div>
         <div class="text-xs text-muted">较趋势差额</div>
       </div>
       <div>
         <div class="text-xs text-muted">假设调整后 · 预测总支出</div>
-        <div class="text-lg font-bold" style="color:var(--primary)">${formatMoney(totalProjectedInclBills)}</div>
-        <div class="text-xs ${projectedSavingsForDisplay >= 0 ? 'text-success' : 'text-danger'}">可储蓄 ${projectedSavingsForDisplay >= 0 ? '+' : ''}${formatMoney(projectedSavingsForDisplay)}</div>
+        <div class="text-lg font-bold" style="color:var(--primary)">${formatMoney(adjustedTotal)}</div>
+        <div class="text-xs ${adjustedSavings >= 0 ? 'text-success' : 'text-danger'}">可储蓄 ${adjustedSavings >= 0 ? '+' : ''}${formatMoney(adjustedSavings)}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
@@ -311,14 +315,14 @@ function renderWhatIfResults(result) {
       </div>
       <div>
         <div class="text-xs text-muted">日均支出（假设）</div>
-        <div>${formatMoney(projectedDailyAvgInclBills)}</div>
+        <div>${formatMoney(adjustedDailyAvg)}</div>
       </div>
     </div>
   </div>`;
 
   // === 储蓄对比 (horizontal bar, baseline = trend savings) ===
   const baseSavings = trendSavings;
-  const diffSavings = projectedSavingsForDisplay - baseSavings;
+  const diffSavings = adjustedSavings - baseSavings;
   const pctOfBase = baseSavings > 0 ? Math.abs(diffSavings) / baseSavings * 100 : 0;
   const displayPct = Math.min(pctOfBase, 500);
   const fillWidth = baseSavings > 0 ? (displayPct / 200 * 100) : 0;
@@ -332,7 +336,7 @@ function renderWhatIfResults(result) {
       <span class="savings-value">${formatMoney(baseSavings)}</span>
       <span class="savings-arrow">→</span>
       <span class="text-xs text-muted">假设</span>
-      <span class="savings-value" style="color:${isBetter ? 'var(--success)' : 'var(--danger)'}">${formatMoney(projectedSavingsForDisplay)}</span>
+      <span class="savings-value" style="color:${isBetter ? 'var(--success)' : 'var(--danger)'}">${formatMoney(adjustedSavings)}</span>
       <span class="savings-pct">(${diffSavings >= 0 ? '+' : ''}${pctOfBase.toFixed(1)}%)</span>
     </div>
     <div class="savings-bar-wrapper">
@@ -350,7 +354,7 @@ function renderWhatIfResults(result) {
     </div>` : `
     <div class="text-xs text-muted" style="text-align:center;padding:12px">
       ⚠️ 趋势储蓄为 RM 0 或负值，无法计算百分比。
-      <div>趋势: ${formatMoney(baseSavings)} → 假设: ${formatMoney(projectedSavingsForDisplay)}</div>
+      <div>趋势: ${formatMoney(baseSavings)} → 假设: ${formatMoney(adjustedSavings)}</div>
     </div>`}
     <div class="savings-compare-footer">
       <span class="savings-target">🎯 ${formatMoney(targetAmount)}</span>
@@ -374,8 +378,8 @@ function renderWhatIfResults(result) {
       <div style="text-align:center">
         <div class="text-xs text-muted mb-8">假设调整 · 预测总支出</div>
         <canvas class="whatif-ring" id="wi-ring-proj-wi" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(totalProjectedInclBills)}</div>
-        <div class="text-xs text-muted">占收入 ${income > 0 ? ((totalProjectedInclBills / income) * 100).toFixed(1) : 0}%</div>
+        <div class="text-sm font-bold">${formatMoney(adjustedTotal)}</div>
+        <div class="text-xs text-muted">占收入 ${income > 0 ? ((adjustedTotal / income) * 100).toFixed(1) : 0}%</div>
       </div>
     </div>
   </div>`;
@@ -513,11 +517,12 @@ function renderWhatIfResults(result) {
 
 // Draw the comparison rings
 function drawWhatIfRings(result) {
-  const { income, trendTotal, projectedSavings, trendSavings, targetAmount } = result;
+  const { income, trendTotal, totalProjected, daysPassed, daysInMonth } = result;
   const month = getMonthKey(new Date().toISOString());
-  const actualBills = StatsEngine.getBillSpendingActual(month);
-  const totalProjectedInclBills = (result.totalProjected || 0) + actualBills;
-  const projectedSavingsForDisplay = income - totalProjectedInclBills;
+  const varSpentTotal = StatsEngine.getVariableSpending(month);
+  const varTrendTotal = daysPassed > 0 ? varSpentTotal / daysPassed * daysInMonth : 0;
+  const varAdjustment = (totalProjected || 0) - varTrendTotal;
+  const adjustedTotal = trendTotal + varAdjustment;
 
   // Trend budget ring
   const trendCanvas = document.getElementById('wi-ring-trend-wi');
@@ -529,7 +534,7 @@ function drawWhatIfRings(result) {
   // Projected budget ring
   const projCanvas = document.getElementById('wi-ring-proj-wi');
   if (projCanvas && income > 0) {
-    const pct = Math.min(totalProjectedInclBills / income, 1);
+    const pct = Math.min(adjustedTotal / income, 1);
     drawSimpleRing(projCanvas, pct, '#10B981', '#e5e7eb');
   }
 

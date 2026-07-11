@@ -57,6 +57,7 @@ function selectCategory(catId, context) {
   const cat = DataStore.getCategory(catId);
   if (!cat) return;
   selectedCategoryId = catId;
+  window.selectedCategoryId = catId;
   const displayAdd = document.getElementById('addCategoryDisplay');
   const displayEdit = document.getElementById('editCategoryDisplay');
   const html = `<span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block;vertical-align:middle"></span> ${escHtml(cat.icon)} ${escHtml(cat.name)}`;

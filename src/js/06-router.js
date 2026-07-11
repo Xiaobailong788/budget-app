@@ -25,6 +25,7 @@ function navigateTo(tab) {
   }
   const prevTab = currentTab;
   currentTab = tab;
+  window.currentTab = tab;
 
   // Update page sections
   document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));

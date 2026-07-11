@@ -649,6 +649,7 @@ function renderStats() {
   const el = document.getElementById('page-stats');
   const now = new Date();
   statsMonth = statsMonth || getMonthKey(now.toISOString());
+  window.statsMonth = statsMonth;
   const monthTotal = StatsEngine.getMonthTotal(statsMonth);
   const dailyAvg = StatsEngine.getDailyAverage(statsMonth);
   const predicted = StatsEngine.getPredictedTotal(statsMonth);
@@ -890,25 +891,35 @@ function renderStats() {
 }
 function changeStatsMonth(month) {
   statsMonth = month;
+  window.statsMonth = month;
   statsStartDate = '';
+  window.statsStartDate = '';
   statsEndDate = '';
+  window.statsEndDate = '';
   statsDrillStack = [];
+  window.statsDrillStack = [];
   renderStats();
 }
 
 function changeStatsCustom() {
   statsStartDate = document.getElementById('statsDateStart').value;
+  window.statsStartDate = statsStartDate;
   statsEndDate = document.getElementById('statsDateEnd').value;
+  window.statsEndDate = statsEndDate;
   if (statsStartDate && statsEndDate) {
     // Validate: if start > end, swap them
     if (statsStartDate > statsEndDate) {
       [statsStartDate, statsEndDate] = [statsEndDate, statsStartDate];
+      window.statsStartDate = statsStartDate;
+      window.statsEndDate = statsEndDate;
       document.getElementById('statsDateStart').value = statsStartDate;
       document.getElementById('statsDateEnd').value = statsEndDate;
       showToast('日期范围已自动修正', 'warning');
     }
     statsMonth = '';
+    window.statsMonth = '';
     statsDrillStack = [];
+    window.statsDrillStack = [];
     renderStats();
   }
 }
@@ -919,6 +930,7 @@ function resetStatsDrill() {
     statsDrillStack.pop(); // remove current, parent becomes active
   } else {
     statsDrillStack = []; // back to root
+    window.statsDrillStack = [];
   }
   updateDrillCharts();
 }
