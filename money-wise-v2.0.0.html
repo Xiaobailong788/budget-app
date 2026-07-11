@@ -2996,6 +2996,17 @@ const SimulationEngine = {
     const unpaidBills = Math.max(0, DataStore.getBillTotal(month) - StatsEngine.getBillSpendingActual(month));
     const trendSavings = StatsEngine.getSavingsPrediction(month) - unpaidBills;
 
+    console.log('[SimEngine] result:', {
+      month,
+      income, bills, actualSpent, totalProjectedRemaining, totalProjected,
+      trendTotal, trendDailyAvg, trendSavings,
+      daysPassed, remainingDays, daysInMonth,
+      netDisposable, targetAmount, spendable,
+      actualBills: StatsEngine.getBillSpendingActual(month),
+      overviewPredicted: StatsEngine.getPredictedTotal(month),
+      simTotalPlusBills: totalProjected + StatsEngine.getBillSpendingActual(month)
+    });
+
     return {
       // Parameters used
       params: params,
@@ -7780,6 +7791,24 @@ function renderWhatIf() {
   const section = document.getElementById('page-whatif');
   const month = getMonthKey(new Date().toISOString());
   const savedParams = DataStore.getWhatIfParams();
+  console.log('[WhatIf] render, month:', month, 'savedParams:', savedParams);
+
+  // Log Overview baseline for comparison
+  const overviewPredicted = StatsEngine.getPredictedTotal(month);
+  const overviewDailyAvg = StatsEngine.getDailyAverage(month);
+  const overviewMonthTotal = StatsEngine.getMonthTotal(month);
+  const overviewBillsActual = StatsEngine.getBillSpendingActual(month);
+  const overviewBillsPlanned = DataStore.getBillTotal(month);
+  const overviewVariable = StatsEngine.getVariableSpending(month);
+  console.log('[WhatIf] Overview baseline:', {
+    predicted: overviewPredicted,
+    dailyAvg: overviewDailyAvg,
+    monthTotal: overviewMonthTotal,
+    billsActual: overviewBillsActual,
+    billsPlanned: overviewBillsPlanned,
+    variableSpending: overviewVariable,
+    daysPassed: new Date().getDate()
+  });
 
   // Clean stale category references (Fix 3)
   if (savedParams && savedParams.categoryAdjustments) {
@@ -8016,6 +8045,11 @@ function renderWhatIfResults(result) {
   const totalProjectedInclBills = totalProjected + actualBills;
   const projectedDailyAvgInclBills = totalProjectedInclBills / daysInMonth;
   const projectedSavingsForDisplay = income - totalProjectedInclBills;
+  console.log('[WhatIfResults] display values:', {
+    totalProjected, actualBills, totalProjectedInclBills,
+    trendTotal, diff: totalProjectedInclBills - trendTotal,
+    income, projectedSavingsForDisplay, trendSavings
+  });
   // Recompute attainment based on display savings
   const savingsDiffForDisplay = projectedSavingsForDisplay - targetAmount;
   const savingsAttainedForDisplay = projectedSavingsForDisplay >= targetAmount;
