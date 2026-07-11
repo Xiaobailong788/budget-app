@@ -1389,6 +1389,138 @@ ul, ol { list-style: none; }
   display: block;
 }
 
+/* 🔮 What-If Analysis */
+.whatif-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.whatif-params-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .whatif-params-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.whatif-param-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.whatif-cat-root {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.whatif-cat-root-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: var(--bg-secondary, #f9fafb);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.whatif-cat-root-header:hover {
+  background: var(--bg-hover, #f3f4f6);
+}
+.whatif-expand-icon {
+  font-size: 0.7rem;
+  width: 16px;
+  text-align: center;
+}
+.whatif-cat-body {
+  padding: 8px 12px 8px 28px;
+}
+.whatif-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+.whatif-cat-child {
+  padding-left: 20px;
+  border-left: 2px solid var(--border, #e5e7eb);
+}
+.whatif-cat-label {
+  min-width: 80px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.whatif-mode-select {
+  width: auto;
+  min-width: 100px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+.whatif-value-input {
+  width: 80px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+.whatif-hypo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.whatif-hypo-row .input-field {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+.whatif-summary-card {
+  background: linear-gradient(135deg, var(--bg-secondary, #f9fafb), var(--card-bg));
+}
+.whatif-progress-bar {
+  height: 8px;
+  background: var(--border, #e5e7eb);
+  border-radius: 4px;
+  overflow: hidden;
+  max-width: 200px;
+  margin: 0 auto;
+}
+.whatif-progress-fill {
+  height: 100%;
+  background: var(--primary, #6366F1);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.whatif-ring {
+  border-radius: 50%;
+}
+.whatif-compare-table {
+  font-size: 0.85rem;
+}
+.whatif-compare-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.whatif-compare-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 6px 0;
+  align-items: center;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.whatif-compare-total {
+  border-bottom: none;
+  border-top: 2px solid var(--border, #e5e7eb);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
   </style>
 </head>
 <body>
@@ -1414,6 +1546,7 @@ ul, ol { list-style: none; }
         <div class="sidebar-item" data-tab="categories"><span class="icon">🏷️</span> 分类</div>
         <div class="sidebar-item" data-tab="stats"><span class="icon">📈</span> 统计</div>
         <div class="sidebar-item" data-tab="report"><span class="icon">📋</span> 报告</div>
+        <div class="sidebar-item" data-tab="whatif"><span class="icon">🔮</span> 假设分析</div>
         <div class="sidebar-item" data-tab="settings"><span class="icon">⚙️</span> 设置</div>
       </nav>
     </aside>
@@ -1445,6 +1578,9 @@ ul, ol { list-style: none; }
 
     <!-- 设置 (Settings) -->
     <section class="page-section" id="page-settings" data-page="settings"></section>
+
+    <!-- 假设分析 (What-If) -->
+    <section class="page-section" id="page-whatif" data-page="whatif"></section>
     </main>
   </div>
 
@@ -1456,6 +1592,7 @@ ul, ol { list-style: none; }
     <div class="nav-item" data-tab="categories"><span class="nav-icon">🏷️</span><span class="nav-label">分类</span></div>
     <div class="nav-item" data-tab="stats"><span class="nav-icon">📈</span><span class="nav-label">统计</span></div>
     <div class="nav-item" data-tab="report"><span class="nav-icon">📋</span><span class="nav-label">报告</span></div>
+    <div class="nav-item" data-tab="whatif"><span class="nav-icon">🔮</span><span class="nav-label">假设分析</span></div>
     <div class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span><span class="nav-label">设置</span></div>
   </nav>
 
@@ -1532,7 +1669,8 @@ const DataStore = {
       billAmounts: {},
       monthlyIncome: {},
       percentBase: 'gross',
-      lastActiveMonth: ''
+      lastActiveMonth: '',
+      whatIfParams: null
     };
   },
 
@@ -1564,6 +1702,9 @@ const DataStore = {
         }
         if (!this._data.lastActiveMonth) {
           this._data.lastActiveMonth = '';
+        }
+        if (!this._data.whatIfParams) {
+          this._data.whatIfParams = null;
         }
       } catch(e) {
         this._data = this._defaults();
@@ -1927,6 +2068,19 @@ const DataStore = {
 
   clearAll() {
     this._data = this._defaults();
+    this.save();
+  },
+
+  // What-If Analysis
+  getWhatIfParams() {
+    return this._data.whatIfParams || null;
+  },
+  setWhatIfParams(params) {
+    this._data.whatIfParams = params;
+    this.save();
+  },
+  clearWhatIfParams() {
+    this._data.whatIfParams = null;
     this.save();
   }
 };
@@ -2629,6 +2783,232 @@ const StatsEngine = {
 };
 
 /* ============================================================
+   SIMULATION ENGINE — What-If projection calculations
+   ============================================================ */
+const SimulationEngine = {
+  /**
+   * Run a what-if simulation for a given month.
+   * @param {string} month - 'YYYY-MM'
+   * @param {object} params - user's what-if assumptions
+   * @returns {object} projection result with comparison to current trend
+   */
+  run(month, params) {
+    if (!params) return null;
+    const now = new Date();
+    const isCurrentMonth = month === getMonthKey(now.toISOString());
+    const today = now.getDate();
+    const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
+    const daysPassed = isCurrentMonth ? today : daysInMonth;
+    const remainingDays = Math.max(0, daysInMonth - daysPassed);
+
+    // Override params with actuals if not specified
+    const income = params.income != null ? params.income : (DataStore.getMonthlyIncome(month) || DataStore.getBudget(month) || 0);
+    const bills = params.bills != null ? params.bills : DataStore.getBillTotal(month);
+    const netDisposable = Math.max(0, income - bills);
+    const savingsTarget = params.savingsTarget || DataStore.getSavingsTarget();
+    const percentBase = DataStore.getPercentBase();
+    const baseAmount = percentBase === 'net' ? netDisposable : income;
+    let targetAmount = 0;
+    if (savingsTarget.type === 'fixed') targetAmount = savingsTarget.fixedAmount || 0;
+    else if (savingsTarget.type === 'percent') targetAmount = (savingsTarget.percent || 0) / 100 * baseAmount;
+    else if (savingsTarget.type === 'both') targetAmount = (savingsTarget.fixedAmount || 0) + (savingsTarget.percent || 0) / 100 * baseAmount;
+    const spendable = Math.max(0, netDisposable - targetAmount);
+
+    // Get actual spending to date (variable categories only)
+    const allRecords = DataStore.getRecords()
+      .filter(r => getMonthKey(r.date || r.createdAt) === month && !StatsEngine.isBillCategory(r.categoryId));
+    const actualSpent = allRecords.reduce((s, r) => s + r.amount, 0);
+    const categoryTotals = {};
+    const categoryDays = {};
+    allRecords.forEach(r => {
+      categoryTotals[r.categoryId] = (categoryTotals[r.categoryId] || 0) + r.amount;
+      const d = new Date(r.date || r.createdAt);
+      const day = d.getDate();
+      if (!categoryDays[r.categoryId]) categoryDays[r.categoryId] = new Set();
+      categoryDays[r.categoryId].add(day);
+    });
+
+    // Build full category tree with current stats
+    const allCats = DataStore.getCategories();
+    const catMap = {}; allCats.forEach(c => catMap[c.id] = c);
+    const rootCats = DataStore.getRootCategories();
+
+    // Compute leaf category ids
+    const leafCatIds = new Set();
+    allCats.forEach(c => {
+      // It's a leaf if it has no children
+      const hasChildren = allCats.some(x => x.parentId === c.id);
+      if (!hasChildren) leafCatIds.add(c.id);
+    });
+
+    // Get current daily average per category
+    const getCurrentDailyAvg = (catId) => {
+      return daysPassed > 0 ? (categoryTotals[catId] || 0) / daysPassed : 0;
+    };
+
+    // For each leaf category, compute projected spending
+    const categoryProjections = {};
+    let totalProjectedRemaining = 0;
+    const adjustments = (params.categoryAdjustments) || {};
+    const globalAdj = params.globalAdjustment || { mode: null, value: null };
+
+    // First pass: get root-level settings for inheritance
+    const rootSettings = {};
+    Object.entries(adjustments).forEach(([catId, adj]) => {
+      const cat = catMap[catId];
+      if (cat && !cat.parentId) {
+        rootSettings[catId] = adj;
+      }
+    });
+
+    // Process leaf categories
+    leafCatIds.forEach(catId => {
+      const cat = catMap[catId];
+      if (!cat) return;
+      const rootId = cat.parentId || catId;
+      const rootCat = rootId === catId ? cat : catMap[rootId];
+
+      // Determine effective adjustment: direct first, then inherit from root
+      let adj = adjustments[catId];
+      if (!adj) adj = adjustments[rootId] || null;
+      if (!adj) adj = { mode: 'trend', value: null };
+
+      const currentAvg = getCurrentDailyAvg(catId);
+      let projectedRemaining;
+
+      switch (adj.mode) {
+        case 'daily':
+          projectedRemaining = adj.value * remainingDays;
+          break;
+        case 'total':
+          projectedRemaining = adj.value || 0;
+          break;
+        case 'zero':
+          projectedRemaining = 0;
+          break;
+        case 'trend':
+        default:
+          projectedRemaining = currentAvg * remainingDays;
+          break;
+      }
+
+      // Apply global adjustment if the category doesn't have a specific non-trend override
+      if (globalAdj.mode && adj.mode === 'trend') {
+        if (globalAdj.mode === 'percent') {
+          projectedRemaining = projectedRemaining * (1 + (globalAdj.value || 0) / 100);
+        } else if (globalAdj.mode === 'amount') {
+          projectedRemaining = projectedRemaining + (globalAdj.value || 0) * remainingDays;
+        }
+      }
+
+      projectedRemaining = Math.max(0, projectedRemaining);
+      totalProjectedRemaining += projectedRemaining;
+
+      categoryProjections[catId] = {
+        category: cat,
+        rootId: rootId,
+        rootName: rootCat ? rootCat.name : cat.name,
+        currentTotal: categoryTotals[catId] || 0,
+        currentDailyAvg: currentAvg,
+        mode: adj.mode,
+        value: adj.value,
+        projectedRemaining: projectedRemaining,
+        projectedTotal: (categoryTotals[catId] || 0) + projectedRemaining
+      };
+    });
+
+    // Add hypothetical categories
+    const hypotheticals = (params.hypotheticalCategories) || [];
+    let hypotheticalTotal = 0;
+    const hypotheticalProjections = [];
+    hypotheticals.forEach(h => {
+      const daily = h.type === 'daily' ? (h.amount || 0) : ((h.amount || 0) / remainingDays);
+      const hypRemaining = h.type === 'daily' ? (h.amount || 0) * remainingDays : (h.amount || 0);
+      hypotheticalTotal += hypRemaining;
+      hypotheticalProjections.push({
+        name: h.name,
+        icon: h.icon || '❓',
+        daily: daily,
+        projectedRemaining: hypRemaining
+      });
+    });
+    totalProjectedRemaining += hypotheticalTotal;
+
+    // Aggregate to root level
+    const rootProjections = {};
+    rootCats.forEach(rc => {
+      const children = Object.values(categoryProjections).filter(p => p.rootId === rc.id);
+      const currentTotal = children.reduce((s, p) => s + p.currentTotal, 0);
+      const projectedRemaining = children.reduce((s, p) => s + p.projectedRemaining, 0);
+      rootProjections[rc.id] = {
+        category: rc,
+        currentTotal: currentTotal,
+        projectedRemaining: projectedRemaining,
+        projectedTotal: currentTotal + projectedRemaining,
+        children: children
+      };
+    });
+
+    // Global result
+    const totalProjected = actualSpent + totalProjectedRemaining;
+    const projectedSavings = netDisposable - totalProjected;
+    const projectedDailyAvg = totalProjected / daysInMonth;
+    const savingsAttained = projectedSavings >= targetAmount;
+
+    // Current trend (for comparison)
+    const trendDailyAvg = daysPassed > 0 ? actualSpent / daysPassed : 0;
+    const trendTotal = trendDailyAvg * daysInMonth;
+    const trendSavings = netDisposable - trendTotal;
+    const trendDailyTarget = spendable / daysInMonth;
+
+    return {
+      // Parameters used
+      params: params,
+      income: income,
+      bills: bills,
+      netDisposable: netDisposable,
+      targetAmount: targetAmount,
+      spendable: spendable,
+
+      // Actuals
+      daysPassed: daysPassed,
+      remainingDays: remainingDays,
+      daysInMonth: daysInMonth,
+      actualSpent: actualSpent,
+
+      // Projection
+      totalProjected: totalProjected,
+      projectedRemaining: totalProjectedRemaining,
+      projectedDailyAvg: projectedDailyAvg,
+      projectedSavings: projectedSavings,
+      savingsAttained: savingsAttained,
+      hypotheticalTotal: hypotheticalTotal,
+
+      // Current trend (comparison)
+      trendTotal: trendTotal,
+      trendDailyAvg: trendDailyAvg,
+      trendSavings: trendSavings,
+
+      // Per-root-category breakdown
+      rootProjections: rootProjections,
+
+      // Hypothetical categories
+      hypotheticalProjections: hypotheticalProjections,
+
+      // Leaf projections for detail
+      categoryProjections: categoryProjections
+    };
+  },
+
+  /**
+   * Get the current trend projection (no what-if changes).
+   */
+  getCurrentTrend(month) {
+    return this.run(month, {});
+  }
+};
+
+/* ============================================================
    ROUTER
    ============================================================ */
 const pageTitles = {
@@ -2638,6 +3018,7 @@ const pageTitles = {
   categories: '分类',
   stats: '统计',
   report: '月度报告',
+  whatif: '假设分析',
   settings: '设置'
 };
 
@@ -2668,6 +3049,7 @@ function navigateTo(tab) {
   else if (tab === 'categories') renderCategories();
   else if (tab === 'stats') renderStats();
   else if (tab === 'report') renderReport();
+  else if (tab === 'whatif') renderWhatIf();
   else if (tab === 'settings') renderSettings();
 }
 
@@ -7350,6 +7732,573 @@ function confirmClearAll() {
   closeModal();
   showToast('✅ 所有数据已清除');
   navigateTo('overview');
+}
+
+/* ============================================================
+   🔮 假设分析 — What-If Simulation Page
+   ============================================================ */
+
+// Global state for this page
+let whatIfExpandStates = {};  // { 'cat-root-1': true/false }
+
+function renderWhatIf() {
+  const section = document.getElementById('page-whatif');
+  const month = getMonthKey(new Date().toISOString());
+  const savedParams = DataStore.getWhatIfParams();
+
+  let html = '';
+
+  // === SECTION 1: Parameter Panel ===
+  html += renderWhatIfParams(month, savedParams);
+
+  // === SECTION 2: Results (if available) ===
+  if (savedParams) {
+    const result = SimulationEngine.run(month, savedParams);
+    if (result) {
+      html += renderWhatIfResults(result);
+    }
+  }
+
+  section.innerHTML = html;
+  whatIfExpandStates = {};
+
+  // Attach event listeners after rendering
+  attachWhatIfListeners(month);
+}
+
+function renderWhatIfParams(month, savedParams) {
+  const income = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month) || 0;
+  const bills = DataStore.getBillTotal(month);
+  const savingsTarget = DataStore.getSavingsTarget();
+  const rootCats = DataStore.getRootCategories();
+  const allCats = DataStore.getCategories();
+  const catMap = {}; allCats.forEach(c => catMap[c.id] = c);
+  const today = new Date().getDate();
+  const daysInMonth = new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 0).getDate();
+  const daysPassed = today;
+  const remainingDays = Math.max(0, daysInMonth - daysPassed);
+
+  // Get actual monthly spending per category
+  const records = DataStore.getRecords()
+    .filter(r => getMonthKey(r.date || r.createdAt) === month && !StatsEngine.isBillCategory(r.categoryId));
+  const catActual = {};
+  records.forEach(r => {
+    catActual[r.categoryId] = (catActual[r.categoryId] || 0) + r.amount;
+  });
+
+  // Compute daily avg per category
+  const catDailyAvg = {};
+  Object.entries(catActual).forEach(([catId, total]) => {
+    catDailyAvg[catId] = daysPassed > 0 ? total / daysPassed : 0;
+  });
+
+  const adj = savedParams ? savedParams.categoryAdjustments || {} : {};
+  const globalAdj = savedParams ? savedParams.globalAdjustment || { mode: null, value: null } : { mode: null, value: null };
+  const hypos = savedParams ? savedParams.hypotheticalCategories || [] : [];
+
+  // Savings target text
+  let targetDesc = '';
+  if (savingsTarget.type === 'fixed') targetDesc = `RM ${savingsTarget.fixedAmount}`;
+  else if (savingsTarget.type === 'percent') targetDesc = `${savingsTarget.percent}%`;
+  else if (savingsTarget.type === 'both') targetDesc = `RM ${savingsTarget.fixedAmount} + ${savingsTarget.percent}%`;
+  else targetDesc = '未设置';
+
+  let html = `<div class="whatif-container">
+    <div class="section-title">🔮 假设分析</div>
+    <p class="text-sm text-muted" style="margin-bottom:16px">调整未来消费假设，预测月末结果。当前月份：${month}，剩余 ${remainingDays} 天</p>`;
+
+  // === 基础参数卡片 ===
+  html += `<div class="card mb-16">
+    <div class="card-title">📐 基础参数</div>
+    <div class="whatif-params-grid">
+      <div class="whatif-param-item">
+        <label class="text-sm">月收入 (RM)</label>
+        <input type="number" class="input-field" id="wi-income" value="${savedParams && savedParams.income != null ? savedParams.income : income}" min="0" step="0.01" placeholder="当前: ${income}">
+        <span class="text-xs text-muted">留空使用当前值 (${formatMoney(income)})</span>
+      </div>
+      <div class="whatif-param-item">
+        <label class="text-sm">账单合计 (RM)</label>
+        <input type="number" class="input-field" id="wi-bills" value="${savedParams && savedParams.bills != null ? savedParams.bills : ''}" min="0" step="0.01" placeholder="当前: ${bills}">
+        <span class="text-xs text-muted">留空使用当前值 (${formatMoney(bills)})</span>
+      </div>
+      <div class="whatif-param-item">
+        <label class="text-sm">储蓄目标</label>
+        <select class="input-field" id="wi-save-type">
+          <option value="fixed" ${(savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.type : savingsTarget.type) === 'fixed' ? 'selected' : ''}>固定金额</option>
+          <option value="percent" ${(savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.type : savingsTarget.type) === 'percent' ? 'selected' : ''}>百分比</option>
+          <option value="both" ${(savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.type : savingsTarget.type) === 'both' ? 'selected' : ''}>两者</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input type="number" class="input-field" id="wi-save-fixed" value="${savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.fixedAmount || '' : savingsTarget.fixedAmount || ''}" min="0" step="0.01" placeholder="固定金额" style="flex:1">
+          <input type="number" class="input-field" id="wi-save-pct" value="${savedParams && savedParams.savingsTarget ? savedParams.savingsTarget.percent || '' : savingsTarget.percent || ''}" min="0" max="100" step="1" placeholder="%" style="width:80px">
+        </div>
+        <span class="text-xs text-muted">留空使用当前设置 (${targetDesc})</span>
+      </div>
+    </div>
+  </div>`;
+
+  // === 分类支出调整 ===
+  html += `<div class="card mb-16">
+    <div class="card-title">🏷️ 分类支出调整</div>
+    <p class="text-xs text-muted" style="margin-bottom:8px">调整每个分类在剩余天数的支出方式。展开根分类查看子分类。</p>`;
+
+  rootCats.forEach(root => {
+    const expandKey = 'wi-expand-' + root.id;
+    const isExpanded = whatIfExpandStates[expandKey] !== false; // default expanded
+
+    const children = allCats.filter(c => c.parentId === root.id);
+    const rootAdj = adj[root.id] || { mode: 'trend', value: null };
+    const rootDailyAvg = children.reduce((s, c) => s + (catDailyAvg[c.id] || 0), 0);
+
+    html += `<div class="whatif-cat-root">
+      <div class="whatif-cat-root-header" onclick="toggleWhatIfExpand('${root.id}')">
+        <span class="whatif-expand-icon">${isExpanded ? '▼' : '▶'}</span>
+        <span>${root.icon} ${root.name}</span>
+        <span class="text-xs text-muted" style="margin-left:8px">日均 ${formatMoney(rootDailyAvg)}</span>
+        <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(catActual[root.id] || children.reduce((s, c) => s + (catActual[c.id] || 0), 0))}</span>
+      </div>
+      ${isExpanded ? `
+      <div class="whatif-cat-body">
+        <div class="whatif-cat-row">
+          <span class="whatif-cat-label">${root.icon} ${root.name}（整体）</span>
+          <select class="input-field whatif-mode-select" data-cat="${root.id}" data-level="root" onchange="whatifModeChange(this)">
+            <option value="trend" ${rootAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
+            <option value="daily" ${rootAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
+            <option value="total" ${rootAdj.mode === 'total' ? 'selected' : ''}>设剩余月额</option>
+            <option value="zero" ${rootAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
+          </select>
+          <input type="number" class="input-field whatif-value-input" data-cat="${root.id}" value="${rootAdj.value || ''}" min="0" step="0.01" placeholder="值" ${rootAdj.mode === 'trend' || rootAdj.mode === 'zero' ? 'style="display:none"' : ''}>
+          <span class="text-xs text-muted whatif-preview" data-cat="${root.id}"></span>
+        </div>
+        ${children.map(child => {
+          const childAdj = adj[child.id] || { mode: 'trend', value: null };
+          const childDailyAvg = catDailyAvg[child.id] || 0;
+          return `<div class="whatif-cat-row whatif-cat-child">
+            <span class="whatif-cat-label">${child.icon} ${child.name}</span>
+            <select class="input-field whatif-mode-select" data-cat="${child.id}" data-level="child" onchange="whatifModeChange(this)">
+              <option value="trend" ${childAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
+              <option value="daily" ${childAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
+              <option value="total" ${childAdj.mode === 'total' ? 'selected' : ''}>设剩余月额</option>
+              <option value="zero" ${childAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
+            </select>
+            <input type="number" class="input-field whatif-value-input" data-cat="${child.id}" value="${childAdj.value || ''}" min="0" step="0.01" placeholder="值" ${childAdj.mode === 'trend' || childAdj.mode === 'zero' ? 'style="display:none"' : ''}>
+            <span class="text-xs text-muted" style="min-width:60px;text-align:right">日均 ${formatMoney(childDailyAvg)}</span>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+    </div>`;
+  });
+
+  html += `</div>`; // end card
+
+  // === 全局调整 ===
+  html += `<div class="card mb-16">
+    <div class="card-title">🌐 全局调整</div>
+    <p class="text-xs text-muted" style="margin-bottom:8px">对所有保持趋势的分类统一调整。不覆盖已单独设置的分类。</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select class="input-field" id="wi-global-mode" style="width:auto;min-width:120px">
+        <option value="" ${!globalAdj.mode ? 'selected' : ''}>无</option>
+        <option value="percent" ${globalAdj.mode === 'percent' ? 'selected' : ''}>± %</option>
+        <option value="amount" ${globalAdj.mode === 'amount' ? 'selected' : ''}>± RM/天</option>
+      </select>
+      <input type="number" class="input-field" id="wi-global-value" value="${globalAdj.value || ''}" min="0" step="0.01" placeholder="值" style="width:100px">
+      <span class="text-xs text-muted">负值=减少，正值=增加（如 −10% 或 −5）</span>
+    </div>
+  </div>`;
+
+  // === 添加假设分类 ===
+  html += `<div class="card mb-16">
+    <div class="card-title">➕ 添加假设分类</div>
+    <p class="text-xs text-muted" style="margin-bottom:8px">添加一个当前不存在的新分类来评估其影响。</p>
+    <div id="wi-hypo-list">
+      ${hypos.map((h, i) => `
+        <div class="whatif-hypo-row" data-index="${i}">
+          <input type="text" class="input-field wi-hypo-icon" value="${h.icon || ''}" placeholder="图标" style="width:50px">
+          <input type="text" class="input-field wi-hypo-name" value="${h.name || ''}" placeholder="分类名" style="flex:1">
+          <input type="number" class="input-field wi-hypo-amount" value="${h.amount || ''}" min="0" step="0.01" placeholder="金额" style="width:100px">
+          <select class="input-field wi-hypo-type" style="width:auto">
+            <option value="daily" ${h.type === 'daily' ? 'selected' : ''}>/天</option>
+            <option value="total" ${h.type === 'total' ? 'selected' : ''}>/月</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="removeWhatIfHypo(${i})" style="color:var(--danger)">✕</button>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-sm btn-outline mt-8" onclick="addWhatIfHypo()">＋ 添加假设分类</button>
+  </div>`;
+
+  // === Action buttons ===
+  html += `<div style="display:flex;gap:12px;margin-bottom:24px">
+    <button class="btn btn-primary btn-lg" onclick="runWhatIfSimulation()" style="flex:1">🔮 生成预测</button>
+    ${savedParams ? '<button class="btn btn-ghost btn-lg" onclick="clearWhatIfSimulation()" style="color:var(--danger)">🗑️ 清除场景</button>' : ''}
+  </div>`;
+
+  html += `</div>`; // end whatif-container
+
+  return html;
+}
+
+function renderWhatIfResults(result) {
+  if (!result) return '';
+
+  const { 
+    income, bills, netDisposable, targetAmount, spendable,
+    daysPassed, remainingDays, daysInMonth,
+    actualSpent, totalProjected, projectedRemaining, projectedDailyAvg,
+    projectedSavings, savingsAttained, hypotheticalTotal,
+    trendTotal, trendDailyAvg, trendSavings,
+    rootProjections, hypotheticalProjections
+  } = result;
+
+  const savingsDiff = projectedSavings - targetAmount;
+  const savingsPct = targetAmount > 0 ? projectedSavings / targetAmount : 0;
+
+  let html = `<div class="whatif-container" style="margin-top:32px;padding-top:24px;border-top:2px solid var(--border)">
+    <div class="section-title">🔮 预测结果</div>`;
+
+  // === 对比摘要 ===
+  html += `<div class="card mb-16 whatif-summary-card">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center">
+      <div>
+        <div class="text-xs text-muted">当前趋势</div>
+        <div class="text-lg font-bold" style="color:var(--text-muted)">${formatMoney(trendTotal)}</div>
+        <div class="text-xs ${trendSavings >= 0 ? 'text-success' : 'text-danger'}">${trendSavings >= 0 ? '+' : ''}${formatMoney(trendSavings)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:center">
+        <div class="text-lg" style="font-size:1.5rem">${totalProjected > trendTotal ? '📈' : '📉'}</div>
+        <div class="text-sm font-bold" style="color:${totalProjected > trendTotal ? 'var(--danger)' : 'var(--success)'}">
+          ${Math.abs(totalProjected - trendTotal) > 0.01 ? (totalProjected > trendTotal ? '+' : '') + formatMoney(totalProjected - trendTotal) : '持平'}
+        </div>
+      </div>
+      <div>
+        <div class="text-xs text-muted">假设预测</div>
+        <div class="text-lg font-bold" style="color:var(--primary)">${formatMoney(totalProjected)}</div>
+        <div class="text-xs ${projectedSavings >= 0 ? 'text-success' : 'text-danger'}">${projectedSavings >= 0 ? '+' : ''}${formatMoney(projectedSavings)}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div>
+        <div class="text-xs text-muted">日均</div>
+        <div>${formatMoney(trendDailyAvg)}</div>
+      </div>
+      <div>
+        <div class="text-xs text-muted">目标</div>
+        <div>${formatMoney(targetAmount)}</div>
+      </div>
+      <div>
+        <div class="text-xs text-muted">日均</div>
+        <div>${formatMoney(projectedDailyAvg)}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // === 储蓄达成 ===
+  html += `<div class="card mb-16" style="text-align:center;padding:20px">
+    <div style="font-size:2rem;margin-bottom:8px">${savingsAttained ? '✅' : '❌'}</div>
+    <div class="text-sm">
+      预计月末储蓄：<strong style="color:${projectedSavings >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(projectedSavings)}</strong>
+      ${savingsAttained ? `≥ 目标 ${formatMoney(targetAmount)}` : `< target ${formatMoney(targetAmount)}，还差 ${formatMoney(Math.abs(savingsDiff))}</span>`}
+    </div>
+    ${savingsPct > 0 ? `<div style="margin-top:8px"><div class="whatif-progress-bar"><div class="whatif-progress-fill" style="width:${Math.min(savingsPct, 1) * 100}%"></div></div><span class="text-xs text-muted">${(savingsPct * 100).toFixed(1)}%</span></div>` : ''}
+  </div>`;
+
+  // === 预算环对比 (canvas side by side) ===
+  html += `<div class="card mb-16">
+    <div class="card-title">📊 支出对比</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">当前趋势</div>
+        <canvas class="whatif-ring" id="wi-ring-trend" width="140" height="140"></canvas>
+        <div class="text-sm font-bold">${formatMoney(trendTotal)}</div>
+        <div class="text-xs text-muted">${income > 0 ? ((trendTotal / income) * 100).toFixed(1) + '%' : ''}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">假设预测</div>
+        <canvas class="whatif-ring" id="wi-ring-proj" width="140" height="140"></canvas>
+        <div class="text-sm font-bold">${formatMoney(totalProjected)}</div>
+        <div class="text-xs text-muted">${income > 0 ? ((totalProjected / income) * 100).toFixed(1) + '%' : ''}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // === 储蓄环对比 ===
+  html += `<div class="card mb-16">
+    <div class="card-title">💰 储蓄对比</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">当前趋势</div>
+        <canvas class="whatif-ring" id="wi-ring-save-trend" width="140" height="140"></canvas>
+        <div class="text-sm ${trendSavings >= 0 ? 'font-bold' : 'text-danger'}">${trendSavings >= 0 ? '+' : ''}${formatMoney(trendSavings)}</div>
+      </div>
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">假设预测</div>
+        <canvas class="whatif-ring" id="wi-ring-save-proj" width="140" height="140"></canvas>
+        <div class="text-sm ${projectedSavings >= 0 ? 'font-bold' : 'text-danger'}">${projectedSavings >= 0 ? '+' : ''}${formatMoney(projectedSavings)}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // === 分类对比表 ===
+  html += `<div class="card mb-16">
+    <div class="card-title">📋 分类预测明细</div>
+    <div class="whatif-compare-table">
+      <div class="whatif-compare-header">
+        <span>分类</span>
+        <span>本月已花</span>
+        <span>预测剩余</span>
+        <span>预测月末</span>
+        <span>较趋势</span>
+      </div>`;
+
+  Object.values(rootProjections).forEach(rp => {
+    const trendForRoot = daysPassed > 0 ? (rp.currentTotal / daysPassed) * daysInMonth : 0;
+    const diff = rp.projectedTotal - trendForRoot;
+    html += `<div class="whatif-compare-row">
+      <span class="font-semibold">${rp.category.icon} ${rp.category.name}</span>
+      <span>${formatMoney(rp.currentTotal)}</span>
+      <span>${formatMoney(rp.projectedRemaining)}</span>
+      <span class="font-semibold">${formatMoney(rp.projectedTotal)}</span>
+      <span style="color:${Math.abs(diff) < 0.01 ? 'var(--text-muted)' : (diff > 0 ? 'var(--danger)' : 'var(--success)')}">
+        ${Math.abs(diff) < 0.01 ? '—' : (diff > 0 ? '+' : '') + formatMoney(diff)}
+      </span>
+    </div>`;
+  });
+
+  // Hypothetical categories row
+  hypotheticalProjections.forEach(hp => {
+    html += `<div class="whatif-compare-row" style="color:var(--primary);font-style:italic">
+      <span>${hp.icon} ${hp.name} <span class="text-xs text-muted">(假设)</span></span>
+      <span>—</span>
+      <span>${formatMoney(hp.projectedRemaining)}</span>
+      <span>${formatMoney(hp.projectedRemaining)}</span>
+      <span style="color:var(--danger)">+${formatMoney(hp.projectedRemaining)}</span>
+    </div>`;
+  });
+
+  // Total row
+  const trendForGrand = daysPassed > 0 ? (actualSpent / daysPassed) * daysInMonth : 0;
+  const grandDiff = totalProjected - trendForGrand;
+  html += `<div class="whatif-compare-row whatif-compare-total">
+    <span class="font-bold">合计</span>
+    <span>${formatMoney(actualSpent)}</span>
+    <span>${formatMoney(projectedRemaining)}</span>
+    <span class="font-bold">${formatMoney(totalProjected)}</span>
+    <span style="color:${Math.abs(grandDiff) < 0.01 ? 'var(--text-muted)' : (grandDiff > 0 ? 'var(--danger)' : 'var(--success)')}">
+      ${Math.abs(grandDiff) < 0.01 ? '—' : (grandDiff > 0 ? '+' : '') + formatMoney(grandDiff)}
+    </span>
+  </div>`;
+
+  html += `</div></div>`;
+
+  // === 明细按钮 ===
+  html += `<div style="display:flex;gap:12px;margin-top:8px">
+    <button class="btn btn-ghost btn-lg" onclick="runWhatIfSimulation()" style="flex:1">🔄 重新预测</button>
+    <button class="btn btn-ghost btn-lg" onclick="clearWhatIfSimulation()" style="color:var(--danger)">🗑️ 清除场景</button>
+  </div>`;
+
+  html += `</div>`; // end whatif-container
+
+  // Draw rings after render
+  setTimeout(() => drawWhatIfRings(result), 50);
+
+  return html;
+}
+
+// Draw the comparison rings
+function drawWhatIfRings(result) {
+  const { income, totalProjected, trendTotal, projectedSavings, trendSavings, targetAmount } = result;
+
+  // Trend budget ring
+  const trendCanvas = document.getElementById('wi-ring-trend');
+  if (trendCanvas && income > 0) {
+    const pct = Math.min(trendTotal / income, 1);
+    drawSimpleRing(trendCanvas, pct, '#6366F1', '#e5e7eb');
+  }
+
+  // Projected budget ring
+  const projCanvas = document.getElementById('wi-ring-proj');
+  if (projCanvas && income > 0) {
+    const pct = Math.min(totalProjected / income, 1);
+    drawSimpleRing(projCanvas, pct, '#10B981', '#e5e7eb');
+  }
+
+  // Trend savings ring
+  const saveTrendCanvas = document.getElementById('wi-ring-save-trend');
+  if (saveTrendCanvas && targetAmount > 0) {
+    const pct = Math.max(0, Math.min(trendSavings / targetAmount, 1));
+    drawSimpleRing(saveTrendCanvas, pct, trendSavings >= 0 ? '#10B981' : '#EF4444', '#e5e7eb');
+  }
+
+  // Projected savings ring
+  const saveProjCanvas = document.getElementById('wi-ring-save-proj');
+  if (saveProjCanvas && targetAmount > 0) {
+    const pct = Math.max(0, Math.min(projectedSavings / targetAmount, 1));
+    drawSimpleRing(saveProjCanvas, pct, projectedSavings >= 0 ? '#10B981' : '#EF4444', '#e5e7eb');
+  }
+}
+
+// Helper to draw a simple ring (named differently to avoid collision with existing drawRing)
+function drawSimpleRing(canvas, percent, fillColor, bgColor) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2;
+  const r = Math.min(cx, cy) - 8;
+  const lineWidth = 12;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = bgColor || '#e5e7eb';
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(percent, 1));
+  ctx.strokeStyle = fillColor || '#6366F1';
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Center text
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1E293B';
+  ctx.font = 'bold 14px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText((percent * 100).toFixed(0) + '%', cx, cy);
+}
+
+/* ============================================================
+   What-If Event Handlers
+   ============================================================ */
+
+function toggleWhatIfExpand(rootId) {
+  const key = 'wi-expand-' + rootId;
+  whatIfExpandStates[key] = !whatIfExpandStates[key];
+  const month = getMonthKey(new Date().toISOString());
+  const savedParams = DataStore.getWhatIfParams();
+  const section = document.getElementById('page-whatif');
+  let html = renderWhatIfParams(month, savedParams);
+  if (savedParams) {
+    const result = SimulationEngine.run(month, savedParams);
+    if (result) html += renderWhatIfResults(result);
+  }
+  section.innerHTML = html;
+  attachWhatIfListeners(month);
+}
+
+function whatifModeChange(selectEl) {
+  const catId = selectEl.dataset.cat;
+  const valInput = selectEl.parentElement.querySelector('.whatif-value-input');
+  if (valInput) {
+    valInput.style.display = (selectEl.value === 'trend' || selectEl.value === 'zero') ? 'none' : '';
+  }
+}
+
+function addWhatIfHypo() {
+  const list = document.getElementById('wi-hypo-list');
+  const idx = list ? list.children.length : 0;
+  const div = document.createElement('div');
+  div.className = 'whatif-hypo-row';
+  div.dataset.index = idx;
+  div.innerHTML = `
+    <input type="text" class="input-field wi-hypo-icon" placeholder="图标" style="width:50px">
+    <input type="text" class="input-field wi-hypo-name" placeholder="分类名" style="flex:1">
+    <input type="number" class="input-field wi-hypo-amount" min="0" step="0.01" placeholder="金额" style="width:100px">
+    <select class="input-field wi-hypo-type" style="width:auto">
+      <option value="daily">/天</option>
+      <option value="total">/月</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="removeWhatIfHypo(${idx})" style="color:var(--danger)">✕</button>
+  `;
+  if (list) list.appendChild(div);
+}
+
+function removeWhatIfHypo(index) {
+  const list = document.getElementById('wi-hypo-list');
+  if (list && list.children[index]) {
+    list.removeChild(list.children[index]);
+    // Re-index remaining
+    Array.from(list.children).forEach((el, i) => {
+      el.dataset.index = i;
+      const btn = el.querySelector('button');
+      if (btn) btn.onclick = () => removeWhatIfHypo(i);
+    });
+  }
+}
+
+function collectWhatIfParams() {
+  const month = getMonthKey(new Date().toISOString());
+  const income = parseFloat(document.getElementById('wi-income')?.value) || null;
+  const bills = parseFloat(document.getElementById('wi-bills')?.value) || null;
+  const saveType = document.getElementById('wi-save-type')?.value || 'fixed';
+  const saveFixed = parseFloat(document.getElementById('wi-save-fixed')?.value) || 0;
+  const savePct = parseFloat(document.getElementById('wi-save-pct')?.value) || 0;
+
+  // Build savings target only if values differ from current
+  const currentTarget = DataStore.getSavingsTarget();
+  const savingsTarget = {
+    type: saveType,
+    fixedAmount: saveFixed,
+    percent: savePct
+  };
+
+  // Category adjustments
+  const categoryAdjustments = {};
+  document.querySelectorAll('.whatif-mode-select').forEach(sel => {
+    const catId = sel.dataset.cat;
+    const mode = sel.value;
+    const valInput = sel.parentElement.querySelector('.whatif-value-input');
+    const value = valInput ? parseFloat(valInput.value) || null : null;
+    if (mode !== 'trend' || value !== null) {
+      categoryAdjustments[catId] = { mode, value };
+    }
+  });
+
+  // Global adjustment
+  const globalMode = document.getElementById('wi-global-mode')?.value || '';
+  const globalValue = parseFloat(document.getElementById('wi-global-value')?.value) || null;
+  const globalAdjustment = globalMode ? { mode: globalMode, value: globalValue } : { mode: null, value: null };
+
+  // Hypothetical categories
+  const hypotheticalCategories = [];
+  document.querySelectorAll('.whatif-hypo-row').forEach(row => {
+    const icon = row.querySelector('.wi-hypo-icon')?.value || '';
+    const name = row.querySelector('.wi-hypo-name')?.value || '';
+    const amount = parseFloat(row.querySelector('.wi-hypo-amount')?.value) || 0;
+    const type = row.querySelector('.wi-hypo-type')?.value || 'daily';
+    if (name) {
+      hypotheticalCategories.push({ icon, name, amount, type });
+    }
+  });
+
+  return {
+    income: income || null,
+    bills: bills || null,
+    savingsTarget: savingsTarget,
+    categoryAdjustments: categoryAdjustments,
+    globalAdjustment: globalAdjustment,
+    hypotheticalCategories: hypotheticalCategories
+  };
+}
+
+function runWhatIfSimulation() {
+  const params = collectWhatIfParams();
+  DataStore.setWhatIfParams(params);
+  renderWhatIf();
+}
+
+function clearWhatIfSimulation() {
+  DataStore.clearWhatIfParams();
+  renderWhatIf();
+}
+
+function attachWhatIfListeners(month) {
+  // Mode selectors: show/hide value inputs
+  document.querySelectorAll('.whatif-mode-select').forEach(sel => {
+    sel.addEventListener('change', function() {
+      whatifModeChange(this);
+    });
+  });
 }
 
 /* ============================================================
