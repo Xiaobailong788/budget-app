@@ -56,7 +56,7 @@ function drawRing(canvasId, progress, color, label, overspendColor) {
 
   // Label
   ctx.fillStyle = progress > 1 ? (overspendColor || '#EF4444') : color;
-  ctx.font = `bold ${size * 0.16}px -apple-system, sans-serif`;
+  ctx.font = `bold ${cssSize * 0.16}px -apple-system, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, cx, cy);
