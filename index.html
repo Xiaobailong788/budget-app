@@ -8948,15 +8948,39 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 
   function sanitizeHtml(str) {
     if (typeof str !== 'string') return '';
-    var map = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-      '`': '&#96;'
-    };
+    var map = { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;' };
     return String(str).replace(/[&<>"'`]/g, function (c) { return map[c]; });
+  }
+
+  /* Compress/decompress SDP strings using browser's CompressionStream API */
+  function _b64FromBytes(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+  function _bytesFromB64(b64) {
+    var s = atob(b64), len = s.length, bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) bytes[i] = s.charCodeAt(i);
+    return bytes;
+  }
+  async function compressStr(str) {
+    if (!window.CompressionStream) return str; // fallback
+    try {
+      var bytes = new TextEncoder().encode(str);
+      var blob = await new Response(
+        new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))
+      ).blob();
+      return _b64FromBytes(new Uint8Array(await blob.arrayBuffer()));
+    } catch (e) { return str; }
+  }
+  async function decompressStr(b64) {
+    if (!window.CompressionStream || b64.indexOf('\n') !== -1) return b64; // fallback: not compressed
+    try {
+      var blob2 = await new Response(
+        new Blob([_bytesFromB64(b64)]).stream().pipeThrough(new DecompressionStream('gzip'))
+      ).blob();
+      return new TextDecoder().decode(await blob2.arrayBuffer());
+    } catch (e) { return b64; }
   }
 
   var validators = {
@@ -9042,16 +9066,19 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     };
     return pc.createOffer()
       .then(function (o) { return pc.setLocalDescription(o); })
-      .then(function () { return pc.localDescription.sdp; });
+      .then(function () { return pc.localDescription.sdp; })
+      .then(function (sdp) { return compressStr(sdp); });
   }
 
-  function acceptAnswer(answerSdp) {
+  function acceptAnswer(answerB64) {
     if (!pc || (syncState !== 'host-offer' && syncState !== 'connected'))
       return Promise.reject(new Error('状态异常，请重新开始'));
-    return pc.setRemoteDescription({ type: 'answer', sdp: answerSdp }).then(function () { return true; });
+    return decompressStr(answerB64).then(function (sdp) {
+      return pc.setRemoteDescription({ type: 'answer', sdp: sdp });
+    }).then(function () { return true; });
   }
 
-  function createClient(offerSdp, callbacks) {
+  function createClient(offerB64, callbacks) {
     resetConnection();
     onStateChange = callbacks.onStateChange || null;
     onDataCallback = callbacks.onDataReceived || null;
@@ -9070,10 +9097,13 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
       channel.onmessage = function (msg) { if (typeof onDataCallback === 'function') onDataCallback(msg.data); };
       channel.onerror = function () { if (onErrorCallback) onErrorCallback('数据通道错误'); };
     };
-    return pc.setRemoteDescription({ type: 'offer', sdp: offerSdp })
-      .then(function () { return pc.createAnswer(); })
-      .then(function (a) { return pc.setLocalDescription(a); })
-      .then(function () { return pc.localDescription.sdp; });
+    return decompressStr(offerB64).then(function (sdp) {
+      return pc.setRemoteDescription({ type: 'offer', sdp: sdp })
+        .then(function () { return pc.createAnswer(); })
+        .then(function (a) { return pc.setLocalDescription(a); })
+        .then(function () { return pc.localDescription.sdp; })
+        .then(function (sdp2) { return compressStr(sdp2); });
+    });
   }
 
   function receiveAndMerge(jsonStr) {
