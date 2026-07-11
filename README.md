@@ -1,4 +1,4 @@
-# 记账软件 · Budget App
+# 记账软件 · Budget App v1.1.0
 
 > Personal Budget Tracker — Zero-dependency single-page HTML app. Fully offline, runs entirely in your browser.
 
@@ -8,7 +8,7 @@
 
 ## 📸 Screenshots
 
-> Screenshots coming soon. Open `money-wise-v1.0.2.html` in your browser to see the app in action.
+> Screenshots coming soon. Open `money-wise-v1.1.0.html` in your browser to see the app in action.
 
 ---
 
@@ -100,6 +100,10 @@ Print-optimized monthly summary featuring budget and savings rings, a category b
 ### ⚙️ 设置 Settings
 Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fixed amount, percentage, or both). Export and import data via JSON (replace or merge), CSV, or Excel (XML Spreadsheet 2003 with 5 sheets and live formulas). Clear all data option available.
 
+### 📱 手机版 Mobile Companion
+轻量级手机专用版本 `money-wise-mobile.html`，支持完整的记账增删改查、分类管理、JSON 导入导出。
+适合在手机上快速记录，导出 JSON 后在主应用导入。单 HTML 文件，零依赖。
+
 ---
 
 ### 🔥 Highlights
@@ -117,8 +121,8 @@ Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fix
 
 ## 🚀 Quick Start
 
-1. Download `money-wise-v1.0.2.html`
-2. Open it in any modern browser (Chrome, Firefox, Edge, Safari)
+1. Download `money-wise-v1.1.0.html` (主应用) 或 `money-wise-mobile.html` (手机版)
+2. 主应用在电脑浏览器打开，手机版在手机浏览器打开
 3. Start tracking your expenses — everything is saved automatically in your browser
 
 No installation, no server, no internet connection required after download.
@@ -158,11 +162,12 @@ No installation, no server, no internet connection required after download.
 
 ```
 budget-app/
-├── money-wise-v1.0.2.html   # Single-file application (~6,759 lines)
+├── money-wise-v1.1.0.html   # 主应用：完整记账功能 (~6,759 lines)
+├── money-wise-mobile.html   # 手机版：轻量记账，支持导入导出JSON (~1,384 lines)
 ├── features/                # Feature documentation
-├── technical/               # Technical development logs
-├── user/                    # User-facing changelogs
-├── logs/                    # Consolidated project logs
+├── technical/               # Technical development logs (local only)
+├── user/                    # User-facing changelogs (local only)
+├── logs/                    # Consolidated project logs (local only)
 └── README.md                # This file
 ```
 
