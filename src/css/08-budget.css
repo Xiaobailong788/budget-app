@@ -1,0 +1,41 @@
+/* ===== BUDGET VIEW TOGGLE (slider style) ===== */
+.budget-view-toggle {
+  position: relative;
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.72rem;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1;
+}
+.budget-view-toggle .bvt-slider {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  width: calc(50% - 1px);
+  background: var(--primary);
+  border-radius: 5px;
+  z-index: 1;
+  transition: left 0.2s ease;
+}
+.budget-view-toggle.segmented .bvt-slider {
+  left: 50%;
+}
+.budget-view-toggle .bvt-label {
+  padding: 3px 10px;
+  position: relative;
+  z-index: 2;
+  transition: color 0.15s;
+  color: var(--text-primary);
+}
+.budget-view-toggle .bvt-label.active {
+  color: #fff;
+}
+
+/* Budget progress bar fill */
+.budget-bar-fill {
+  transition: width 0.35s ease;
+}

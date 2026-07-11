@@ -95,6 +95,60 @@ ul, ol { list-style: none; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+/* ===== UTILITY ===== */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.85rem; }
+.text-lg { font-size: 1.15rem; }
+.text-xl { font-size: 1.5rem; }
+.text-2xl { font-size: 2rem; }
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.text-primary { color: var(--primary); }
+.text-danger { color: var(--danger); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hidden { display: none !important; }
+.w-full { width: 100%; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+@media (max-width: 600px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 481px) {
+  .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 1024px) {
+  .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+
+.grid-5 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+@media (min-width: 481px) {
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+}
 /* ===== APP LAYOUT ===== */
 #app {
   display: flex;
@@ -119,11 +173,6 @@ ul, ol { list-style: none; }
   flex-direction: column;
   overflow-y: auto;
   animation: slideInLeft 0.3s ease;
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
 }
 
 .sidebar-logo {
@@ -200,11 +249,6 @@ ul, ol { list-style: none; }
 
 .page-section.active { display: block; }
 
-@keyframes pageEnter {
-  from { opacity: 0; transform: translateX(24px) scale(0.98); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
-}
-
 /* ===== BOTTOM TAB NAVIGATION ===== */
 .bottom-nav {
   display: flex;
@@ -242,7 +286,6 @@ ul, ol { list-style: none; }
 .nav-item.active { color: var(--primary); }
 .nav-item.active .nav-icon { transform: scale(1.1); }
 .nav-item:active { transform: scale(0.92); }
-
 /* ===== COMMON COMPONENTS ===== */
 
 /* Cards */
@@ -371,12 +414,6 @@ ul, ol { list-style: none; }
   box-shadow: var(--shadow-lg);
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes modalScale {
-  from { opacity: 0; transform: scale(0.92) translateY(18px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
 .modal-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -427,12 +464,6 @@ ul, ol { list-style: none; }
 .toast.error { border-left-color: var(--danger); }
 .toast.warning { border-left-color: var(--warning); }
 
-@keyframes toastSlide {
-  from { opacity: 0; transform: translateY(-20px) scale(0.92); }
-  70% { opacity: 1; transform: translateY(4px) scale(1.01); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 /* Empty state */
 .empty-state {
   text-align: center;
@@ -458,92 +489,29 @@ ul, ol { list-style: none; }
 .badge-success { background: rgba(16,185,129,0.1); color: var(--success); }
 .badge-warning { background: rgba(245,158,11,0.1); color: var(--warning); }
 .badge-danger { background: rgba(239,68,68,0.1); color: var(--danger); }
-
-/* ===== RESPONSIVE: TABLET (480px+) ===== */
-@media (min-width: 481px) {
-  .main-content {
-    padding: 0 28px 28px;
-    padding-top: var(--header-height);
-  }
-  .top-header {
-    padding: 16px 0 12px;
-  }
-  .grid-4 { gap: 16px; }
-  .card { padding: 20px; }
-}
-
-/* ===== RESPONSIVE: DESKTOP (1024px+) ===== */
-@media (min-width: 1024px) {
-  .sidebar { display: flex; }
-  .bottom-nav { display: none; }
-  .main-content {
-    margin-left: var(--sidebar-width);
-    max-width: calc(1200px - var(--sidebar-width));
-    padding: 0 36px 36px;
-    padding-top: 28px;
-  }
-  .top-header { position: static; padding: 0 0 24px; }
-  .top-header h1 { font-size: 1.5rem; }
-  .grid-4 { gap: 20px; }
-  .card { padding: 24px; margin-bottom: 16px; }
-}
-
-/* ===== UTILITY ===== */
-.flex { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
-.flex-1 { flex: 1; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.justify-center { justify-content: center; }
-.gap-4 { gap: 4px; }
-.gap-8 { gap: 8px; }
-.gap-12 { gap: 12px; }
-.gap-16 { gap: 16px; }
-.mt-8 { margin-top: 8px; }
-.mt-16 { margin-top: 16px; }
-.mb-8 { margin-bottom: 8px; }
-.mb-16 { margin-bottom: 16px; }
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.85rem; }
-.text-lg { font-size: 1.15rem; }
-.text-xl { font-size: 1.5rem; }
-.text-2xl { font-size: 2rem; }
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-.text-muted { color: var(--text-muted); }
-.text-secondary { color: var(--text-secondary); }
-.text-primary { color: var(--primary); }
-.text-danger { color: var(--danger); }
-.text-success { color: var(--success); }
-.text-warning { color: var(--warning); }
-.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hidden { display: none !important; }
-.w-full { width: 100%; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-@media (max-width: 600px) {
-  .grid-2 { grid-template-columns: 1fr; }
-}
-
-@media (min-width: 481px) {
-  .grid-4 { grid-template-columns: 1fr 1fr; }
-}
-
-@media (min-width: 1024px) {
-  .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-}
-
-.grid-5 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-
-@media (min-width: 481px) {
-  .grid-5 { grid-template-columns: repeat(5, 1fr); }
-}
-
 /* ===== ANIMATIONS ===== */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateX(24px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalScale {
+  from { opacity: 0; transform: scale(0.92) translateY(18px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes toastSlide {
+  from { opacity: 0; transform: translateY(-20px) scale(0.92); }
+  70% { opacity: 1; transform: translateY(4px) scale(1.01); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
@@ -572,122 +540,23 @@ ul, ol { list-style: none; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* ===== CALENDAR HEATMAP ===== */
-.heatmap-container { user-select: none; }
-.heatmap-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  margin-top: 8px;
+@keyframes chartModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.heatmap-day {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  position: relative;
-  min-height: 36px;
-}
-.heatmap-day:hover {
-  transform: scale(1.12);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  z-index: 2;
-}
-.heatmap-day.future {
-  opacity: 0.35;
-  cursor: default;
-  pointer-events: none;
-}
-.heatmap-day.empty-day {
-  background: #F1F5F9 !important;
-  color: #94A3B8;
-}
-[data-theme="dark"] .heatmap-day.empty-day {
-  background: #1E293B !important;
-  color: #64748B;
-}
-.heatmap-day .heatmap-tooltip {
-  display: none;
-  position: absolute;
-  bottom: 110%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1E293B;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  white-space: nowrap;
-  z-index: 10;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-[data-theme="dark"] .heatmap-day .heatmap-tooltip { background: #0F172A; }
-.heatmap-day:hover .heatmap-tooltip { display: block; }
-.heatmap-weekday {
-  text-align: center;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  padding: 2px 0;
-}
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.heatmap-legend-item {
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
-}
-.heatmap-legend-label {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  margin-right: 6px;
-}
-.heatmap-day-popup {
-  margin-top: 12px;
-  border-top: 1px solid var(--border);
-  padding-top: 12px;
-}
-.heatmap-day-popup-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-secondary);
+@keyframes chartModalScaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* ===== TAB NAV INDICATOR ===== */
-.nav-item { position: relative; }
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%) scaleX(0);
-  width: 24px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--primary);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+@keyframes expandFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.nav-item.active::after { transform: translateX(-50%) scaleX(1); }
-
-/* ===== EMPTY STATE POLISH ===== */
-.empty-state { padding: 56px 16px; }
-.empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.6; }
-.empty-state .empty-text { font-size: 1.05rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-.empty-state .empty-hint { font-size: 0.85rem; color: var(--text-muted); max-width: 280px; margin: 0 auto; line-height: 1.5; }
-
+@keyframes expandSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 /* ===== RECORD CARD POLISH ===== */
 .record-card {
   transition: var(--transition);
@@ -788,7 +657,6 @@ ul, ol { list-style: none; }
   color: white;
   border-color: var(--primary);
 }
-
 /* ===== CATEGORY ACCORDION ===== */
 .cat-item {
   border-bottom: 1px solid var(--border);
@@ -1006,7 +874,99 @@ ul, ol { list-style: none; }
   color: var(--text-primary);
   font-weight: 600;
 }
-
+/* ===== CALENDAR HEATMAP ===== */
+.heatmap-container { user-select: none; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-top: 8px;
+}
+.heatmap-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  min-height: 36px;
+}
+.heatmap-day:hover {
+  transform: scale(1.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 2;
+}
+.heatmap-day.future {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+.heatmap-day.empty-day {
+  background: #F1F5F9 !important;
+  color: #94A3B8;
+}
+[data-theme="dark"] .heatmap-day.empty-day {
+  background: #1E293B !important;
+  color: #64748B;
+}
+.heatmap-day .heatmap-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1E293B;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  z-index: 10;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .heatmap-day .heatmap-tooltip { background: #0F172A; }
+.heatmap-day:hover .heatmap-tooltip { display: block; }
+.heatmap-weekday {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 2px 0;
+}
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.heatmap-legend-item {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+.heatmap-legend-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+.heatmap-day-popup {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.heatmap-day-popup-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
 /* ===== BUDGET VIEW TOGGLE (slider style) ===== */
 .budget-view-toggle {
   position: relative;
@@ -1044,351 +1004,10 @@ ul, ol { list-style: none; }
   color: #fff;
 }
 
-/* ===== PRINT STYLES ===== */
-@media print {
-  @page { margin: 15mm; }
-  body { background: white; color: black; }
-  /* Hide everything except the report page */
-  .sidebar, .bottom-nav, .top-header, .toast-container, .modal-overlay,
-  .nav-item, .sidebar-item,
-  #toastContainer, #modalOverlay,
-  .page-section:not(#page-report),
-  .report-header-buttons,
-  .no-print { display: none !important; }
-  .main-content { margin: 0 !important; max-width: 100% !important; padding: 0 !important; }
-  #page-report { display: block !important; }
-  #page-report .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; page-break-inside: avoid; }
-  #page-report canvas { max-width: 100% !important; }
-  #page-report .btn { display: none !important; }
-}
-
-/* ===== CHART EXPAND MODAL ===== */
-.chart-modal-backdrop {
-  position: fixed;
-  z-index: 1000;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: chartModalFadeIn 0.2s ease;
-}
-.chart-modal {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-  max-width: min(90vw, 800px);
-  max-height: 90vh;
-  overflow: auto;
-  padding: 24px;
-  animation: chartModalScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-}
-.chart-modal .heatmap-grid {
-  max-width: 500px;
-  margin: 0 auto;
-}
-.chart-modal .heatmap-day {
-  min-width: 36px;
-  min-height: 36px;
-  font-size: 0.85rem;
-}
-.chart-modal-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: var(--border);
-  color: var(--text-secondary);
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition-fast);
-}
-.chart-modal-close:hover {
-  background: var(--danger);
-  color: white;
-}
-@keyframes chartModalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes chartModalScaleIn {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-/* ===== CHART EXPAND (MODAL) — Issues 1&4 ===== */
-/* Dimmed backdrop */
-.chart-expand-overlay {
-  position: fixed !important;
-  z-index: 1000 !important;
-  inset: 0 !important;
-  background: rgba(0,0,0,0.4) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  animation: expandFadeIn 0.25s ease !important;
-}
-
-/* Inner modal card */
-.chart-expand-inner {
-  background: var(--card-bg) !important;
-  border-radius: 16px !important;
-  padding: 20px 24px !important;
-  max-width: 720px !important;
-  width: 92% !important;
-  max-height: 88vh !important;
-  overflow-y: auto !important;
-  position: relative !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
-  animation: expandSlideIn 0.25s ease !important;
-}
-
-.chart-expand-inner canvas {
-  max-width: 100% !important;
-  max-height: 65vh !important;
-  margin: 0 auto !important;
-  display: block !important;
-}
-
-/* Close button inside modal */
-.chart-expand-close {
-  position: absolute !important;
-  top: 8px !important;
-  right: 8px !important;
-  z-index: 1 !important;
-  background: var(--danger) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 50% !important;
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 0.9rem !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-  line-height: 1 !important;
-}
-
-/* Heatmap constraint inside expand modal (Issue 2) */
-.chart-expand-inner .heatmap-grid {
-  max-width: 480px !important;
-  margin: 0 auto !important;
-}
-.chart-expand-inner .heatmap-day {
-  width: 54px !important;
-  height: 54px !important;
-  font-size: 0.85rem !important;
-}
-.chart-expand-inner #expandPieChart {
-  width: 100% !important;
-  max-width: 650px !important;
-  height: 400px !important;
-  margin: 0 auto !important;
-  display: block !important;
-  pointer-events: auto !important;
-  touch-action: auto !important;
-}
-
-/* Ensure main pie chart receives mouse events */
-#pieChart {
-  pointer-events: auto;
-}
-
-/* Animation keyframes */
-@keyframes expandFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes expandSlideIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 /* Budget progress bar fill */
 .budget-bar-fill {
   transition: width 0.35s ease;
 }
-
-/* ===== BILLS CENTER COMPONENTS ===== */
-
-/* Card variant for Bills Center modal */
-.bills-card {
-  margin-bottom: 8px;
-  padding: 12px;
-}
-
-/* Card title bar with flex layout */
-.bills-card-title {
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Income input (larger, bolder) */
-.bills-income-input {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* Bill list row item */
-.bills-list-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-/* Bill category icon (clickable) */
-.bills-cat-icon {
-  cursor: pointer;
-  font-size: 1.2rem;
-}
-
-/* Bill amount inline input */
-.bills-amount-input {
-  width: 90px;
-  padding: 4px 8px;
-  font-size: 0.85rem;
-  text-align: right;
-}
-
-/* Small delete button */
-.bills-delete-btn {
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  color: var(--danger);
-  opacity: 0.6;
-}
-
-/* Summary card with background tint */
-.bills-summary {
-  padding: 12px;
-  background: var(--bg);
-}
-
-/* Dashed summary divider */
-.bills-summary-divider {
-  border-top: 2px dashed var(--border);
-  margin: 6px 0;
-}
-
-/* Summary total amount (primary color) */
-.bills-total-amount {
-  color: var(--primary);
-  font-size: 1.1rem;
-}
-
-/* ===== CATEGORY PICKER BILLS SECTION ===== */
-
-/* Section header with border-top */
-.picker-section-header {
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 8px 4px 4px;
-  color: var(--text-secondary);
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
-}
-
-/* Bill category item in picker */
-.picker-bill-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(99, 102, 241, 0.04);
-}
-
-.picker-bill-item:hover {
-  background: var(--bg);
-}
-
-/* Bill badge in picker */
-.picker-bill-badge {
-  font-size: 0.65rem;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--primary);
-  color: white;
-  margin-left: auto;
-}
-
-/* ===== BILL TOGGLE (Chart) ===== */
-
-.bill-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  margin-left: auto;
-}
-
-.bill-toggle input[type="checkbox"] {
-  accent-color: var(--primary);
-}
-
-/* ===== SETTINGS NAV CARD ===== */
-
-.settings-nav-card {
-  border-left: 4px solid var(--primary);
-  padding: 12px;
-  cursor: pointer;
-}
-
-.settings-nav-card .settings-nav-icon {
-  font-size: 1.2rem;
-}
-
-.settings-nav-card .settings-nav-title {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.settings-nav-card .settings-nav-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.settings-nav-card .settings-nav-arrow {
-  margin-left: auto;
-  font-size: 0.78rem;
-  color: var(--primary);
-}
-
-.settings-nav-card .settings-nav-hint {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin-top: 8px;
-}
-
-/* ===== SETTINGS PERCENT BASE TOGGLE ===== */
-
-.percent-base-group {
-  display: none;
-}
-
-.percent-base-group.visible {
-  display: block;
-}
-
 /* 🔮 What-If Analysis */
 .whatif-container {
   max-width: 1200px;
@@ -1628,8 +1247,378 @@ ul, ol { list-style: none; }
     position: static;
   }
 }
+/* ===== BILLS CENTER COMPONENTS ===== */
 
-  </style>
+/* Card variant for Bills Center modal */
+.bills-card {
+  margin-bottom: 8px;
+  padding: 12px;
+}
+
+/* Card title bar with flex layout */
+.bills-card-title {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Income input (larger, bolder) */
+.bills-income-input {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Bill list row item */
+.bills-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Bill category icon (clickable) */
+.bills-cat-icon {
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+/* Bill amount inline input */
+.bills-amount-input {
+  width: 90px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+/* Small delete button */
+.bills-delete-btn {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  color: var(--danger);
+  opacity: 0.6;
+}
+
+/* Summary card with background tint */
+.bills-summary {
+  padding: 12px;
+  background: var(--bg);
+}
+
+/* Dashed summary divider */
+.bills-summary-divider {
+  border-top: 2px dashed var(--border);
+  margin: 6px 0;
+}
+
+/* Summary total amount (primary color) */
+.bills-total-amount {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+/* ===== CATEGORY PICKER BILLS SECTION ===== */
+
+/* Section header with border-top */
+.picker-section-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 4px 4px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* Bill category item in picker */
+.picker-bill-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.picker-bill-item:hover {
+  background: var(--bg);
+}
+
+/* Bill badge in picker */
+.picker-bill-badge {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--primary);
+  color: white;
+  margin-left: auto;
+}
+
+/* ===== BILL TOGGLE (Chart) ===== */
+
+.bill-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.bill-toggle input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+/* ===== PERCENT BASE GROUP ===== */
+
+.percent-base-group {
+  display: none;
+}
+
+.percent-base-group.visible {
+  display: block;
+}
+/* ===== PRINT STYLES ===== */
+@media print {
+  @page { margin: 15mm; }
+  body { background: white; color: black; }
+  /* Hide everything except the report page */
+  .sidebar, .bottom-nav, .top-header, .toast-container, .modal-overlay,
+  .nav-item, .sidebar-item,
+  #toastContainer, #modalOverlay,
+  .page-section:not(#page-report),
+  .report-header-buttons,
+  .no-print { display: none !important; }
+  .main-content { margin: 0 !important; max-width: 100% !important; padding: 0 !important; }
+  #page-report { display: block !important; }
+  #page-report .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; page-break-inside: avoid; }
+  #page-report canvas { max-width: 100% !important; }
+  #page-report .btn { display: none !important; }
+}
+/* ===== RESPONSIVE: TABLET (480px+) ===== */
+@media (min-width: 481px) {
+  .main-content {
+    padding: 0 28px 28px;
+    padding-top: var(--header-height);
+  }
+  .top-header {
+    padding: 16px 0 12px;
+  }
+  .grid-4 { gap: 16px; }
+  .card { padding: 20px; }
+}
+
+/* ===== RESPONSIVE: DESKTOP (1024px+) ===== */
+@media (min-width: 1024px) {
+  .sidebar { display: flex; }
+  .bottom-nav { display: none; }
+  .main-content {
+    margin-left: var(--sidebar-width);
+    max-width: calc(1200px - var(--sidebar-width));
+    padding: 0 36px 36px;
+    padding-top: 28px;
+  }
+  .top-header { position: static; padding: 0 0 24px; }
+  .top-header h1 { font-size: 1.5rem; }
+  .grid-4 { gap: 20px; }
+  .card { padding: 24px; margin-bottom: 16px; }
+}
+
+/* ===== TAB NAV INDICATOR ===== */
+.nav-item { position: relative; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--primary);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-item.active::after { transform: translateX(-50%) scaleX(1); }
+
+/* ===== EMPTY STATE POLISH ===== */
+.empty-state { padding: 56px 16px; }
+.empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.6; }
+.empty-state .empty-text { font-size: 1.05rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.empty-state .empty-hint { font-size: 0.85rem; color: var(--text-muted); max-width: 280px; margin: 0 auto; line-height: 1.5; }
+
+/* ===== CHART EXPAND MODAL ===== */
+.chart-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: chartModalFadeIn 0.2s ease;
+}
+.chart-modal {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  max-width: min(90vw, 800px);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  animation: chartModalScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.chart-modal .heatmap-grid {
+  max-width: 500px;
+  margin: 0 auto;
+}
+.chart-modal .heatmap-day {
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 0.85rem;
+}
+.chart-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+.chart-modal-close:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* ===== CHART EXPAND (MODAL) — Issues 1&4 ===== */
+/* Dimmed backdrop */
+.chart-expand-overlay {
+  position: fixed !important;
+  z-index: 1000 !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  animation: expandFadeIn 0.25s ease !important;
+}
+
+/* Inner modal card */
+.chart-expand-inner {
+  background: var(--card-bg) !important;
+  border-radius: 16px !important;
+  padding: 20px 24px !important;
+  max-width: 720px !important;
+  width: 92% !important;
+  max-height: 88vh !important;
+  overflow-y: auto !important;
+  position: relative !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
+  animation: expandSlideIn 0.25s ease !important;
+}
+
+.chart-expand-inner canvas {
+  max-width: 100% !important;
+  max-height: 65vh !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+/* Close button inside modal */
+.chart-expand-close {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 1 !important;
+  background: var(--danger) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  line-height: 1 !important;
+}
+
+/* Heatmap constraint inside expand modal (Issue 2) */
+.chart-expand-inner .heatmap-grid {
+  max-width: 480px !important;
+  margin: 0 auto !important;
+}
+.chart-expand-inner .heatmap-day {
+  width: 54px !important;
+  height: 54px !important;
+  font-size: 0.85rem !important;
+}
+.chart-expand-inner #expandPieChart {
+  width: 100% !important;
+  max-width: 650px !important;
+  height: 400px !important;
+  margin: 0 auto !important;
+  display: block !important;
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
+/* Ensure main pie chart receives mouse events */
+#pieChart {
+  pointer-events: auto;
+}
+
+/* ===== SETTINGS NAV CARD ===== */
+
+.settings-nav-card {
+  border-left: 4px solid var(--primary);
+  padding: 12px;
+  cursor: pointer;
+}
+
+.settings-nav-card .settings-nav-icon {
+  font-size: 1.2rem;
+}
+
+.settings-nav-card .settings-nav-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.settings-nav-card .settings-nav-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.settings-nav-card .settings-nav-arrow {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--primary);
+}
+
+.settings-nav-card .settings-nav-hint {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+</style>
 </head>
 <body>
 
@@ -1661,34 +1650,34 @@ ul, ol { list-style: none; }
 
     <!-- Main content -->
     <main class="main-content" id="mainContent">
-    <!-- Top header -->
-    <div class="top-header" id="topHeader">
-      <h1 id="pageTitle">总览</h1>
-    </div>
+      <!-- Top header -->
+      <div class="top-header" id="topHeader">
+        <h1 id="pageTitle">总览</h1>
+      </div>
 
-    <!-- 总览 (Overview) -->
-    <section class="page-section active" id="page-overview" data-page="overview"></section>
+      <!-- 总览 (Overview) -->
+      <section class="page-section active" id="page-overview" data-page="overview"></section>
 
-    <!-- 记账 (Add Record) -->
-    <section class="page-section" id="page-add" data-page="add"></section>
+      <!-- 记账 (Add Record) -->
+      <section class="page-section" id="page-add" data-page="add"></section>
 
-    <!-- 流水 (Records) -->
-    <section class="page-section" id="page-records" data-page="records"></section>
+      <!-- 流水 (Records) -->
+      <section class="page-section" id="page-records" data-page="records"></section>
 
-    <!-- 分类 (Categories) -->
-    <section class="page-section" id="page-categories" data-page="categories"></section>
+      <!-- 分类 (Categories) -->
+      <section class="page-section" id="page-categories" data-page="categories"></section>
 
-    <!-- 统计 (Statistics) -->
-    <section class="page-section" id="page-stats" data-page="stats"></section>
+      <!-- 统计 (Statistics) -->
+      <section class="page-section" id="page-stats" data-page="stats"></section>
 
-    <!-- 报告 (Report) -->
-    <section class="page-section" id="page-report" data-page="report"></section>
+      <!-- 报告 (Report) -->
+      <section class="page-section" id="page-report" data-page="report"></section>
 
-    <!-- 设置 (Settings) -->
-    <section class="page-section" id="page-settings" data-page="settings"></section>
+      <!-- 设置 (Settings) -->
+      <section class="page-section" id="page-settings" data-page="settings"></section>
 
-    <!-- 假设分析 (What-If) -->
-    <section class="page-section" id="page-whatif" data-page="whatif"></section>
+      <!-- 假设分析 (What-If) -->
+      <section class="page-section" id="page-whatif" data-page="whatif"></section>
     </main>
   </div>
 
@@ -1758,7 +1747,6 @@ function getMonthKey(dateStr) {
   const d = new Date(dateStr);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
-
 /* ============================================================
    DataStore
    ============================================================ */
@@ -2193,7 +2181,6 @@ const DataStore = {
     this.save();
   }
 };
-
 /* ============================================================
    EXCEL EXPORT — Generates a real .xlsx-compatible XML Spreadsheet
    with formulas (SUM, AVERAGE, MAX, MIN, IF, etc.) so the user
@@ -2658,7 +2645,6 @@ function exportToExcel() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-
 /* ============================================================
    STATISTICS ENGINE
    ============================================================ */
@@ -2892,7 +2878,6 @@ const StatsEngine = {
     return result;
   }
 };
-
 /* ============================================================
    SIMULATION ENGINE — What-If projection calculations
    ============================================================ */
@@ -3143,7 +3128,6 @@ const SimulationEngine = {
     return this.run(month, {});
   }
 };
-
 /* ============================================================
    ROUTER
    ============================================================ */
@@ -3198,7 +3182,6 @@ document.querySelectorAll('.nav-item, .sidebar-item').forEach(el => {
     }
   });
 });
-
 /* ============================================================
    UI HELPERS
    ============================================================ */
@@ -3510,6 +3493,75 @@ function getRootAncestor(catId) {
     cat = DataStore.getCategory(cat.parentId);
   }
   return cat;
+}
+let selectedCategoryId = null;
+
+function openCategoryPicker(context) {
+  const cats = DataStore.getRootCategories();
+  const billCats = DataStore.getBillCategories();
+  let html = '<div class="modal-title">选择分类</div><div style="max-height:50vh;overflow-y:auto">';
+
+  // Regular categories section
+  html += '<div class="text-sm font-semibold" style="padding:6px 4px;color:var(--text-secondary)">日常消费</div>';
+  html += buildCategoryTreePicker(cats, 0, context);
+
+  // Bill categories section
+  if (billCats.length > 0) {
+    html += '<div class="picker-section-header">📋 月账单</div>';
+    billCats.forEach(cat => {
+      html += `
+        <div class="picker-bill-item"
+             onclick="selectCategory('${cat.id}','${context}')">
+          <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block"></span>
+          <span>${escHtml(cat.icon)}</span>
+          <span>${escHtml(cat.name)}</span>
+          <span class="picker-bill-badge">📋 账单</span>
+        </div>
+      `;
+    });
+  }
+
+  html += '</div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>';
+  showModal(html);
+}
+
+function buildCategoryTreePicker(cats, depth, context) {
+  let html = '';
+  cats.forEach(cat => {
+    const children = DataStore.getChildren(cat.id);
+    const indent = depth * 20;
+    html += `
+      <div style="padding:8px 12px;cursor:pointer;border-radius:var(--radius-sm);transition:var(--transition-fast);display:flex;align-items:center;gap:8px;margin-left:${indent}px"
+           onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"
+           onclick="selectCategory('${cat.id}','${context}')">
+        <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block"></span>
+        <span>${escHtml(cat.icon)}</span>
+        <span>${escHtml(cat.name)}</span>
+      </div>
+    `;
+    if (children.length) {
+      html += buildCategoryTreePicker(children, depth + 1, context);
+    }
+  });
+  return html;
+}
+
+function selectCategory(catId, context) {
+  const cat = DataStore.getCategory(catId);
+  if (!cat) return;
+  selectedCategoryId = catId;
+  const displayAdd = document.getElementById('addCategoryDisplay');
+  const displayEdit = document.getElementById('editCategoryDisplay');
+  const html = `<span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block;vertical-align:middle"></span> ${escHtml(cat.icon)} ${escHtml(cat.name)}`;
+  if (displayAdd) {
+    displayAdd.innerHTML = html;
+    displayAdd.style.color = 'var(--text-primary)';
+  }
+  if (displayEdit) {
+    displayEdit.innerHTML = html;
+    displayEdit.style.color = 'var(--text-primary)';
+  }
+  closeModal();
 }
 
 /* ============================================================
@@ -3844,7 +3896,60 @@ function renderOverview() {
     drawSparkline('sparklineChart', last7);
   }, 50);
 }
+function refreshOverviewBudget() {
+  const now = new Date();
+  const month = getMonthKey(now.toISOString());
+  const includeBills = isBillToggleChecked('overviewBudget');
+  const monthTotal = includeBills ? StatsEngine.getMonthTotal(month) : StatsEngine.getVariableSpending(month);
+  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
+  if (!budget) return;
 
+  const totalBills = DataStore.getBillTotal(month);
+  const savingsTarget = DataStore.getSavingsTarget();
+  const percentBase = DataStore.getPercentBase();
+  const netDisposable = Math.max(0, budget - totalBills);
+  const baseAmount = percentBase === 'net' ? netDisposable : budget;
+  const targetAmount = (() => {
+    const t = savingsTarget;
+    if (t.type === 'fixed') return t.fixedAmount || 0;
+    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
+    return 0;
+  })();
+  const spendableBudget = Math.max(0, netDisposable - targetAmount);
+  const budgetPct = includeBills
+    ? (budget > 0 ? (monthTotal / budget) * 100 : 0)
+    : (spendableBudget > 0 ? (monthTotal / spendableBudget) * 100 : 0);
+
+  // Redraw ring
+  const budgetOverspend = budgetPct > 100;
+  drawRing('budgetRing', Math.min(budgetPct, 200) / 100, budgetOverspend ? '#EF4444' : '#6366F1',
+    (budgetOverspend ? '+' : '') + budgetPct.toFixed(0) + '%', '#EF4444');
+
+  // Update label below ring
+  const parent = document.getElementById('budgetRing')?.parentElement;
+  if (!parent) return;
+  const labelEl = parent.querySelector('.text-sm.text-secondary');
+  if (labelEl) {
+    labelEl.textContent = budgetPct > 100
+      ? '超支 ' + formatMoney(monthTotal - (includeBills ? budget : spendableBudget))
+      : formatMoney(monthTotal) + ' / ' + formatMoney(includeBills ? budget : spendableBudget);
+    labelEl.style.color = budgetPct > 100 ? 'var(--danger)' : '';
+    labelEl.style.fontWeight = budgetPct > 100 ? '600' : '';
+  }
+
+  // Update bottom formula text
+  const formulaEl = parent.querySelector('.text-xs.text-muted');
+  if (formulaEl) {
+    formulaEl.remove();
+  }
+  if (targetAmount > 0 && budget > 0) {
+    const newFormula = document.createElement('div');
+    newFormula.className = 'text-xs text-muted mt-4';
+    newFormula.textContent = `月收入 ${formatMoney(budget)}` + (totalBills > 0 ? ` − 账单 ${formatMoney(totalBills)}` : '') + ` − 储蓄 ${formatMoney(targetAmount)} = 日常可用 ${formatMoney(spendableBudget)}`;
+    parent.appendChild(newFormula);
+  }
+}
 /* ===== THEME-AWARE COLORS ===== */
 function getThemeColors() {
   const s = getComputedStyle(document.documentElement);
@@ -3857,7 +3962,6 @@ function getThemeColors() {
     cardBg: s.getPropertyValue('--card-bg').trim() || '#FFFFFF',
   };
 }
-
 /* ===== BUDGET PROGRESS CARD ===== */
 let budgetProgressSort = localStorage.getItem('budgetProgressSort') || 'usage';
 let budgetProgressView = localStorage.getItem('budgetProgressView') || 'solid';
@@ -4210,7 +4314,6 @@ function renderBudgetProgressCardInner(month) {
   console.log('[budgetProgress] rendered', rows.length, 'rows');
   return html;
 }
-
 /* ============================================================
    CANVAS DRAWING HELPERS
    ============================================================ */
@@ -4324,7 +4427,6 @@ function drawSparkline(canvasId, data) {
     ctx.fill();
   });
 }
-
 /* ============================================================
    RENDER: Add Record Page
    ============================================================ */
@@ -4390,77 +4492,6 @@ function renderAddPage() {
     this.value = val;
   });
 }
-
-let selectedCategoryId = null;
-
-function openCategoryPicker(context) {
-  const cats = DataStore.getRootCategories();
-  const billCats = DataStore.getBillCategories();
-  let html = '<div class="modal-title">选择分类</div><div style="max-height:50vh;overflow-y:auto">';
-
-  // Regular categories section
-  html += '<div class="text-sm font-semibold" style="padding:6px 4px;color:var(--text-secondary)">日常消费</div>';
-  html += buildCategoryTreePicker(cats, 0, context);
-
-  // Bill categories section
-  if (billCats.length > 0) {
-    html += '<div class="picker-section-header">📋 月账单</div>';
-    billCats.forEach(cat => {
-      html += `
-        <div class="picker-bill-item"
-             onclick="selectCategory('${cat.id}','${context}')">
-          <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block"></span>
-          <span>${escHtml(cat.icon)}</span>
-          <span>${escHtml(cat.name)}</span>
-          <span class="picker-bill-badge">📋 账单</span>
-        </div>
-      `;
-    });
-  }
-
-  html += '</div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>';
-  showModal(html);
-}
-
-function buildCategoryTreePicker(cats, depth, context) {
-  let html = '';
-  cats.forEach(cat => {
-    const children = DataStore.getChildren(cat.id);
-    const indent = depth * 20;
-    html += `
-      <div style="padding:8px 12px;cursor:pointer;border-radius:var(--radius-sm);transition:var(--transition-fast);display:flex;align-items:center;gap:8px;margin-left:${indent}px"
-           onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''"
-           onclick="selectCategory('${cat.id}','${context}')">
-        <span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block"></span>
-        <span>${escHtml(cat.icon)}</span>
-        <span>${escHtml(cat.name)}</span>
-      </div>
-    `;
-    if (children.length) {
-      html += buildCategoryTreePicker(children, depth + 1, context);
-    }
-  });
-  return html;
-}
-
-function selectCategory(catId, context) {
-  const cat = DataStore.getCategory(catId);
-  if (!cat) return;
-  selectedCategoryId = catId;
-  const displayAdd = document.getElementById('addCategoryDisplay');
-  const displayEdit = document.getElementById('editCategoryDisplay');
-  const html = `<span style="width:10px;height:10px;border-radius:50%;background:${cat.color};display:inline-block;vertical-align:middle"></span> ${escHtml(cat.icon)} ${escHtml(cat.name)}`;
-  if (displayAdd) {
-    displayAdd.innerHTML = html;
-    displayAdd.style.color = 'var(--text-primary)';
-  }
-  if (displayEdit) {
-    displayEdit.innerHTML = html;
-    displayEdit.style.color = 'var(--text-primary)';
-  }
-  closeModal();
-}
-
 function submitRecord(e) {
   e.preventDefault();
   const amountEl = document.getElementById('addAmount');
@@ -5824,7 +5855,6 @@ function saveCategoryEdit(catId) {
   showToast('✅ 名称已更新');
   renderCategories();
 }
-
 /* ============================================================
    RENDER: Statistics Page
    ============================================================ */
@@ -5868,7 +5898,6 @@ function updateDrillCharts() {
   drawBarChart('barChart', statsMonth, sD, eD);
   syncPieDrillBar();
 }
-
 /* ============================================================
    CALENDAR HEATMAP
    ============================================================ */
@@ -6067,7 +6096,6 @@ function showDayRecords(dateStr) {
   });
 
   target.innerHTML = html;
-}
 
 /* ===== CHART EXPAND ===== */
 let _expandedChart = null; // 'heatmap' or 'pie'
@@ -6265,7 +6293,6 @@ function shrinkChart() {
   document.body.style.overflow = '';
   _expandedChart = null;
 }
-
 /* ===== MONTH-OVER-MONTH COMPARISON ===== */
 function toggleMonthCompare() {
   showMonthCompare = !showMonthCompare;
@@ -6373,7 +6400,6 @@ function drawCompareBarChart(canvasId, month) {
   ctx.fillStyle = '#10B981';
   ctx.fillText('🟢 上月', padding.left + 80, 12);
 }
-
 /* ============================================================
    BILL TOGGLE — Include/Exclude Bills from Charts
    ============================================================ */
@@ -6472,7 +6498,6 @@ function isBillToggleChecked(chartId) {
   const stored = localStorage.getItem('chartBillToggle_' + chartId);
   return stored !== null ? stored === '1' : true;
 }
-
 function renderStats() {
   console.log('[renderStats] rendering for month:', statsMonth, 'custom:', statsStartDate, statsEndDate);
   const el = document.getElementById('page-stats');
@@ -6717,7 +6742,6 @@ function renderStats() {
     }
   }, 50);
 }
-
 function changeStatsMonth(month) {
   statsMonth = month;
   statsStartDate = '';
@@ -6752,7 +6776,6 @@ function resetStatsDrill() {
   }
   updateDrillCharts();
 }
-
 /* ============================================================
    CANVAS CHARTS
    ============================================================ */
@@ -6832,7 +6855,6 @@ function getRawChartData(month, startDate, endDate, options = {}) {
     .filter(x => x.cat)
     .sort((a,b) => b.total - a.total);
 }
-
 function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAnim) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -7220,7 +7242,6 @@ function drawPieChart(canvasId, month, startDate, endDate, onDrill, height, noAn
     requestAnimationFrame(animatePie);
   }
 }
-
 // Helper: lighten a hex color by a percentage
 function lightenColor(hex, pct) {
   const num = parseInt(hex.replace('#', ''), 16);
@@ -7237,7 +7258,6 @@ function darkenColor(hex, pct) {
   const b = Math.max(0, (num & 0x0000FF) - Math.round(2.55 * pct));
   return '#' + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
 }
-
 function drawLineChart(canvasId, month, startDate, endDate) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -7402,7 +7422,6 @@ function drawLineChart(canvasId, month, startDate, endDate) {
 
   requestAnimationFrame(animateLine);
 }
-
 function drawBarChart(canvasId, month, startDate, endDate) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -7513,7 +7532,6 @@ function drawBarChart(canvasId, month, startDate, endDate) {
     }
   };
 }
-
 function drawMonthlyChart(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -7610,7 +7628,6 @@ function drawMonthlyChart(canvasId) {
     ctx.fillText(formatMoney(p.total), p.x, p.y - 10);
   });
 }
-
 function drawSavingsChart(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -7707,7 +7724,6 @@ function drawSavingsChart(canvasId) {
   ctx.stroke();
   ctx.setLineDash([]);
 }
-
 function downloadChart(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -7716,7 +7732,6 @@ function downloadChart(canvasId) {
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
-
 /* ============================================================
    RENDER: Settings Page
    ============================================================ */
@@ -7908,7 +7923,231 @@ function confirmClearAll() {
   showToast('✅ 所有数据已清除');
   navigateTo('overview');
 }
+/* ============================================================
+   RENDER: Report Page
+   ============================================================ */
+let reportMonth = '';
 
+function renderReport() {
+  const el = document.getElementById('page-report');
+  const now = new Date();
+  reportMonth = reportMonth || getMonthKey(now.toISOString());
+  const month = reportMonth;
+
+  const monthTotal = StatsEngine.getMonthTotal(month);
+  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
+  const savingsTarget = DataStore.getSavingsTarget();
+  const dailyTotals = StatsEngine.getDailyTotals(month);
+  const catTotals = StatsEngine.getCategoryTotals(month);
+
+  // Savings target amount
+  const percentBase = DataStore.getPercentBase();
+  const totalBills = DataStore.getBillTotal(month);
+  const paidBillsRep = StatsEngine.getBillSpendingActual(month);
+  const unpaidPlannedBillsRep = Math.max(0, totalBills - paidBillsRep);
+  const netDisposable = Math.max(0, budget - totalBills);
+  const baseAmount = percentBase === 'net' ? netDisposable : budget;
+  const targetAmount = (() => {
+    const t = savingsTarget;
+    if (t.type === 'fixed') return t.fixedAmount || 0;
+    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
+    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
+    return 0;
+  })();
+  const spendableBudget = Math.max(0, netDisposable - targetAmount);
+  const variableSpending = StatsEngine.getVariableSpending(month);
+  const actualSavings = Math.max(0, budget - (monthTotal + unpaidPlannedBillsRep));
+  const savingsRate = budget > 0 ? (actualSavings / budget * 100) : 0;
+  const predicted = StatsEngine.getPredictedTotal(month);
+  const savingsPred = StatsEngine.getSavingsPrediction(month) - unpaidPlannedBillsRep;
+
+  // Aggregate to root categories for table
+  const rootTotals = {};
+  Object.entries(catTotals).forEach(([id, total]) => {
+    const rootId = getRootAncestorId(id);
+    if (rootId) rootTotals[rootId] = (rootTotals[rootId] || 0) + total;
+  });
+  const rootCats = DataStore.getRootCategories();
+  const catTableRows = rootCats.map(c => {
+    const spent = rootTotals[c.id] || 0;
+    const catBudget = DataStore.getCategoryBudget(c.id, month).value || 0;
+    const remaining = catBudget > 0 ? catBudget - spent : 0;
+    const pct = catBudget > 0 ? (spent / catBudget * 100) : 0;
+    const status = catBudget > 0 ? (spent <= catBudget ? '✅ 预算内' : '⚠️ 超支') : '—';
+    return { cat: c, spent, catBudget, remaining, pct, status };
+  }).sort((a,b) => b.spent - a.spent);
+
+  // TOP 5
+  const top5 = [...catTableRows].filter(r => r.spent > 0).slice(0, 5);
+
+  const parts = month.split('-');
+  const year = parts[0], mon = parts[1];
+
+  el.innerHTML = `
+    <div class="report-container">
+      <!-- Header -->
+      <div class="card mb-16 report-header-buttons">
+        <div class="flex items-center gap-12" style="flex-wrap:wrap">
+          <div class="flex items-center gap-8">
+            <label class="text-sm text-secondary">选择月份</label>
+            <input type="month" id="reportMonthInput" class="input-field" style="width:160px" value="${month}" onchange="changeReportMonth(this.value)">
+          </div>
+          <button class="btn btn-outline" onclick="printReport()">🖨️ 打印报告</button>
+        </div>
+      </div>
+
+      <!-- Summary row -->
+      <div class="grid-4 mb-16">
+        <div class="card" style="text-align:center">
+          <div class="card-title">月收入</div>
+          <div class="text-xl font-bold" style="color:var(--primary)">${budget ? formatMoney(budget) : '未设置'}</div>
+          ${totalBills > 0 ? `<div class="text-xs text-muted">净收入 ${formatMoney(Math.max(0, budget - totalBills))}</div>` : ''}
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="card-title">总支出</div>
+          <div class="text-xl font-bold" style="color:${monthTotal <= spendableBudget ? 'var(--success)' : 'var(--danger)'}">${formatMoney(monthTotal)}</div>
+          ${(() => {
+            const billActual = StatsEngine.getBillSpendingActual(month);
+            if (billActual > 0) {
+              const varSpend = monthTotal - billActual;
+              return `<div class="text-xs text-muted mt-4">日常 ${formatMoney(varSpend)} · 账单 ${formatMoney(billActual)}</div>`;
+            }
+            return '';
+          })()}
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="card-title">储蓄</div>
+          <div class="text-xl font-bold" style="color:${actualSavings >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(actualSavings)}</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="card-title">储蓄率</div>
+          <div class="text-xl font-bold" style="color:${savingsRate >= 20 ? 'var(--success)' : (savingsRate > 0 ? 'var(--warning)' : 'var(--danger)')}">${savingsRate.toFixed(1)}%</div>
+        </div>
+      </div>
+
+      <!-- Budget & Savings rings -->
+      <div class="grid-2 mb-16">
+        <div class="card" style="text-align:center">
+          <div class="card-title">收支进度</div>
+          <canvas id="reportBudgetRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
+          <div class="text-sm text-secondary">
+            ${budget > 0 ? formatMoney(monthTotal) + ' / ' + formatMoney(budget) : '未设置月收入'}
+            ${totalBills > 0 ? `<div class="text-xs text-muted mt-4">净收入 ${formatMoney(netDisposable)} · 日常可用 ${formatMoney(spendableBudget)}</div>` : ''}
+          </div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="card-title">预计储蓄/储蓄目标</div>
+          <canvas id="reportSavingsRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
+          <div class="text-sm text-secondary">
+            ${targetAmount > 0 ? formatMoney(savingsPred) + ' / ' + formatMoney(targetAmount) : '未设置目标'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Category breakdown table -->
+      <div class="card mb-16">
+        <div class="card-title">分类支出明细</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border);color:var(--text-secondary);font-size:0.78rem">
+                <th style="text-align:left;padding:8px 4px">分类</th>
+                <th style="text-align:right;padding:8px 4px">预算 (RM)</th>
+                <th style="text-align:right;padding:8px 4px">支出 (RM)</th>
+                <th style="text-align:right;padding:8px 4px">占比</th>
+                <th style="text-align:right;padding:8px 4px">剩余 (RM)</th>
+                <th style="text-align:center;padding:8px 4px">状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${catTableRows.map(r => {
+                const bgColor = r.spent > 0 ? (r.catBudget > 0 && r.spent > r.catBudget ? '#FFF5F5' : '') : '';
+                return `
+                <tr style="border-bottom:1px solid var(--border);background:${bgColor}">
+                  <td style="padding:8px 4px">${escHtml(r.cat.icon)} ${escHtml(r.cat.name)}</td>
+                  <td style="text-align:right;padding:8px 4px">${r.catBudget > 0 ? formatMoney(r.catBudget) : '—'}</td>
+                  <td style="text-align:right;padding:8px 4px;font-weight:600">${r.spent > 0 ? formatMoney(r.spent) : '—'}</td>
+                  <td style="text-align:right;padding:8px 4px">${monthTotal > 0 ? (r.spent/monthTotal*100).toFixed(1) + '%' : '—'}</td>
+                  <td style="text-align:right;padding:8px 4px;color:${r.catBudget > 0 ? (r.remaining >= 0 ? 'var(--success)' : 'var(--danger)') : 'var(--text-muted)'}">${r.catBudget > 0 ? (r.remaining >= 0 ? formatMoney(r.remaining) : '-' + formatMoney(Math.abs(r.remaining))) : '—'}</td>
+                  <td style="text-align:center;padding:8px 4px;font-size:0.78rem">${r.status}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="border-top:2px solid var(--border);font-weight:700">
+                <td style="padding:8px 4px">合计</td>
+                <td style="text-align:right;padding:8px 4px">${budget > 0 ? formatMoney(budget) : '—'}</td>
+                <td style="text-align:right;padding:8px 4px;color:var(--primary)">${formatMoney(monthTotal)}</td>
+                <td style="text-align:right;padding:8px 4px">100%</td>
+                <td style="text-align:right;padding:8px 4px;color:${budget - monthTotal >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(budget - monthTotal)}</td>
+                <td style="text-align:center;padding:8px 4px">${budget > 0 ? (monthTotal <= budget ? '✅' : '⚠️') : '—'}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Daily trend sparkline -->
+      <div class="card mb-16">
+        <div class="card-title">每日消费趋势 (${year}年${mon}月)</div>
+        <canvas id="reportSparkline" width="600" height="160" style="width:100%;height:80px"></canvas>
+      </div>
+
+      <!-- TOP 5 spending -->
+      <div class="card mb-16">
+        <div class="card-title">支出排行 TOP 5</div>
+        ${top5.length > 0 ? top5.map((r, i) => `
+          <div class="flex items-center justify-between" style="padding:6px 0;border-bottom:1px solid var(--border)">
+            <div class="flex items-center gap-8">
+              <span style="width:20px;height:20px;border-radius:50%;background:${r.cat.color};display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:white;font-weight:700">${i+1}</span>
+              <span>${escHtml(r.cat.icon)}</span>
+              <span class="font-semibold">${escHtml(r.cat.name)}</span>
+            </div>
+            <span class="font-bold" style="color:var(--primary)">${formatMoney(r.spent)}</span>
+          </div>
+        `).join('') : '<div class="text-sm text-muted">暂无支出</div>'}
+      </div>
+
+      <!-- Savings prediction summary -->
+      <div class="card mb-16" style="border-left:4px solid ${savingsPred >= 0 ? 'var(--success)' : 'var(--danger)'}">
+        <div class="card-title">💰 储蓄预测总结</div>
+        <div class="text-sm" style="line-height:1.8">
+          ${budget > 0 ? `
+            <p>📅 ${year}年${mon}月收入为 <strong>${formatMoney(budget)}</strong>。${totalBills > 0 ? `账单合计 <strong>${formatMoney(totalBills)}</strong>，净收入 <strong>${formatMoney(netDisposable)}</strong>。` : ''}</p>
+            ${targetAmount > 0 ? `<p>🎯 储蓄目标 <strong>${formatMoney(targetAmount)}</strong>，日常可用 <strong>${formatMoney(spendableBudget)}</strong>。</p>` : ''}
+            <p>📊 本月至今已消费 <strong>${formatMoney(monthTotal)}</strong>，日均 ${dailyTotals.length > 0 ? formatMoney(monthTotal / Math.max(1, dailyTotals.filter(d => d.total > 0).length)) : 0}。</p>
+            <p>${savingsPred >= 0
+              ? `📈 如果维持当前消费习惯，预计月末可存 <strong style="color:var(--success)">${formatMoney(savingsPred)}</strong>。`
+              : `⚠️ 按当前趋势预计超支 <strong style="color:var(--danger)">${formatMoney(Math.abs(savingsPred))}</strong>，建议控制支出。`}
+            </p>
+          ` : '<p>💡 在「月账单中心」设定月收入，在「设置」设定储蓄目标后可查看完整预测。</p>'}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Draw rings and sparkline
+  setTimeout(() => {
+    const budgetPct = spendableBudget > 0 ? (monthTotal / spendableBudget) : (budget > 0 ? monthTotal / budget : 0);
+    drawRing('reportBudgetRing', Math.min(budgetPct, 1), budgetPct > 1 ? '#EF4444' : '#6366F1',
+      (budgetPct * 100).toFixed(0) + '%', '#EF4444');
+    const savingsPct = targetAmount > 0 ? Math.min(savingsPred / targetAmount, 1) : 0;
+    drawRing('reportSavingsRing', savingsPct, savingsPct >= 1 ? '#10B981' : (savingsPct > 0 ? '#F59E0B' : '#94A3B8'),
+      (savingsPct * 100).toFixed(0) + '%');
+    drawSparkline('reportSparkline', dailyTotals.map(d => ({ total: d.total, day: d.day })));
+  }, 50);
+}
+
+function changeReportMonth(month) {
+  reportMonth = month;
+  renderReport();
+}
+
+function printReport() {
+  // Navigate to report page first, then print
+  navigateTo('report');
+  setTimeout(() => { window.print(); }, 100);
+}
 /* ============================================================
    🔮 假设分析 — What-If Simulation Page
    ============================================================ */
@@ -8635,233 +8874,6 @@ function attachWhatIfListeners(month) {
     inp.addEventListener('change', runWhatIfSimulation);
   });
 }
-
-/* ============================================================
-   RENDER: Report Page
-   ============================================================ */
-let reportMonth = '';
-
-function renderReport() {
-  const el = document.getElementById('page-report');
-  const now = new Date();
-  reportMonth = reportMonth || getMonthKey(now.toISOString());
-  const month = reportMonth;
-
-  const monthTotal = StatsEngine.getMonthTotal(month);
-  const budget = DataStore.getMonthlyIncome(month) || DataStore.getBudget(month);
-  const savingsTarget = DataStore.getSavingsTarget();
-  const dailyTotals = StatsEngine.getDailyTotals(month);
-  const catTotals = StatsEngine.getCategoryTotals(month);
-
-  // Savings target amount
-  const percentBase = DataStore.getPercentBase();
-  const totalBills = DataStore.getBillTotal(month);
-  const paidBillsRep = StatsEngine.getBillSpendingActual(month);
-  const unpaidPlannedBillsRep = Math.max(0, totalBills - paidBillsRep);
-  const netDisposable = Math.max(0, budget - totalBills);
-  const baseAmount = percentBase === 'net' ? netDisposable : budget;
-  const targetAmount = (() => {
-    const t = savingsTarget;
-    if (t.type === 'fixed') return t.fixedAmount || 0;
-    if (t.type === 'percent') return baseAmount * (t.percent || 0) / 100;
-    if (t.type === 'both') return (t.fixedAmount || 0) + (baseAmount * (t.percent || 0) / 100);
-    return 0;
-  })();
-  const spendableBudget = Math.max(0, netDisposable - targetAmount);
-  const variableSpending = StatsEngine.getVariableSpending(month);
-  const actualSavings = Math.max(0, budget - (monthTotal + unpaidPlannedBillsRep));
-  const savingsRate = budget > 0 ? (actualSavings / budget * 100) : 0;
-  const predicted = StatsEngine.getPredictedTotal(month);
-  const savingsPred = StatsEngine.getSavingsPrediction(month) - unpaidPlannedBillsRep;
-
-  // Aggregate to root categories for table
-  const rootTotals = {};
-  Object.entries(catTotals).forEach(([id, total]) => {
-    const rootId = getRootAncestorId(id);
-    if (rootId) rootTotals[rootId] = (rootTotals[rootId] || 0) + total;
-  });
-  const rootCats = DataStore.getRootCategories();
-  const catTableRows = rootCats.map(c => {
-    const spent = rootTotals[c.id] || 0;
-    const catBudget = DataStore.getCategoryBudget(c.id, month).value || 0;
-    const remaining = catBudget > 0 ? catBudget - spent : 0;
-    const pct = catBudget > 0 ? (spent / catBudget * 100) : 0;
-    const status = catBudget > 0 ? (spent <= catBudget ? '✅ 预算内' : '⚠️ 超支') : '—';
-    return { cat: c, spent, catBudget, remaining, pct, status };
-  }).sort((a,b) => b.spent - a.spent);
-
-  // TOP 5
-  const top5 = [...catTableRows].filter(r => r.spent > 0).slice(0, 5);
-
-  const parts = month.split('-');
-  const year = parts[0], mon = parts[1];
-
-  el.innerHTML = `
-    <div class="report-container">
-      <!-- Header -->
-      <div class="card mb-16 report-header-buttons">
-        <div class="flex items-center gap-12" style="flex-wrap:wrap">
-          <div class="flex items-center gap-8">
-            <label class="text-sm text-secondary">选择月份</label>
-            <input type="month" id="reportMonthInput" class="input-field" style="width:160px" value="${month}" onchange="changeReportMonth(this.value)">
-          </div>
-          <button class="btn btn-outline" onclick="printReport()">🖨️ 打印报告</button>
-        </div>
-      </div>
-
-      <!-- Summary row -->
-      <div class="grid-4 mb-16">
-        <div class="card" style="text-align:center">
-          <div class="card-title">月收入</div>
-          <div class="text-xl font-bold" style="color:var(--primary)">${budget ? formatMoney(budget) : '未设置'}</div>
-          ${totalBills > 0 ? `<div class="text-xs text-muted">净收入 ${formatMoney(Math.max(0, budget - totalBills))}</div>` : ''}
-        </div>
-        <div class="card" style="text-align:center">
-          <div class="card-title">总支出</div>
-          <div class="text-xl font-bold" style="color:${monthTotal <= spendableBudget ? 'var(--success)' : 'var(--danger)'}">${formatMoney(monthTotal)}</div>
-          ${(() => {
-            const billActual = StatsEngine.getBillSpendingActual(month);
-            if (billActual > 0) {
-              const varSpend = monthTotal - billActual;
-              return `<div class="text-xs text-muted mt-4">日常 ${formatMoney(varSpend)} · 账单 ${formatMoney(billActual)}</div>`;
-            }
-            return '';
-          })()}
-        </div>
-        <div class="card" style="text-align:center">
-          <div class="card-title">储蓄</div>
-          <div class="text-xl font-bold" style="color:${actualSavings >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(actualSavings)}</div>
-        </div>
-        <div class="card" style="text-align:center">
-          <div class="card-title">储蓄率</div>
-          <div class="text-xl font-bold" style="color:${savingsRate >= 20 ? 'var(--success)' : (savingsRate > 0 ? 'var(--warning)' : 'var(--danger)')}">${savingsRate.toFixed(1)}%</div>
-        </div>
-      </div>
-
-      <!-- Budget & Savings rings -->
-      <div class="grid-2 mb-16">
-        <div class="card" style="text-align:center">
-          <div class="card-title">收支进度</div>
-          <canvas id="reportBudgetRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
-          <div class="text-sm text-secondary">
-            ${budget > 0 ? formatMoney(monthTotal) + ' / ' + formatMoney(budget) : '未设置月收入'}
-            ${totalBills > 0 ? `<div class="text-xs text-muted mt-4">净收入 ${formatMoney(netDisposable)} · 日常可用 ${formatMoney(spendableBudget)}</div>` : ''}
-          </div>
-        </div>
-        <div class="card" style="text-align:center">
-          <div class="card-title">预计储蓄/储蓄目标</div>
-          <canvas id="reportSavingsRing" width="160" height="160" style="max-width:160px;margin:8px auto"></canvas>
-          <div class="text-sm text-secondary">
-            ${targetAmount > 0 ? formatMoney(savingsPred) + ' / ' + formatMoney(targetAmount) : '未设置目标'}
-          </div>
-        </div>
-      </div>
-
-      <!-- Category breakdown table -->
-      <div class="card mb-16">
-        <div class="card-title">分类支出明细</div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
-            <thead>
-              <tr style="border-bottom:2px solid var(--border);color:var(--text-secondary);font-size:0.78rem">
-                <th style="text-align:left;padding:8px 4px">分类</th>
-                <th style="text-align:right;padding:8px 4px">预算 (RM)</th>
-                <th style="text-align:right;padding:8px 4px">支出 (RM)</th>
-                <th style="text-align:right;padding:8px 4px">占比</th>
-                <th style="text-align:right;padding:8px 4px">剩余 (RM)</th>
-                <th style="text-align:center;padding:8px 4px">状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${catTableRows.map(r => {
-                const bgColor = r.spent > 0 ? (r.catBudget > 0 && r.spent > r.catBudget ? '#FFF5F5' : '') : '';
-                return `
-                <tr style="border-bottom:1px solid var(--border);background:${bgColor}">
-                  <td style="padding:8px 4px">${escHtml(r.cat.icon)} ${escHtml(r.cat.name)}</td>
-                  <td style="text-align:right;padding:8px 4px">${r.catBudget > 0 ? formatMoney(r.catBudget) : '—'}</td>
-                  <td style="text-align:right;padding:8px 4px;font-weight:600">${r.spent > 0 ? formatMoney(r.spent) : '—'}</td>
-                  <td style="text-align:right;padding:8px 4px">${monthTotal > 0 ? (r.spent/monthTotal*100).toFixed(1) + '%' : '—'}</td>
-                  <td style="text-align:right;padding:8px 4px;color:${r.catBudget > 0 ? (r.remaining >= 0 ? 'var(--success)' : 'var(--danger)') : 'var(--text-muted)'}">${r.catBudget > 0 ? (r.remaining >= 0 ? formatMoney(r.remaining) : '-' + formatMoney(Math.abs(r.remaining))) : '—'}</td>
-                  <td style="text-align:center;padding:8px 4px;font-size:0.78rem">${r.status}</td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-            <tfoot>
-              <tr style="border-top:2px solid var(--border);font-weight:700">
-                <td style="padding:8px 4px">合计</td>
-                <td style="text-align:right;padding:8px 4px">${budget > 0 ? formatMoney(budget) : '—'}</td>
-                <td style="text-align:right;padding:8px 4px;color:var(--primary)">${formatMoney(monthTotal)}</td>
-                <td style="text-align:right;padding:8px 4px">100%</td>
-                <td style="text-align:right;padding:8px 4px;color:${budget - monthTotal >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(budget - monthTotal)}</td>
-                <td style="text-align:center;padding:8px 4px">${budget > 0 ? (monthTotal <= budget ? '✅' : '⚠️') : '—'}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      <!-- Daily trend sparkline -->
-      <div class="card mb-16">
-        <div class="card-title">每日消费趋势 (${year}年${mon}月)</div>
-        <canvas id="reportSparkline" width="600" height="160" style="width:100%;height:80px"></canvas>
-      </div>
-
-      <!-- TOP 5 spending -->
-      <div class="card mb-16">
-        <div class="card-title">支出排行 TOP 5</div>
-        ${top5.length > 0 ? top5.map((r, i) => `
-          <div class="flex items-center justify-between" style="padding:6px 0;border-bottom:1px solid var(--border)">
-            <div class="flex items-center gap-8">
-              <span style="width:20px;height:20px;border-radius:50%;background:${r.cat.color};display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:white;font-weight:700">${i+1}</span>
-              <span>${escHtml(r.cat.icon)}</span>
-              <span class="font-semibold">${escHtml(r.cat.name)}</span>
-            </div>
-            <span class="font-bold" style="color:var(--primary)">${formatMoney(r.spent)}</span>
-          </div>
-        `).join('') : '<div class="text-sm text-muted">暂无支出</div>'}
-      </div>
-
-      <!-- Savings prediction summary -->
-      <div class="card mb-16" style="border-left:4px solid ${savingsPred >= 0 ? 'var(--success)' : 'var(--danger)'}">
-        <div class="card-title">💰 储蓄预测总结</div>
-        <div class="text-sm" style="line-height:1.8">
-          ${budget > 0 ? `
-            <p>📅 ${year}年${mon}月收入为 <strong>${formatMoney(budget)}</strong>。${totalBills > 0 ? `账单合计 <strong>${formatMoney(totalBills)}</strong>，净收入 <strong>${formatMoney(netDisposable)}</strong>。` : ''}</p>
-            ${targetAmount > 0 ? `<p>🎯 储蓄目标 <strong>${formatMoney(targetAmount)}</strong>，日常可用 <strong>${formatMoney(spendableBudget)}</strong>。</p>` : ''}
-            <p>📊 本月至今已消费 <strong>${formatMoney(monthTotal)}</strong>，日均 ${dailyTotals.length > 0 ? formatMoney(monthTotal / Math.max(1, dailyTotals.filter(d => d.total > 0).length)) : 0}。</p>
-            <p>${savingsPred >= 0
-              ? `📈 如果维持当前消费习惯，预计月末可存 <strong style="color:var(--success)">${formatMoney(savingsPred)}</strong>。`
-              : `⚠️ 按当前趋势预计超支 <strong style="color:var(--danger)">${formatMoney(Math.abs(savingsPred))}</strong>，建议控制支出。`}
-            </p>
-          ` : '<p>💡 在「月账单中心」设定月收入，在「设置」设定储蓄目标后可查看完整预测。</p>'}
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Draw rings and sparkline
-  setTimeout(() => {
-    const budgetPct = spendableBudget > 0 ? (monthTotal / spendableBudget) : (budget > 0 ? monthTotal / budget : 0);
-    drawRing('reportBudgetRing', Math.min(budgetPct, 1), budgetPct > 1 ? '#EF4444' : '#6366F1',
-      (budgetPct * 100).toFixed(0) + '%', '#EF4444');
-    const savingsPct = targetAmount > 0 ? Math.min(savingsPred / targetAmount, 1) : 0;
-    drawRing('reportSavingsRing', savingsPct, savingsPct >= 1 ? '#10B981' : (savingsPct > 0 ? '#F59E0B' : '#94A3B8'),
-      (savingsPct * 100).toFixed(0) + '%');
-    drawSparkline('reportSparkline', dailyTotals.map(d => ({ total: d.total, day: d.day })));
-  }, 50);
-}
-
-function changeReportMonth(month) {
-  reportMonth = month;
-  renderReport();
-}
-
-function printReport() {
-  // Navigate to report page first, then print
-  navigateTo('report');
-  setTimeout(() => { window.print(); }, 100);
-}
-
 /* ============================================================
    MONTH ROLLOVER DETECTION
    ============================================================ */
@@ -8911,7 +8923,6 @@ function showBillRolloverReminder(lastMonth, currentMonth) {
     </div>
   `);
 }
-
 /* ============================================================
    INITIALIZATION
    ============================================================ */
@@ -8959,7 +8970,6 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     return this;
   };
   }
-
 /* ============================================================
    LAN SYNC — WebRTC P2P (zero server, manual signaling)
    ============================================================ */
@@ -9407,7 +9417,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   window.confirmSyncMode = confirmSyncMode;
   window.LANSync = { open: function () { ui.showMenu(); }, sanitizeHtml: sanitizeHtml };
 
-})();
-  </script>
+
+</script>
 </body>
 </html>

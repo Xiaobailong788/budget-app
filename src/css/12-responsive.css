@@ -1,0 +1,220 @@
+/* ===== RESPONSIVE: TABLET (480px+) ===== */
+@media (min-width: 481px) {
+  .main-content {
+    padding: 0 28px 28px;
+    padding-top: var(--header-height);
+  }
+  .top-header {
+    padding: 16px 0 12px;
+  }
+  .grid-4 { gap: 16px; }
+  .card { padding: 20px; }
+}
+
+/* ===== RESPONSIVE: DESKTOP (1024px+) ===== */
+@media (min-width: 1024px) {
+  .sidebar { display: flex; }
+  .bottom-nav { display: none; }
+  .main-content {
+    margin-left: var(--sidebar-width);
+    max-width: calc(1200px - var(--sidebar-width));
+    padding: 0 36px 36px;
+    padding-top: 28px;
+  }
+  .top-header { position: static; padding: 0 0 24px; }
+  .top-header h1 { font-size: 1.5rem; }
+  .grid-4 { gap: 20px; }
+  .card { padding: 24px; margin-bottom: 16px; }
+}
+
+/* ===== TAB NAV INDICATOR ===== */
+.nav-item { position: relative; }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--primary);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-item.active::after { transform: translateX(-50%) scaleX(1); }
+
+/* ===== EMPTY STATE POLISH ===== */
+.empty-state { padding: 56px 16px; }
+.empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.6; }
+.empty-state .empty-text { font-size: 1.05rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.empty-state .empty-hint { font-size: 0.85rem; color: var(--text-muted); max-width: 280px; margin: 0 auto; line-height: 1.5; }
+
+/* ===== CHART EXPAND MODAL ===== */
+.chart-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: chartModalFadeIn 0.2s ease;
+}
+.chart-modal {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  max-width: min(90vw, 800px);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  animation: chartModalScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.chart-modal .heatmap-grid {
+  max-width: 500px;
+  margin: 0 auto;
+}
+.chart-modal .heatmap-day {
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 0.85rem;
+}
+.chart-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+.chart-modal-close:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* ===== CHART EXPAND (MODAL) — Issues 1&4 ===== */
+/* Dimmed backdrop */
+.chart-expand-overlay {
+  position: fixed !important;
+  z-index: 1000 !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.4) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  animation: expandFadeIn 0.25s ease !important;
+}
+
+/* Inner modal card */
+.chart-expand-inner {
+  background: var(--card-bg) !important;
+  border-radius: 16px !important;
+  padding: 20px 24px !important;
+  max-width: 720px !important;
+  width: 92% !important;
+  max-height: 88vh !important;
+  overflow-y: auto !important;
+  position: relative !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
+  animation: expandSlideIn 0.25s ease !important;
+}
+
+.chart-expand-inner canvas {
+  max-width: 100% !important;
+  max-height: 65vh !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+/* Close button inside modal */
+.chart-expand-close {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 1 !important;
+  background: var(--danger) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 0.9rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  line-height: 1 !important;
+}
+
+/* Heatmap constraint inside expand modal (Issue 2) */
+.chart-expand-inner .heatmap-grid {
+  max-width: 480px !important;
+  margin: 0 auto !important;
+}
+.chart-expand-inner .heatmap-day {
+  width: 54px !important;
+  height: 54px !important;
+  font-size: 0.85rem !important;
+}
+.chart-expand-inner #expandPieChart {
+  width: 100% !important;
+  max-width: 650px !important;
+  height: 400px !important;
+  margin: 0 auto !important;
+  display: block !important;
+  pointer-events: auto !important;
+  touch-action: auto !important;
+}
+
+/* Ensure main pie chart receives mouse events */
+#pieChart {
+  pointer-events: auto;
+}
+
+/* ===== SETTINGS NAV CARD ===== */
+
+.settings-nav-card {
+  border-left: 4px solid var(--primary);
+  padding: 12px;
+  cursor: pointer;
+}
+
+.settings-nav-card .settings-nav-icon {
+  font-size: 1.2rem;
+}
+
+.settings-nav-card .settings-nav-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.settings-nav-card .settings-nav-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.settings-nav-card .settings-nav-arrow {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--primary);
+}
+
+.settings-nav-card .settings-nav-hint {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}

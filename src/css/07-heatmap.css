@@ -1,0 +1,93 @@
+/* ===== CALENDAR HEATMAP ===== */
+.heatmap-container { user-select: none; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-top: 8px;
+}
+.heatmap-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  min-height: 36px;
+}
+.heatmap-day:hover {
+  transform: scale(1.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 2;
+}
+.heatmap-day.future {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+.heatmap-day.empty-day {
+  background: #F1F5F9 !important;
+  color: #94A3B8;
+}
+[data-theme="dark"] .heatmap-day.empty-day {
+  background: #1E293B !important;
+  color: #64748B;
+}
+.heatmap-day .heatmap-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1E293B;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  z-index: 10;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .heatmap-day .heatmap-tooltip { background: #0F172A; }
+.heatmap-day:hover .heatmap-tooltip { display: block; }
+.heatmap-weekday {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 2px 0;
+}
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.heatmap-legend-item {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+.heatmap-legend-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+.heatmap-day-popup {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.heatmap-day-popup-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}

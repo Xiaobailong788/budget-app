@@ -1,0 +1,100 @@
+/* ===== RECORD CARD POLISH ===== */
+.record-card {
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.record-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.record-card:active {
+  transform: scale(0.99);
+}
+/* ===== COMPACT RECORD VIEW ===== */
+.record-card.compact {
+  padding: 6px 10px;
+  margin-bottom: 3px;
+  border-radius: var(--radius-sm);
+}
+.record-card.compact:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+}
+.record-card.compact:active {
+  transform: none;
+}
+.record-card.compact .compact-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+.record-card.compact .compact-date {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  min-width: 75px;
+  flex-shrink: 0;
+}
+.record-card.compact .compact-cat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 60px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.record-card.compact .compact-note {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+.record-card.compact .compact-amount {
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 70px;
+}
+.record-card.compact .record-del-btn {
+  position: static !important;
+  opacity: 0.5 !important;
+  font-size: 0.7rem !important;
+  padding: 0 4px !important;
+  flex-shrink: 0;
+}
+.record-card.compact .record-delete-btn {
+  display: none;
+}
+.record-card.compact:hover .record-del-btn {
+  opacity: 0.8 !important;
+}
+.view-toggle-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.view-toggle-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.view-toggle-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}

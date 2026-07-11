@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+  <title>记账软件 v2.0.0</title>
+  <!--build:css-->
+</head>
+<body>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Modal container -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <div id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <span>💰</span> 记账软件
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-item active" data-tab="overview"><span class="icon">📊</span> 总览</div>
+        <div class="sidebar-item" data-tab="add"><span class="icon">✏️</span> 记账</div>
+        <div class="sidebar-item" data-tab="records"><span class="icon">📋</span> 流水</div>
+        <div class="sidebar-item" data-tab="categories"><span class="icon">🏷️</span> 分类</div>
+        <div class="sidebar-item" data-tab="stats"><span class="icon">📈</span> 统计</div>
+        <div class="sidebar-item" data-tab="report"><span class="icon">📋</span> 报告</div>
+        <div class="sidebar-item" data-tab="whatif"><span class="icon">🔮</span> 假设分析</div>
+        <div class="sidebar-item" data-tab="settings"><span class="icon">⚙️</span> 设置</div>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content" id="mainContent">
+      <!-- Top header -->
+      <div class="top-header" id="topHeader">
+        <h1 id="pageTitle">总览</h1>
+      </div>
+
+      <!-- 总览 (Overview) -->
+      <section class="page-section active" id="page-overview" data-page="overview"></section>
+
+      <!-- 记账 (Add Record) -->
+      <section class="page-section" id="page-add" data-page="add"></section>
+
+      <!-- 流水 (Records) -->
+      <section class="page-section" id="page-records" data-page="records"></section>
+
+      <!-- 分类 (Categories) -->
+      <section class="page-section" id="page-categories" data-page="categories"></section>
+
+      <!-- 统计 (Statistics) -->
+      <section class="page-section" id="page-stats" data-page="stats"></section>
+
+      <!-- 报告 (Report) -->
+      <section class="page-section" id="page-report" data-page="report"></section>
+
+      <!-- 设置 (Settings) -->
+      <section class="page-section" id="page-settings" data-page="settings"></section>
+
+      <!-- 假设分析 (What-If) -->
+      <section class="page-section" id="page-whatif" data-page="whatif"></section>
+    </main>
+  </div>
+
+  <!-- Bottom tab navigation (mobile) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-tab="overview"><span class="nav-icon">📊</span><span class="nav-label">总览</span></div>
+    <div class="nav-item" data-tab="add"><span class="nav-icon">➕</span><span class="nav-label">记账</span></div>
+    <div class="nav-item" data-tab="records"><span class="nav-icon">📋</span><span class="nav-label">流水</span></div>
+    <div class="nav-item" data-tab="categories"><span class="nav-icon">🏷️</span><span class="nav-label">分类</span></div>
+    <div class="nav-item" data-tab="stats"><span class="nav-icon">📈</span><span class="nav-label">统计</span></div>
+    <div class="nav-item" data-tab="report"><span class="nav-icon">📋</span><span class="nav-label">报告</span></div>
+    <div class="nav-item" data-tab="whatif"><span class="nav-icon">🔮</span><span class="nav-label">假设分析</span></div>
+    <div class="nav-item" data-tab="settings"><span class="nav-icon">⚙️</span><span class="nav-label">设置</span></div>
+  </nav>
+
+  <!--build:js-->
+</body>
+</html>
