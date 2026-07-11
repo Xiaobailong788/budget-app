@@ -18,7 +18,11 @@ const pageTitles = {
 let currentTab = 'overview';
 
 function navigateTo(tab) {
-  if (tab === currentTab && tab !== 'add') return;
+  if (tab === currentTab && tab !== 'add') {
+    // Force re-render if page is empty (e.g., on initial load)
+    const pageEl = document.getElementById('page-' + tab);
+    if (pageEl && pageEl.innerHTML.trim()) return;
+  }
   const prevTab = currentTab;
   currentTab = tab;
 

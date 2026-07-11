@@ -57,6 +57,7 @@ function getMonthKey(dateStr) {
 
   // === EXPORTS ===
   window.COLORS = COLORS;
+  window.DEFAULT_CATEGORIES = DEFAULT_CATEGORIES;
   window.escHtml = escHtml;
   window.uuid = uuid;
   window.getMonthKey = getMonthKey;
