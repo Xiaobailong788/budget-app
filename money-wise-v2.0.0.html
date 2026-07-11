@@ -8043,13 +8043,15 @@ function renderWhatIfParams(month, savedParams) {
 
     let out = '';
 
-    // Header row
-    out += `<div class="whatif-cat-root-header" ${hasChildren ? `onclick="toggleWhatIfExpand('${node.id}')"` : ''} style="cursor:${hasChildren ? 'pointer' : 'default'};padding-left:${headerIndent + 12}px">
-      ${hasChildren ? `<span class="whatif-expand-icon">${isExpanded ? '▼' : '▶'}</span>` : '<span class="whatif-expand-icon" style="visibility:hidden">▶</span>'}
-      <span>${node.icon} ${node.name}</span>
-      <span class="text-xs text-muted" style="margin-left:8px">日均 ${formatMoney(nodeDailyAvg)}</span>
-      <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(nodeSpent)}</span>
-    </div>`;
+    // Header row — only for nodes that have children (expand/collapse purpose)
+    if (hasChildren) {
+      out += `<div class="whatif-cat-root-header" onclick="toggleWhatIfExpand('${node.id}')" style="cursor:pointer;padding-left:${headerIndent + 12}px">
+        <span class="whatif-expand-icon">${isExpanded ? '▼' : '▶'}</span>
+        <span>${node.icon} ${node.name}</span>
+        <span class="text-xs text-muted" style="margin-left:8px">日均 ${formatMoney(nodeDailyAvg)}</span>
+        <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(nodeSpent)}</span>
+      </div>`;
+    }
 
     // Controls row — always shown for leaves; for parents only when expanded
     if (!hasChildren || isExpanded) {
