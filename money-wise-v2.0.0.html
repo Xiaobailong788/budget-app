@@ -8009,7 +8009,7 @@ function renderWhatIfParams(month, savedParams) {
     else if (treeMap[c.parentId]) treeMap[c.parentId].children.push(treeMap[c.id]);
   });
 
-  // Recursive render: depth = 0 for root, 1 for children, etc.
+  // Recursive render: flat structure (no nested bodies to avoid cumulative padding)
   function renderCatNode(node, depth) {
     const expandKey = 'wi-expand-' + node.id;
     const isExpanded = whatIfExpandStates[expandKey] === true;
@@ -8037,45 +8037,49 @@ function renderWhatIfParams(month, savedParams) {
       ancestor = ancestor.parentId ? treeMap[ancestor.parentId] : null;
     }
 
-    let out = '';
-    if (depth === 0) out += `<div class="whatif-cat-root">`;
+    // Flat indentation: header indents left, control row indents 16px more
+    const headerIndent = depth * 24;
+    const bodyIndent = headerIndent + 24;
 
-    // Header row — child headers align with parent's body padding
-    const headerPad = depth === 0 ? 12 : depth * 20 + 8;
-    out += `<div class="whatif-cat-root-header" ${hasChildren ? `onclick="toggleWhatIfExpand('${node.id}')"` : ''} style="cursor:${hasChildren ? 'pointer' : 'default'};padding-left:${headerPad}px">
+    let out = '';
+
+    // Header row
+    out += `<div class="whatif-cat-root-header" ${hasChildren ? `onclick="toggleWhatIfExpand('${node.id}')"` : ''} style="cursor:${hasChildren ? 'pointer' : 'default'};padding-left:${headerIndent + 12}px">
       ${hasChildren ? `<span class="whatif-expand-icon">${isExpanded ? '▼' : '▶'}</span>` : '<span class="whatif-expand-icon" style="visibility:hidden">▶</span>'}
       <span>${node.icon} ${node.name}</span>
       <span class="text-xs text-muted" style="margin-left:8px">日均 ${formatMoney(nodeDailyAvg)}</span>
       <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(nodeSpent)}</span>
     </div>`;
 
-    // Body: shown when expanded, or for root-level leaf nodes
-    const bodyPad = depth * 20 + 28;
+    // Controls row — only show when the category itself is expanded (or root leaf)
     if (isExpanded || (depth === 0 && !hasChildren)) {
-      out += `<div class="whatif-cat-body" style="padding-left:${bodyPad}px">
-        <div class="whatif-cat-row">
-          <span class="whatif-cat-label">${node.icon} ${node.name}${hasChildren ? '（整体）' : ''}</span>
-          <select class="input-field whatif-mode-select" data-cat="${node.id}" data-level="${depth === 0 ? 'root' : 'child'}" ${isDisabled ? 'disabled' : ''}>
-            <option value="trend" ${nodeAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
-            <option value="daily" ${nodeAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
-            <option value="total" ${nodeAdj.mode === 'total' ? 'selected' : ''}>固定剩余总额</option>
-            <option value="percent" ${nodeAdj.mode === 'percent' ? 'selected' : ''}>比趋势± %</option>
-            <option value="adjust" ${nodeAdj.mode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
-            <option value="zero" ${nodeAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
-          </select>
-          <input type="number" class="input-field whatif-value-input" data-cat="${node.id}" value="${nodeAdj.value || ''}" min="0" step="0.01" placeholder="值" ${isDisabled || nodeAdj.mode === 'trend' || nodeAdj.mode === 'zero' ? 'style="display:none"' : ''}>
-          <span class="text-xs text-muted" style="min-width:60px;text-align:right">日均 ${formatMoney(nodeDailyAvg)}</span>
-        </div>
-        ${isExpanded && hasChildren ? node.children.map(ch => renderCatNode(ch, depth + 1)).join('') : ''}
+      out += `<div class="whatif-cat-row" style="padding-left:${bodyIndent + 12}px">
+        <span class="whatif-cat-label">${node.icon} ${node.name}${hasChildren ? '（整体）' : ''}</span>
+        <select class="input-field whatif-mode-select" data-cat="${node.id}" data-level="${depth === 0 ? 'root' : 'child'}" ${isDisabled ? 'disabled' : ''}>
+          <option value="trend" ${nodeAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
+          <option value="daily" ${nodeAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
+          <option value="total" ${nodeAdj.mode === 'total' ? 'selected' : ''}>固定剩余总额</option>
+          <option value="percent" ${nodeAdj.mode === 'percent' ? 'selected' : ''}>比趋势± %</option>
+          <option value="adjust" ${nodeAdj.mode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
+          <option value="zero" ${nodeAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
+        </select>
+        <input type="number" class="input-field whatif-value-input" data-cat="${node.id}" value="${nodeAdj.value || ''}" min="0" step="0.01" placeholder="值" ${isDisabled || nodeAdj.mode === 'trend' || nodeAdj.mode === 'zero' ? 'style="display:none"' : ''}>
+        <span class="text-xs text-muted" style="min-width:60px;text-align:right">日均 ${formatMoney(nodeDailyAvg)}</span>
       </div>`;
     }
 
-    if (depth === 0) out += `</div>`;
+    // Children — rendered flat (not nested inside body div)
+    if (isExpanded && hasChildren) {
+      out += node.children.map(ch => renderCatNode(ch, depth + 1)).join('');
+    }
+
     return out;
   }
 
   treeRoots.forEach(root => {
+    html += `<div class="whatif-cat-root">`;
     html += renderCatNode(root, 0);
+    html += `</div>`;
   });
 
   html += `</div>`; // end card
@@ -8476,12 +8480,14 @@ function whatifModeChange(selectEl) {
     valInput.style.display = (selectEl.value === 'trend' || selectEl.value === 'zero') ? 'none' : '';
   }
 
-  // Cascade "zero" — disable all descendant selects in subsequent .whatif-cat-body elements
+  // Cascade "zero" — disable all subsequent descendant selects in the same root
   if (selectEl.value === 'zero') {
-    const body = selectEl.closest('.whatif-cat-body');
-    if (body) {
-      body.querySelectorAll('.whatif-mode-select').forEach(s => {
-        if (s !== selectEl) {
+    const root = selectEl.closest('.whatif-cat-root');
+    if (root) {
+      let foundSelf = false;
+      root.querySelectorAll('.whatif-mode-select').forEach(s => {
+        if (s === selectEl) { foundSelf = true; return; }
+        if (foundSelf) {
           s.value = 'zero';
           s.disabled = true;
           const vi = s.parentElement.querySelector('.whatif-value-input');
