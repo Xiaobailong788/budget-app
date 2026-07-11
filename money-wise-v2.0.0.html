@@ -1483,6 +1483,90 @@ ul, ol { list-style: none; }
 .whatif-ring {
   border-radius: 50%;
 }
+/* Savings comparison horizontal bar */
+.savings-compare-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.savings-bar-wrapper {
+  max-width: 400px;
+  margin: 0 auto 12px;
+}
+.savings-bar-track {
+  position: relative;
+  height: 32px;
+  background: var(--bg-secondary, #f3f4f6);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.savings-bar-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 16px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+.savings-bar-fill.fill-better {
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+.savings-bar-fill.fill-worse {
+  background: linear-gradient(90deg, #EF4444, #DC2626);
+}
+.savings-bar-baseline {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  background: var(--text-primary, #1E293B);
+  z-index: 2;
+}
+.savings-bar-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  z-index: 3;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.85);
+  color: var(--text-primary, #1E293B);
+  white-space: nowrap;
+}
+.savings-bar-label.baseline-label {
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--text-primary, #1E293B);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+}
+.savings-bar-label.result-label-right {
+  left: calc(50% + 6px);
+}
+.savings-bar-label.result-label-left {
+  right: calc(50% + 6px);
+}
+.savings-bar-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  padding: 0 4px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.savings-compare-footer {
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
 .whatif-compare-table {
   font-size: 0.85rem;
 }
@@ -3693,8 +3777,28 @@ function renderOverview() {
           <div class="flex items-center gap-8">
             <span class="font-bold">${formatMoney(item.total)}</span>
             <span class="text-sm text-muted">${monthTotal > 0 ? (item.total/monthTotal*100).toFixed(1)+'%' : ''}</span>
-          </div>
-        </div>`;
+    </div>
+  </div>`;
+
+  // === 支出对比 (ring charts with clearer labels) ===
+  html += `<div class="card mb-16">
+    <div class="card-title">📊 支出对比</div>
+    <p class="text-xs text-muted" style="margin-bottom:12px">总支出占收入比例 — 圆圈越大，花得越多。</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">当前趋势 · 预测总支出</div>
+        <canvas class="whatif-ring" id="wi-ring-trend" width="140" height="140"></canvas>
+        <div class="text-sm font-bold">${formatMoney(trendTotal)}</div>
+        <div class="text-xs text-muted">占收入 ${income > 0 ? ((trendTotal / income) * 100).toFixed(1) : 0}%</div>
+      </div>
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">假设调整 · 预测总支出</div>
+        <canvas class="whatif-ring" id="wi-ring-proj" width="140" height="140"></canvas>
+        <div class="text-sm font-bold">${formatMoney(totalProjectedInclBills)}</div>
+        <div class="text-xs text-muted">占收入 ${income > 0 ? ((totalProjectedInclBills / income) * 100).toFixed(1) : 0}%</div>
+      </div>
+    </div>
+  </div>`;
       }).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无支出记录</div></div>'}
     </div>
 
@@ -8034,84 +8138,94 @@ function renderWhatIfResults(result) {
 
     <div class="section-title">🔮 预测结果</div>`;
 
-  // === 对比摘要 ===
+  // === 对比摘要 (with clearer labels) ===
   html += `<div class="card mb-16 whatif-summary-card">
+    <div class="card-title">📊 总支出预测</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center">
       <div>
-        <div class="text-xs text-muted">当前趋势</div>
+        <div class="text-xs text-muted">当前趋势 · 预测总支出</div>
         <div class="text-lg font-bold" style="color:var(--text-muted)">${formatMoney(trendTotal)}</div>
-        <div class="text-xs ${trendSavings >= 0 ? 'text-success' : 'text-danger'}">${trendSavings >= 0 ? '+' : ''}${formatMoney(trendSavings)}</div>
+        <div class="text-xs ${trendSavings >= 0 ? 'text-success' : 'text-danger'}">可储蓄 ${trendSavings >= 0 ? '+' : ''}${formatMoney(trendSavings)}</div>
       </div>
       <div style="display:flex;flex-direction:column;justify-content:center">
         <div class="text-lg" style="font-size:1.5rem">${totalProjectedInclBills > trendTotal ? '📈' : '📉'}</div>
         <div class="text-sm font-bold" style="color:${totalProjectedInclBills > trendTotal ? 'var(--danger)' : 'var(--success)'}">
           ${Math.abs(totalProjectedInclBills - trendTotal) > 0.01 ? (totalProjectedInclBills > trendTotal ? '+' : '') + formatMoney(totalProjectedInclBills - trendTotal) : '持平'}
         </div>
+        <div class="text-xs text-muted">较趋势差额</div>
       </div>
       <div>
-        <div class="text-xs text-muted">假设预测</div>
+        <div class="text-xs text-muted">假设调整后 · 预测总支出</div>
         <div class="text-lg font-bold" style="color:var(--primary)">${formatMoney(totalProjectedInclBills)}</div>
-        <div class="text-xs ${projectedSavingsForDisplay >= 0 ? 'text-success' : 'text-danger'}">${projectedSavingsForDisplay >= 0 ? '+' : ''}${formatMoney(projectedSavingsForDisplay)}</div>
+        <div class="text-xs ${projectedSavingsForDisplay >= 0 ? 'text-success' : 'text-danger'}">可储蓄 ${projectedSavingsForDisplay >= 0 ? '+' : ''}${formatMoney(projectedSavingsForDisplay)}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
       <div>
-        <div class="text-xs text-muted">日均</div>
+        <div class="text-xs text-muted">日均支出（趋势）</div>
         <div>${formatMoney(trendDailyAvg)}</div>
       </div>
       <div>
-        <div class="text-xs text-muted">目标</div>
+        <div class="text-xs text-muted">储蓄目标</div>
         <div>${formatMoney(targetAmount)}</div>
       </div>
       <div>
-        <div class="text-xs text-muted">日均</div>
+        <div class="text-xs text-muted">日均支出（假设）</div>
         <div>${formatMoney(projectedDailyAvgInclBills)}</div>
       </div>
     </div>
   </div>`;
 
-  // === 储蓄达成 ===
-  html += `<div class="card mb-16" style="text-align:center;padding:20px">
-    <div style="font-size:2rem;margin-bottom:8px">${savingsAttainedForDisplay ? '✅' : '❌'}</div>
-    <div class="text-sm">
-      预计月末储蓄：<strong style="color:${projectedSavingsForDisplay >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatMoney(projectedSavingsForDisplay)}</strong>
-      ${savingsAttainedForDisplay ? `≥ 目标 ${formatMoney(targetAmount)}` : `< target ${formatMoney(targetAmount)}，还差 ${formatMoney(Math.abs(savingsDiffForDisplay))}</span>`}
-    </div>
-    ${savingsPctForDisplay > 0 ? `<div style="margin-top:8px"><div class="whatif-progress-bar"><div class="whatif-progress-fill" style="width:${Math.min(savingsPctForDisplay, 1) * 100}%"></div></div><span class="text-xs text-muted">${(savingsPctForDisplay * 100).toFixed(1)}%</span></div>` : ''}
-  </div>`;
+  // === 储蓄对比 (horizontal bar, baseline = trend savings) ===
+  const baseSavings = trendSavings;
+  const diffSavings = projectedSavingsForDisplay - baseSavings;
+  const pctOfBase = baseSavings > 0 ? Math.abs(diffSavings) / baseSavings * 100 : 0;
+  const displayPct = Math.min(pctOfBase, 500);
+  const fillWidth = baseSavings > 0 ? (displayPct / 200 * 100) : 0;
+  const isBetter = diffSavings >= 0;
 
-  // === 预算环对比 (canvas side by side) ===
-  html += `<div class="card mb-16">
-    <div class="card-title">📊 支出对比</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">当前趋势</div>
-        <canvas class="whatif-ring" id="wi-ring-trend" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(trendTotal)}</div>
-        <div class="text-xs text-muted">${income > 0 ? ((trendTotal / income) * 100).toFixed(1) + '%' : ''}</div>
-      </div>
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">假设预测</div>
-        <canvas class="whatif-ring" id="wi-ring-proj" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(totalProjectedInclBills)}</div>
-        <div class="text-xs text-muted">${income > 0 ? ((totalProjectedInclBills / income) * 100).toFixed(1) + '%' : ''}</div>
-      </div>
-    </div>
-  </div>`;
-
-  // === 储蓄环对比 ===
   html += `<div class="card mb-16">
     <div class="card-title">💰 储蓄对比</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">当前趋势</div>
-        <canvas class="whatif-ring" id="wi-ring-save-trend" width="140" height="140"></canvas>
-        <div class="text-sm ${trendSavings >= 0 ? 'font-bold' : 'text-danger'}">${trendSavings >= 0 ? '+' : ''}${formatMoney(trendSavings)}</div>
+    <p class="text-xs text-muted" style="margin-bottom:12px">
+      下方对比条以「趋势储蓄」为基准线（中间），假设预测后储蓄额向左（变差）或向右（变好）延伸。
+    </p>
+    <div class="savings-compare-header">
+      <div class="text-sm">趋势储蓄: <strong>${formatMoney(baseSavings)}</strong></div>
+      <div class="text-sm" style="font-size:1.2rem">→</div>
+      <div class="text-sm font-bold" style="color:${isBetter ? 'var(--success)' : 'var(--danger)'};font-size:1.05rem">
+        假设储蓄: <strong>${formatMoney(projectedSavingsForDisplay)}</strong>
+        <span class="text-xs">(${diffSavings >= 0 ? '+' : ''}${pctOfBase.toFixed(1)}%)</span>
       </div>
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">假设预测</div>
-        <canvas class="whatif-ring" id="wi-ring-save-proj" width="140" height="140"></canvas>
-        <div class="text-sm ${projectedSavingsForDisplay >= 0 ? 'font-bold' : 'text-danger'}">${projectedSavingsForDisplay >= 0 ? '+' : ''}${formatMoney(projectedSavingsForDisplay)}</div>
+    </div>
+    ${baseSavings > 0 ? `
+    <div class="savings-bar-wrapper">
+      <div class="savings-bar-track">
+        <div class="savings-bar-fill ${isBetter ? 'fill-better' : 'fill-worse'}"
+             style="${isBetter ? `left:50%;width:${fillWidth}%` : `right:50%;width:${fillWidth}%`}"></div>
+        <div class="savings-bar-baseline"></div>
+        <div class="savings-bar-label baseline-label">基准</div>
+        ${isBetter
+          ? `<div class="savings-bar-label result-label-right">+${pctOfBase.toFixed(1)}%</div>`
+          : `<div class="savings-bar-label result-label-left">−${pctOfBase.toFixed(1)}%</div>`}
+      </div>
+      <div class="savings-bar-scale">
+        <span>−100%</span>
+        <span>基准 (0%)</span>
+        <span>+100%</span>
+      </div>
+    </div>` : `
+    <div class="text-sm text-muted" style="text-align:center;padding:20px">
+      ⚠️ 趋势储蓄为 RM 0 或负值，无法计算百分比变化。
+      <div style="margin-top:4px;font-size:0.85rem">
+        趋势: ${formatMoney(baseSavings)} → 假设: ${formatMoney(projectedSavingsForDisplay)}
+      </div>
+    </div>`}
+    <div class="savings-compare-footer">
+      <div>
+        <span class="text-xs text-muted">🎯 储蓄目标: ${formatMoney(targetAmount)}</span>
+        ${savingsAttainedForDisplay
+          ? `<span class="text-xs text-success"> ✅ 假设方案达成目标 ✓</span>`
+          : `<span class="text-xs text-danger"> ❌ 假设方案未达标，还差 ${formatMoney(Math.abs(savingsDiffForDisplay))}</span>`}
       </div>
     </div>
   </div>`;
@@ -8202,19 +8316,7 @@ function drawWhatIfRings(result) {
     drawSimpleRing(projCanvas, pct, '#10B981', '#e5e7eb');
   }
 
-  // Trend savings ring
-  const saveTrendCanvas = document.getElementById('wi-ring-save-trend');
-  if (saveTrendCanvas && targetAmount > 0) {
-    const pct = Math.max(0, Math.min(trendSavings / targetAmount, 1));
-    drawSimpleRing(saveTrendCanvas, pct, trendSavings >= 0 ? '#10B981' : '#EF4444', '#e5e7eb');
-  }
-
-  // Projected savings ring
-  const saveProjCanvas = document.getElementById('wi-ring-save-proj');
-  if (saveProjCanvas && targetAmount > 0) {
-    const pct = Math.max(0, Math.min(projectedSavingsForDisplay / targetAmount, 1));
-    drawSimpleRing(saveProjCanvas, pct, projectedSavingsForDisplay >= 0 ? '#10B981' : '#EF4444', '#e5e7eb');
-  }
+  // Trend savings — no longer drawn as ring, handled by horizontal bar in renderWhatIfResults
 }
 
 // Helper to draw a simple ring (named differently to avoid collision with existing drawRing)
