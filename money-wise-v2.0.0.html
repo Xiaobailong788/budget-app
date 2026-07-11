@@ -8051,8 +8051,8 @@ function renderWhatIfParams(month, savedParams) {
       <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(nodeSpent)}</span>
     </div>`;
 
-    // Controls row — only show when the category itself is expanded (or root leaf)
-    if (isExpanded || (depth === 0 && !hasChildren)) {
+    // Controls row — always shown for leaves; for parents only when expanded
+    if (!hasChildren || isExpanded) {
       out += `<div class="whatif-cat-row" style="padding-left:${bodyIndent + 12}px">
         <span class="whatif-cat-label">${node.icon} ${node.name}${hasChildren ? '（整体）' : ''}</span>
         <select class="input-field whatif-mode-select" data-cat="${node.id}" data-level="${depth === 0 ? 'root' : 'child'}" ${isDisabled ? 'disabled' : ''}>
