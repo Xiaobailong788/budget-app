@@ -9057,6 +9057,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
         if (onErrorCallback) onErrorCallback('发送失败：' + e.message);
       }
     };
+    channel.onmessage = function (msg) { if (typeof onDataCallback === 'function') onDataCallback(msg.data); };
     channel.onerror = function () { if (onErrorCallback) onErrorCallback('数据通道错误'); };
     pc.oniceconnectionstatechange = function () {
       if (pc.iceConnectionState === 'failed') {
@@ -9116,7 +9117,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     });
   }
 
-  function receiveAndMerge(jsonStr) {
+  function receiveAndMerge(jsonStr, mode) {
     var data;
     try { data = JSON.parse(jsonStr); } catch (e) {
       if (onErrorCallback) onErrorCallback('JSON 解析失败');
@@ -9129,12 +9130,42 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
       return false;
     }
     backupBeforeMerge();
-    mergeIntoDataStore(data);
+    if (mode === 'replace') {
+      var def = DataStore._defaults();
+      DataStore._data = def;
+      DataStore._data.records = data.records;
+      DataStore._data.categories = data.categories;
+      if (data.budgets) DataStore._data.budgets = data.budgets;
+      if (data.categoryBudgets) DataStore._data.categoryBudgets = data.categoryBudgets;
+      if (data.monthlyIncome) DataStore._data.monthlyIncome = data.monthlyIncome;
+      if (data.billAmounts) DataStore._data.billAmounts = data.billAmounts;
+      if (data.savingsTarget) DataStore._data.savingsTarget = data.savingsTarget;
+      if (data.percentBase) DataStore._data.percentBase = data.percentBase;
+      if (data.whatIfParams) DataStore._data.whatIfParams = data.whatIfParams;
+      if (data.billCategories && Array.isArray(data.billCategories))
+        DataStore._data.billCategories = data.billCategories.map(function (b) { b.name = sanitizeHtml(b.name); return b; });
+    } else {
+      mergeIntoDataStore(data);
+    }
     DataStore.save();
     var active = document.querySelector('.page-section.active');
     if (active && typeof navigateTo === 'function')
       navigateTo(active.getAttribute('data-page') || 'overview');
     return { records: data.records.length, categories: data.categories.length };
+  }
+
+  var pendingSyncData = null;
+  function confirmSyncMode(mode) {
+    if (typeof closeModal === 'function') closeModal();
+    if (!pendingSyncData) return;
+    var el = document.getElementById('syncClientProgress');
+    if (el) el.innerHTML = '⏳ 正在' + (mode === 'replace' ? '替换' : '合并') + '数据...';
+    var r = receiveAndMerge(pendingSyncData, mode);
+    pendingSyncData = null;
+    if (r) {
+      if (el) el.innerHTML = '✅ 同步完成！收到 ' + r.records + ' 条记录、' + r.categories + ' 个分类';
+      try { if (channel && channel.readyState === 'open') channel.send('SYNC_OK'); } catch (e) { /* ignore */ }
+    }
   }
 
   function mergeIntoDataStore(incoming) {
@@ -9295,11 +9326,16 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
       },
       onDataReceived: function (data) {
         var el = document.getElementById('syncClientProgress');
-        if (el) el.innerHTML = '📥 收到数据，正在合并...';
-        var r = receiveAndMerge(data);
-        if (r) {
-          if (el) el.innerHTML = '✅ 同步完成！收到 ' + r.records + ' 条记录、' + r.categories + ' 个分类';
-          try { if (channel && channel.readyState === 'open') channel.send('SYNC_OK'); } catch (e) { /* ignore */ }
+        if (el) el.innerHTML = '📥 收到数据，请选择同步方式';
+        pendingSyncData = data;
+        if (typeof showModal === 'function') {
+          showModal(
+            '<div class="modal-title">📥 收到同步数据</div>' +
+            '<p class="text-sm text-secondary mb-16">选择数据导入方式：</p>' +
+            '<button class="btn btn-primary btn-block mb-8" onclick="confirmSyncMode(\'replace\')">🔄 替换当前数据</button>' +
+            '<button class="btn btn-outline btn-block" onclick="confirmSyncMode(\'merge\')">🔀 合并到当前数据</button>' +
+            '<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>'
+          );
         }
       }
     }).then(function (answerSdp) {
@@ -9337,6 +9373,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   };
 
   window.SyncUI = ui;
+  window.confirmSyncMode = confirmSyncMode;
   window.LANSync = { open: function () { ui.showMenu(); }, sanitizeHtml: sanitizeHtml };
 
 })();
