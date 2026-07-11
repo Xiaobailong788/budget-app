@@ -2908,6 +2908,12 @@ const SimulationEngine = {
         case 'total':
           projectedRemaining = adj.value || 0;
           break;
+        case 'percent':
+          projectedRemaining = currentAvg * remainingDays * (1 + (adj.value || 0) / 100);
+          break;
+        case 'adjust':
+          projectedRemaining = (currentAvg + (adj.value || 0)) * remainingDays;
+          break;
         case 'zero':
           projectedRemaining = 0;
           break;
@@ -7916,6 +7922,8 @@ function renderWhatIfParams(month, savedParams) {
             <option value="trend" ${rootAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
             <option value="daily" ${rootAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
             <option value="total" ${rootAdj.mode === 'total' ? 'selected' : ''}>设剩余月额</option>
+            <option value="percent" ${rootAdj.mode === 'percent' ? 'selected' : ''}>比趋势± %</option>
+            <option value="adjust" ${rootAdj.mode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
             <option value="zero" ${rootAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
           </select>
           <input type="number" class="input-field whatif-value-input" data-cat="${root.id}" value="${rootAdj.value || ''}" min="0" step="0.01" placeholder="值" ${rootAdj.mode === 'trend' || rootAdj.mode === 'zero' ? 'style="display:none"' : ''}>
@@ -7933,6 +7941,8 @@ function renderWhatIfParams(month, savedParams) {
               <option value="trend" ${effectiveChildMode === 'trend' ? 'selected' : ''}>保持趋势</option>
               <option value="daily" ${effectiveChildMode === 'daily' ? 'selected' : ''}>设日均值</option>
               <option value="total" ${effectiveChildMode === 'total' ? 'selected' : ''}>设剩余月额</option>
+              <option value="percent" ${effectiveChildMode === 'percent' ? 'selected' : ''}>比趋势± %</option>
+              <option value="adjust" ${effectiveChildMode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
               <option value="zero" ${effectiveChildMode === 'zero' ? 'selected' : ''}>取消消费</option>
             </select>
             <input type="number" class="input-field whatif-value-input" data-cat="${child.id}" value="${childAdj.value || ''}" min="0" step="0.01" placeholder="值" ${isChildDisabled || childAdj.mode === 'trend' || childAdj.mode === 'zero' ? 'style="display:none"' : ''}>
