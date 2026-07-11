@@ -8,7 +8,7 @@
 
 ## 📸 Screenshots
 
-> Screenshots coming soon. Open `money-wise-v1.1.0.html` in your browser to see the app in action.
+> Screenshots coming soon. Open `index.html` in your browser to see the app in action.
 
 ---
 
