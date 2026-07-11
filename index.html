@@ -9117,6 +9117,13 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     });
   }
 
+  function sortRecordsDesc(records) {
+    records.sort(function (a, b) {
+      var da = a.date || a.createdAt || '', db = b.date || b.createdAt || '';
+      return da > db ? -1 : da < db ? 1 : 0;
+    });
+  }
+
   function receiveAndMerge(jsonStr, mode) {
     var data;
     try { data = JSON.parse(jsonStr); } catch (e) {
@@ -9131,6 +9138,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     }
     backupBeforeMerge();
     if (mode === 'replace') {
+      sortRecordsDesc(data.records);
       var def = DataStore._defaults();
       DataStore._data = def;
       DataStore._data.records = data.records;
@@ -9179,6 +9187,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
         if (i !== -1) cur.records[i] = r;
       } else { cur.records.unshift(r); }
     });
+    sortRecordsDesc(cur.records);
     var catIds = {}; cur.categories.forEach(function (c) { catIds[c.id] = true; });
     incoming.categories.forEach(function (c) {
       if (!catIds[c.id]) { c.name = sanitizeHtml(c.name); c.icon = sanitizeHtml(c.icon); cur.categories.push(c); catIds[c.id] = true; }
