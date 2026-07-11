@@ -1484,30 +1484,42 @@ ul, ol { list-style: none; }
   border-radius: 50%;
 }
 /* Savings comparison horizontal bar */
-.savings-compare-header {
+.savings-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+.savings-row .savings-value {
+  font-weight: 700;
+}
+.savings-row .savings-arrow {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+.savings-row .savings-pct {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 .savings-bar-wrapper {
-  max-width: 400px;
-  margin: 0 auto 12px;
+  max-width: 360px;
+  margin: 0 auto 8px;
 }
 .savings-bar-track {
   position: relative;
-  height: 32px;
+  height: 14px;
   background: var(--bg-secondary, #f3f4f6);
-  border-radius: 16px;
+  border-radius: 7px;
   overflow: hidden;
 }
 .savings-bar-fill {
   position: absolute;
   top: 0;
   height: 100%;
-  border-radius: 16px;
+  border-radius: 7px;
   transition: width 0.4s ease;
   min-width: 4px;
 }
@@ -1519,53 +1531,35 @@ ul, ol { list-style: none; }
 }
 .savings-bar-baseline {
   position: absolute;
-  top: 0;
+  top: -2px;
   left: 50%;
   width: 2px;
-  height: 100%;
+  height: calc(100% + 4px);
   background: var(--text-primary, #1E293B);
   z-index: 2;
-}
-.savings-bar-label {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.75rem;
-  font-weight: 700;
-  z-index: 3;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.85);
-  color: var(--text-primary, #1E293B);
-  white-space: nowrap;
-}
-.savings-bar-label.baseline-label {
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--text-primary, #1E293B);
-  color: #fff;
-  font-size: 0.65rem;
-  padding: 1px 5px;
-}
-.savings-bar-label.result-label-right {
-  left: calc(50% + 6px);
-}
-.savings-bar-label.result-label-left {
-  right: calc(50% + 6px);
+  border-radius: 1px;
 }
 .savings-bar-scale {
   display: flex;
   justify-content: space-between;
-  margin-top: 3px;
-  padding: 0 4px;
-  font-size: 0.65rem;
+  margin-top: 2px;
+  font-size: 0.6rem;
   color: var(--text-muted);
+  padding: 0 4px;
 }
 .savings-compare-footer {
   text-align: center;
-  margin-top: 8px;
-  padding-top: 8px;
+  font-size: 0.8rem;
+  padding-top: 6px;
   border-top: 1px solid var(--border, #e5e7eb);
+  margin-top: 8px;
+}
+.savings-compare-footer .savings-target {
+  color: var(--text-muted);
+}
+.savings-compare-footer .savings-status {
+  margin-left: 8px;
+  font-weight: 600;
 }
 .whatif-compare-table {
   font-size: 0.85rem;
@@ -8186,47 +8180,37 @@ function renderWhatIfResults(result) {
 
   html += `<div class="card mb-16">
     <div class="card-title">💰 储蓄对比</div>
-    <p class="text-xs text-muted" style="margin-bottom:12px">
-      下方对比条以「趋势储蓄」为基准线（中间），假设预测后储蓄额向左（变差）或向右（变好）延伸。
-    </p>
-    <div class="savings-compare-header">
-      <div class="text-sm">趋势储蓄: <strong>${formatMoney(baseSavings)}</strong></div>
-      <div class="text-sm" style="font-size:1.2rem">→</div>
-      <div class="text-sm font-bold" style="color:${isBetter ? 'var(--success)' : 'var(--danger)'};font-size:1.05rem">
-        假设储蓄: <strong>${formatMoney(projectedSavingsForDisplay)}</strong>
-        <span class="text-xs">(${diffSavings >= 0 ? '+' : ''}${pctOfBase.toFixed(1)}%)</span>
-      </div>
-    </div>
     ${baseSavings > 0 ? `
+    <div class="savings-row">
+      <span class="text-xs text-muted">趋势</span>
+      <span class="savings-value">${formatMoney(baseSavings)}</span>
+      <span class="savings-arrow">→</span>
+      <span class="text-xs text-muted">假设</span>
+      <span class="savings-value" style="color:${isBetter ? 'var(--success)' : 'var(--danger)'}">${formatMoney(projectedSavingsForDisplay)}</span>
+      <span class="savings-pct">(${diffSavings >= 0 ? '+' : ''}${pctOfBase.toFixed(1)}%)</span>
+    </div>
     <div class="savings-bar-wrapper">
       <div class="savings-bar-track">
         <div class="savings-bar-fill ${isBetter ? 'fill-better' : 'fill-worse'}"
-             style="${isBetter ? `left:50%;width:${fillWidth}%` : `right:50%;width:${fillWidth}%`}"></div>
+             style="${isBetter ? `left:50%;width:${fillWidth}%` : `right:50%;width:${fillWidth}%`}">
+        </div>
         <div class="savings-bar-baseline"></div>
-        <div class="savings-bar-label baseline-label">基准</div>
-        ${isBetter
-          ? `<div class="savings-bar-label result-label-right">+${pctOfBase.toFixed(1)}%</div>`
-          : `<div class="savings-bar-label result-label-left">−${pctOfBase.toFixed(1)}%</div>`}
       </div>
       <div class="savings-bar-scale">
         <span>−100%</span>
-        <span>基准 (0%)</span>
+        <span>基准</span>
         <span>+100%</span>
       </div>
     </div>` : `
-    <div class="text-sm text-muted" style="text-align:center;padding:20px">
-      ⚠️ 趋势储蓄为 RM 0 或负值，无法计算百分比变化。
-      <div style="margin-top:4px;font-size:0.85rem">
-        趋势: ${formatMoney(baseSavings)} → 假设: ${formatMoney(projectedSavingsForDisplay)}
-      </div>
+    <div class="text-xs text-muted" style="text-align:center;padding:12px">
+      ⚠️ 趋势储蓄为 RM 0 或负值，无法计算百分比。
+      <div>趋势: ${formatMoney(baseSavings)} → 假设: ${formatMoney(projectedSavingsForDisplay)}</div>
     </div>`}
     <div class="savings-compare-footer">
-      <div>
-        <span class="text-xs text-muted">🎯 储蓄目标: ${formatMoney(targetAmount)}</span>
-        ${savingsAttainedForDisplay
-          ? `<span class="text-xs text-success"> ✅ 假设方案达成目标 ✓</span>`
-          : `<span class="text-xs text-danger"> ❌ 假设方案未达标，还差 ${formatMoney(Math.abs(savingsDiffForDisplay))}</span>`}
-      </div>
+      <span class="savings-target">🎯 ${formatMoney(targetAmount)}</span>
+      <span class="savings-status" style="color:${savingsAttainedForDisplay ? 'var(--success)' : 'var(--danger)'}">
+        ${savingsAttainedForDisplay ? '✅ 达标' : `❌ 还差 ${formatMoney(Math.abs(savingsDiffForDisplay))}`}
+      </span>
     </div>
   </div>`;
 
