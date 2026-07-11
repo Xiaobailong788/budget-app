@@ -517,66 +517,10 @@
   };
 
   /* ============================================================
-     7. HOOK INTO SETTINGS PAGE
+     7. EXPOSE PUBLIC API
      ============================================================ */
-  function addSyncButton() {
-    var settingsPage = document.getElementById('page-settings');
-    if (!settingsPage) return;
-
-    var btn = settingsPage.querySelector('.sync-lan-btn');
-    if (btn) return; // already added
-
-    var dataCards = settingsPage.querySelectorAll('.card');
-    var dataCard = null;
-    for (var i = 0; i < dataCards.length; i++) {
-      var title = dataCards[i].querySelector('.card-title');
-      if (title && title.textContent.indexOf('数据管理') !== -1) {
-        dataCard = dataCards[i];
-        break;
-      }
-    }
-    if (!dataCard) return;
-
-    var btnContainer = dataCard.querySelector('.flex.flex-col.gap-8');
-    if (!btnContainer) return;
-
-    var syncBtn = document.createElement('button');
-    syncBtn.className = 'btn btn-primary btn-block sync-lan-btn';
-    syncBtn.textContent = '📶 局域网同步';
-    syncBtn.onclick = function () { ui.showMenu(); };
-
-    var clearBtn = btnContainer.querySelector('.btn-danger');
-    if (clearBtn) {
-      btnContainer.insertBefore(syncBtn, clearBtn);
-    } else {
-      btnContainer.appendChild(syncBtn);
-    }
-  }
-
-  function init() {
-    addSyncButton();
-
-    // Watch for settings re-renders
-    var observer = new MutationObserver(function () {
-      addSyncButton();
-    });
-    observer.observe(document.getElementById('page-settings') || document.body, {
-      childList: true, subtree: true
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-  /* Expose for onclick in modal HTML */
   window.SyncUI = ui;
-
-  /* Public API */
   window.LANSync = {
-    init: init,
     open: function () { ui.showMenu(); },
     sanitizeHtml: sanitizeHtml
   };

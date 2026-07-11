@@ -7777,6 +7777,7 @@ function renderSettings() {
         <input type="file" id="importJSONInput" accept=".json" style="display:none" onchange="importJSON(event)">
         <button class="btn btn-outline btn-block" onclick="exportToExcel()">📥 导出 Excel (可修改·含公式)</button>
         <button class="btn btn-outline btn-block" onclick="exportCSV()">📊 导出 CSV</button>
+        <button class="btn btn-primary btn-block" onclick="if(window.LANSync)LANSync.open();else showToast('lan-sync.js 未加载','error')">📶 局域网同步</button>
         <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 清除所有数据</button>
       </div>
     </div>
