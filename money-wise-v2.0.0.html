@@ -2969,6 +2969,14 @@ const SimulationEngine = {
     });
     totalProjectedRemaining += hypotheticalTotal;
 
+    // Account for spending on non-leaf categories (e.g., records on root categories directly)
+    const leafTotalCurrent = Object.values(categoryProjections).reduce((s, p) => s + p.currentTotal, 0);
+    const unaccounted = Math.max(0, actualSpent - leafTotalCurrent);
+    if (unaccounted > 0.01) {
+      const unaccountedProjection = (unaccounted / Math.max(1, daysPassed)) * remainingDays;
+      totalProjectedRemaining += unaccountedProjection;
+    }
+
     // Aggregate to root level
     const rootProjections = {};
     rootCats.forEach(rc => {
