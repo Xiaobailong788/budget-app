@@ -239,6 +239,7 @@ function showDayRecords(dateStr) {
   });
 
   target.innerHTML = html;
+}
 
 /* ===== CHART EXPAND ===== */
 let _expandedChart = null; // 'heatmap' or 'pie'

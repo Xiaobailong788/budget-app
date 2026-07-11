@@ -6096,6 +6096,7 @@ function showDayRecords(dateStr) {
   });
 
   target.innerHTML = html;
+}
 
 /* ===== CHART EXPAND ===== */
 let _expandedChart = null; // 'heatmap' or 'pie'
@@ -9416,6 +9417,8 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
   window.SyncUI = ui;
   window.confirmSyncMode = confirmSyncMode;
   window.LANSync = { open: function () { ui.showMenu(); }, sanitizeHtml: sanitizeHtml };
+
+})();
 
 
 </script>

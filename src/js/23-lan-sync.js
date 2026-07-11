@@ -445,3 +445,5 @@
   window.confirmSyncMode = confirmSyncMode;
   window.LANSync = { open: function () { ui.showMenu(); }, sanitizeHtml: sanitizeHtml };
 
+})();
+
