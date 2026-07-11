@@ -113,6 +113,7 @@ Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fix
 
 - **Zero external dependencies** — Pure HTML, CSS, and JavaScript. No CDN, no frameworks, no libraries.
 - **Modular source structure** — 12 CSS + 22 JS files organized by domain in `src/`, built into a single deployable HTML via `build.sh`.
+- **IIFE scope isolation** — 22 JS files each wrapped in an IIFE, only explicitly exported symbols (`window.*`) are shared across files, preventing global namespace pollution.
 - **Elastic animated pie chart** — Smooth hover pop-out effects and full drill-down navigation.
 - **Calendar heatmap** — Spending ratio visualized with a 6-color gradient across the month.
 - **Soft delete with 5-second undo** — Accidentally deleted a record? Undo it within 5 seconds.

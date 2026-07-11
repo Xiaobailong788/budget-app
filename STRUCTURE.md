@@ -13,7 +13,7 @@ bash build.sh   # 将 src/ 下所有文件拼合为根目录的 index.html
 - **源文件**: `src/index.html`（HTML 骨架，含 `<!--build:css-->` / `<!--build:js-->` 标记）
 - **构建产物**: `index.html`（可直接在浏览器打开，用于 GitHub Pages 部署）
 - **CSS 源文件**: `src/css/*.css`（按编号顺序拼接）
-- **JS 源文件**: `src/js/*.js`（按编号顺序拼接，全局作用域，无模块系统）
+- **JS 源文件**: `src/js/*.js`（按编号顺序拼接，每个文件包裹在 IIFE 中，显式 window.* 导出）
 
 ---
 
@@ -56,9 +56,9 @@ bash build.sh   # 将 src/ 下所有文件拼合为根目录的 index.html
 
 ## JS 文件（`src/js/`）
 
-### 加载顺序 = 编号顺序（全局作用域，必须按此顺序）
+### 加载顺序 = 编号顺序（IIFE 内局部作用域，通过 window.* 跨文件访问，必须按此顺序）
 
-> 每个文件内都是 **全局函数/变量**，无 `import`/`export`。所有文件通过构建脚本拼接到同一个 `<script>` 中。
+> 每个文件包裹在 IIFE 中（详见"全局共享状态"）。函数/变量默认是 IIFE 局部，需要被 HTML `onclick` 或其他文件引用的符号通过 `window.*` 显式导出。所有文件通过构建脚本拼接到同一个 `<script>` 中。
 
 ---
 
@@ -595,7 +595,7 @@ Canvas Drawing Functions / DOM innerHTML
 
 ## 全局共享状态
 
-所有状态变量都是全局的（window 级），**没有模块隔离**，修改时注意不要命名冲突。
+经过 IIFE 重构后，大部分状态变量不再是全局的。只有被 HTML `onclick` 或其他文件引用的符号才通过 `window.*` 显式导出，其余锁在 IIFE 内部。修改时注意在对应文件的 `// === EXPORTS ===` 区域增减导出项。
 
 | 变量 | 定义位置 | 用途 |
 |------|---------|------|
