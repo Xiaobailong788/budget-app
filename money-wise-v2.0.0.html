@@ -8230,6 +8230,26 @@ function renderWhatIfResults(result) {
     </div>
   </div>`;
 
+  // === 支出对比 (ring charts with clearer labels) ===
+  html += `<div class="card mb-16">
+    <div class="card-title">📊 支出对比</div>
+    <p class="text-xs text-muted" style="margin-bottom:12px">总支出占收入比例 — 圆圈越大，花得越多。</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">当前趋势 · 预测总支出</div>
+        <canvas class="whatif-ring" id="wi-ring-trend-wi" width="140" height="140"></canvas>
+        <div class="text-sm font-bold">${formatMoney(trendTotal)}</div>
+        <div class="text-xs text-muted">占收入 ${income > 0 ? ((trendTotal / income) * 100).toFixed(1) : 0}%</div>
+      </div>
+      <div style="text-align:center">
+        <div class="text-xs text-muted mb-8">假设调整 · 预测总支出</div>
+        <canvas class="whatif-ring" id="wi-ring-proj-wi" width="140" height="140"></canvas>
+        <div class="text-sm font-bold">${formatMoney(totalProjectedInclBills)}</div>
+        <div class="text-xs text-muted">占收入 ${income > 0 ? ((totalProjectedInclBills / income) * 100).toFixed(1) : 0}%</div>
+      </div>
+    </div>
+  </div>`;
+
   // === 分类对比表 ===
   html += `<div class="card mb-16">
     <div class="card-title">📋 分类预测明细</div>
@@ -8303,14 +8323,14 @@ function drawWhatIfRings(result) {
   const projectedSavingsForDisplay = income - totalProjectedInclBills;
 
   // Trend budget ring
-  const trendCanvas = document.getElementById('wi-ring-trend');
+  const trendCanvas = document.getElementById('wi-ring-trend-wi');
   if (trendCanvas && income > 0) {
     const pct = Math.min(trendTotal / income, 1);
     drawSimpleRing(trendCanvas, pct, '#6366F1', '#e5e7eb');
   }
 
   // Projected budget ring
-  const projCanvas = document.getElementById('wi-ring-proj');
+  const projCanvas = document.getElementById('wi-ring-proj-wi');
   if (projCanvas && income > 0) {
     const pct = Math.min(totalProjectedInclBills / income, 1);
     drawSimpleRing(projCanvas, pct, '#10B981', '#e5e7eb');
