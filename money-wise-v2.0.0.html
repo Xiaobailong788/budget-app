@@ -7892,7 +7892,8 @@ function confirmClearAll() {
    ============================================================ */
 
 // Global state for this page
-let whatIfExpandStates = {};  // { 'cat-root-1': true/false }
+let whatIfExpandStates = {};  // { 'wi-expand-{catId}': true/false } — params section
+let whatIfCompareExpandStates = {};  // { 'wi-cmp-{catId}': true/false } — compare table
 
 function renderWhatIf() {
   const section = document.getElementById('page-whatif');
@@ -8000,60 +8001,82 @@ function renderWhatIfParams(month, savedParams) {
   // === 分类支出调整 ===
   html += `<div class="card mb-16">
     <div class="card-title">🏷️ 分类支出调整</div>
-    <p class="text-xs text-muted" style="margin-bottom:8px">调整每个分类在剩余天数的支出方式。展开根分类查看子分类。<br>「固定剩余总额」= 剩余天数总共花指定金额；「比趋势± %/天」= 在日均基础上增减。</p>`;
+    <p class="text-xs text-muted" style="margin-bottom:8px">调整每个分类在剩余天数的支出方式。点击名称展开子分类。<br>「固定剩余总额」= 剩余天数总共花指定金额；「比趋势± %/天」= 在日均基础上增减。</p>`;
 
-  rootCats.forEach(root => {
-    const expandKey = 'wi-expand-' + root.id;
-    const isExpanded = whatIfExpandStates[expandKey] === true; // default collapsed
+  // Build category tree
+  const treeMap = {};
+  allCats.forEach(c => treeMap[c.id] = { ...c, children: [] });
+  const treeRoots = [];
+  allCats.forEach(c => {
+    if (!c.parentId) treeRoots.push(treeMap[c.id]);
+    else if (treeMap[c.parentId]) treeMap[c.parentId].children.push(treeMap[c.id]);
+  });
 
-    const children = allCats.filter(c => c.parentId === root.id);
-    const rootAdj = adj[root.id] || { mode: 'trend', value: null };
-    const rootDailyAvg = children.reduce((s, c) => s + (catDailyAvg[c.id] || 0), 0);
+  // Recursive render: depth = 0 for root, 1 for children, etc.
+  function renderCatNode(node, depth) {
+    const expandKey = 'wi-expand-' + node.id;
+    const isExpanded = whatIfExpandStates[expandKey] === true;
+    const nodeAdj = adj[node.id] || { mode: 'trend', value: null };
+    const hasChildren = node.children.length > 0;
 
-    html += `<div class="whatif-cat-root">
-      <div class="whatif-cat-root-header" onclick="toggleWhatIfExpand('${root.id}')">
-        <span class="whatif-expand-icon">${isExpanded ? '▼' : '▶'}</span>
-        <span>${root.icon} ${root.name}</span>
-        <span class="text-xs text-muted" style="margin-left:8px">日均 ${formatMoney(rootDailyAvg)}</span>
-        <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(catActual[root.id] || children.reduce((s, c) => s + (catActual[c.id] || 0), 0))}</span>
-      </div>
-      ${isExpanded ? `
-      <div class="whatif-cat-body">
-        <div class="whatif-cat-row">
-          <span class="whatif-cat-label">${root.icon} ${root.name}（整体）</span>
-          <select class="input-field whatif-mode-select" data-cat="${root.id}" data-level="root">
-            <option value="trend" ${rootAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
-            <option value="daily" ${rootAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
-            <option value="total" ${rootAdj.mode === 'total' ? 'selected' : ''}>固定剩余总额</option>
-            <option value="percent" ${rootAdj.mode === 'percent' ? 'selected' : ''}>比趋势± %</option>
-            <option value="adjust" ${rootAdj.mode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
-            <option value="zero" ${rootAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
-          </select>
-          <input type="number" class="input-field whatif-value-input" data-cat="${root.id}" value="${rootAdj.value || ''}" min="0" step="0.01" placeholder="值" ${rootAdj.mode === 'trend' || rootAdj.mode === 'zero' ? 'style="display:none"' : ''}>
-          <span class="text-xs text-muted whatif-preview" data-cat="${root.id}"></span>
-        </div>
-        ${children.map(child => {
-          const childAdj = adj[child.id] || { mode: 'trend', value: null };
-          const childDailyAvg = catDailyAvg[child.id] || 0;
-          const rootAdjForChild = adj[root.id] || { mode: 'trend', value: null };
-          const isChildDisabled = rootAdjForChild.mode === 'zero';
-          const effectiveChildMode = isChildDisabled ? 'zero' : childAdj.mode;
-          return `<div class="whatif-cat-row whatif-cat-child">
-            <span class="whatif-cat-label">${child.icon} ${child.name}</span>
-            <select class="input-field whatif-mode-select" data-cat="${child.id}" data-level="child" ${isChildDisabled ? 'disabled' : ''}>
-              <option value="trend" ${effectiveChildMode === 'trend' ? 'selected' : ''}>保持趋势</option>
-              <option value="daily" ${effectiveChildMode === 'daily' ? 'selected' : ''}>设日均值</option>
-              <option value="total" ${effectiveChildMode === 'total' ? 'selected' : ''}>固定剩余总额</option>
-              <option value="percent" ${effectiveChildMode === 'percent' ? 'selected' : ''}>比趋势± %</option>
-              <option value="adjust" ${effectiveChildMode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
-              <option value="zero" ${effectiveChildMode === 'zero' ? 'selected' : ''}>取消消费</option>
-            </select>
-            <input type="number" class="input-field whatif-value-input" data-cat="${child.id}" value="${childAdj.value || ''}" min="0" step="0.01" placeholder="值" ${isChildDisabled || childAdj.mode === 'trend' || childAdj.mode === 'zero' ? 'style="display:none"' : ''}>
-            <span class="text-xs text-muted" style="min-width:60px;text-align:right">日均 ${formatMoney(childDailyAvg)}</span>
-          </div>`;
-        }).join('')}
-      </div>` : ''}
+    // Compute daily avg: use direct spending or sum of children
+    let nodeDailyAvg = catDailyAvg[node.id] || 0;
+    if (!nodeDailyAvg && hasChildren) {
+      nodeDailyAvg = node.children.reduce((s, c) => s + (catDailyAvg[c.id] || 0), 0);
+    }
+
+    // Compute total spent: direct spending or sum of children
+    let nodeSpent = catActual[node.id] || 0;
+    if (!nodeSpent && hasChildren) {
+      nodeSpent = node.children.reduce((s, c) => s + (catActual[c.id] || 0), 0);
+    }
+
+    // Check if any ancestor has mode 'zero' → disable this node
+    let isDisabled = false;
+    let ancestor = node.parentId ? treeMap[node.parentId] : null;
+    while (ancestor) {
+      const ancAdj = adj[ancestor.id];
+      if (ancAdj && ancAdj.mode === 'zero') { isDisabled = true; break; }
+      ancestor = ancestor.parentId ? treeMap[ancestor.parentId] : null;
+    }
+
+    let out = '';
+    if (depth === 0) out += `<div class="whatif-cat-root">`;
+
+    // Header row
+    out += `<div class="whatif-cat-root-header" ${hasChildren ? `onclick="toggleWhatIfExpand('${node.id}')"` : ''} style="cursor:${hasChildren ? 'pointer' : 'default'};padding-left:${depth * 20 + 12}px">
+      ${hasChildren ? `<span class="whatif-expand-icon">${isExpanded ? '▼' : '▶'}</span>` : '<span class="whatif-expand-icon" style="visibility:hidden">▶</span>'}
+      <span>${node.icon} ${node.name}</span>
+      <span class="text-xs text-muted" style="margin-left:8px">日均 ${formatMoney(nodeDailyAvg)}</span>
+      <span class="text-xs text-muted" style="margin-left:auto">已花 ${formatMoney(nodeSpent)}</span>
     </div>`;
+
+    // Body: shown when expanded, or for root-level leaf nodes
+    if (isExpanded || (depth === 0 && !hasChildren)) {
+      out += `<div class="whatif-cat-body" style="padding-left:${depth * 20 + 28}px">
+        <div class="whatif-cat-row">
+          <span class="whatif-cat-label">${node.icon} ${node.name}${hasChildren ? '（整体）' : ''}</span>
+          <select class="input-field whatif-mode-select" data-cat="${node.id}" data-level="${depth === 0 ? 'root' : 'child'}" ${isDisabled ? 'disabled' : ''}>
+            <option value="trend" ${nodeAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
+            <option value="daily" ${nodeAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
+            <option value="total" ${nodeAdj.mode === 'total' ? 'selected' : ''}>固定剩余总额</option>
+            <option value="percent" ${nodeAdj.mode === 'percent' ? 'selected' : ''}>比趋势± %</option>
+            <option value="adjust" ${nodeAdj.mode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
+            <option value="zero" ${nodeAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
+          </select>
+          <input type="number" class="input-field whatif-value-input" data-cat="${node.id}" value="${nodeAdj.value || ''}" min="0" step="0.01" placeholder="值" ${isDisabled || nodeAdj.mode === 'trend' || nodeAdj.mode === 'zero' ? 'style="display:none"' : ''}>
+          <span class="text-xs text-muted" style="min-width:60px;text-align:right">日均 ${formatMoney(nodeDailyAvg)}</span>
+        </div>
+        ${isExpanded && hasChildren ? node.children.map(ch => renderCatNode(ch, depth + 1)).join('') : ''}
+      </div>`;
+    }
+
+    if (depth === 0) out += `</div>`;
+    return out;
+  }
+
+  treeRoots.forEach(root => {
+    html += renderCatNode(root, 0);
   });
 
   html += `</div>`; // end card
@@ -8299,17 +8322,24 @@ function renderWhatIfResults(result) {
   }
   rootNodes.forEach(aggregateUp);
 
-  // Recursive render of the tree
+  // Recursive render of the tree (collapsible, default collapsed)
   function renderTreeNodes(nodes, depth) {
     let out = '';
     nodes.forEach(node => {
       const diff = node.projectedTotal - node.trendTotal;
       const isAdjusted = node.mode !== 'trend' && node.mode !== undefined;
+      const hasChildren = node.children.length > 0;
+      const cmpKey = 'wi-cmp-' + node.category.id;
+      const isExpanded = whatIfCompareExpandStates[cmpKey] === true;
+
       const label = isAdjusted
         ? `${node.category.icon} ${node.category.name} <span class="text-xs text-muted">(已调整)</span>`
         : `${node.category.icon} ${node.category.name}`;
       out += `<div class="whatif-compare-row ${depth > 0 ? 'whatif-child-row' : ''}">
-        <span style="${depth > 0 ? `padding-left:${depth * 20 + 4}px` : ''};font-weight:${depth === 0 ? '700' : '400'}">${label}</span>
+        <span style="${depth > 0 ? `padding-left:${depth * 20 + 4}px` : ''};font-weight:${depth === 0 ? '700' : '400'}">
+          ${hasChildren ? `<span class="whatif-expand-icon" onclick="toggleWhatIfCompareExpand('${node.category.id}')" style="cursor:pointer;margin-right:4px">${isExpanded ? '▼' : '▶'}</span>` : '<span class="whatif-expand-icon" style="visibility:hidden;margin-right:4px">▶</span>'}
+          ${label}
+        </span>
         <span>${formatMoney(node.currentTotal)}</span>
         <span>${formatMoney(node.projectedRemaining)}</span>
         <span>${formatMoney(node.projectedTotal)}</span>
@@ -8317,7 +8347,7 @@ function renderWhatIfResults(result) {
           ${Math.abs(diff) < 0.01 ? '—' : (diff > 0 ? '+' : '') + formatMoney(diff)}
         </span>
       </div>`;
-      if (node.children.length > 0) {
+      if (hasChildren && isExpanded) {
         out += renderTreeNodes(node.children, depth + 1);
       }
     });
@@ -8428,33 +8458,41 @@ function toggleWhatIfExpand(rootId) {
   renderWhatIf();
 }
 
+function toggleWhatIfCompareExpand(catId) {
+  const key = 'wi-cmp-' + catId;
+  whatIfCompareExpandStates[key] = !whatIfCompareExpandStates[key];
+  // Re-render only the results section (params stay intact)
+  const month = getMonthKey(new Date().toISOString());
+  const savedParams = DataStore.getWhatIfParams();
+  const result = savedParams ? SimulationEngine.run(month, savedParams) : null;
+  const rightEl = document.querySelector('#page-whatif .whatif-right');
+  if (result && rightEl) {
+    rightEl.innerHTML = renderWhatIfResults(result);
+  }
+}
+
 function whatifModeChange(selectEl) {
-  const catId = selectEl.dataset.cat;
-  const level = selectEl.dataset.level;
   const valInput = selectEl.parentElement.querySelector('.whatif-value-input');
   if (valInput) {
     valInput.style.display = (selectEl.value === 'trend' || selectEl.value === 'zero') ? 'none' : '';
   }
 
-  // If this is a root category, cascade "zero" to all children
-  if (level === 'root') {
-    const rootDiv = selectEl.closest('.whatif-cat-root');
-    if (rootDiv) {
-      const childSelects = rootDiv.querySelectorAll('.whatif-cat-child .whatif-mode-select');
-      const childValueInputs = rootDiv.querySelectorAll('.whatif-cat-child .whatif-value-input');
-      childSelects.forEach((childSel, i) => {
-        if (selectEl.value === 'zero') {
-          childSel.value = 'zero';
-          if (childValueInputs[i]) childValueInputs[i].style.display = 'none';
-          childSel.disabled = true;
-        } else {
-          childSel.disabled = false;
+  // Cascade "zero" — disable all descendant selects in subsequent .whatif-cat-body elements
+  if (selectEl.value === 'zero') {
+    const body = selectEl.closest('.whatif-cat-body');
+    if (body) {
+      body.querySelectorAll('.whatif-mode-select').forEach(s => {
+        if (s !== selectEl) {
+          s.value = 'zero';
+          s.disabled = true;
+          const vi = s.parentElement.querySelector('.whatif-value-input');
+          if (vi) vi.style.display = 'none';
         }
       });
     }
   }
 
-  // Auto-save changes
+  // Auto-save (re-render will set correct disabled states based on adj)
   runWhatIfSimulation();
 }
 
