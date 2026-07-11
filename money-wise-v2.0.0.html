@@ -1582,6 +1582,11 @@ ul, ol { list-style: none; }
   align-items: center;
   border-bottom: 1px solid var(--border, #e5e7eb);
 }
+.whatif-child-row {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #64748B);
+  padding-left: 4px;
+}
 .whatif-compare-total {
   border-bottom: none;
   border-top: 2px solid var(--border, #e5e7eb);
@@ -7995,7 +8000,7 @@ function renderWhatIfParams(month, savedParams) {
   // === 分类支出调整 ===
   html += `<div class="card mb-16">
     <div class="card-title">🏷️ 分类支出调整</div>
-    <p class="text-xs text-muted" style="margin-bottom:8px">调整每个分类在剩余天数的支出方式。展开根分类查看子分类。</p>`;
+    <p class="text-xs text-muted" style="margin-bottom:8px">调整每个分类在剩余天数的支出方式。展开根分类查看子分类。<br>「固定剩余总额」= 剩余天数总共花指定金额；「比趋势± %/天」= 在日均基础上增减。</p>`;
 
   rootCats.forEach(root => {
     const expandKey = 'wi-expand-' + root.id;
@@ -8019,7 +8024,7 @@ function renderWhatIfParams(month, savedParams) {
           <select class="input-field whatif-mode-select" data-cat="${root.id}" data-level="root">
             <option value="trend" ${rootAdj.mode === 'trend' ? 'selected' : ''}>保持趋势</option>
             <option value="daily" ${rootAdj.mode === 'daily' ? 'selected' : ''}>设日均值</option>
-            <option value="total" ${rootAdj.mode === 'total' ? 'selected' : ''}>设剩余月额</option>
+            <option value="total" ${rootAdj.mode === 'total' ? 'selected' : ''}>固定剩余总额</option>
             <option value="percent" ${rootAdj.mode === 'percent' ? 'selected' : ''}>比趋势± %</option>
             <option value="adjust" ${rootAdj.mode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
             <option value="zero" ${rootAdj.mode === 'zero' ? 'selected' : ''}>取消消费</option>
@@ -8038,7 +8043,7 @@ function renderWhatIfParams(month, savedParams) {
             <select class="input-field whatif-mode-select" data-cat="${child.id}" data-level="child" ${isChildDisabled ? 'disabled' : ''}>
               <option value="trend" ${effectiveChildMode === 'trend' ? 'selected' : ''}>保持趋势</option>
               <option value="daily" ${effectiveChildMode === 'daily' ? 'selected' : ''}>设日均值</option>
-              <option value="total" ${effectiveChildMode === 'total' ? 'selected' : ''}>设剩余月额</option>
+              <option value="total" ${effectiveChildMode === 'total' ? 'selected' : ''}>固定剩余总额</option>
               <option value="percent" ${effectiveChildMode === 'percent' ? 'selected' : ''}>比趋势± %</option>
               <option value="adjust" ${effectiveChildMode === 'adjust' ? 'selected' : ''}>比趋势± RM/天</option>
               <option value="zero" ${effectiveChildMode === 'zero' ? 'selected' : ''}>取消消费</option>
@@ -8249,6 +8254,10 @@ function renderWhatIfResults(result) {
   Object.values(rootProjections).forEach(rp => {
     const trendForRoot = daysPassed > 0 ? (rp.currentTotal / daysPassed) * daysInMonth : 0;
     const diff = rp.projectedTotal - trendForRoot;
+
+    // Check if this root has actual subcategories (vs being a leaf itself)
+    const subChildren = (rp.children || []).filter(c => c.category.id !== rp.category.id);
+
     html += `<div class="whatif-compare-row">
       <span class="font-semibold">${rp.category.icon} ${rp.category.name}</span>
       <span>${formatMoney(rp.currentTotal)}</span>
@@ -8258,6 +8267,24 @@ function renderWhatIfResults(result) {
         ${Math.abs(diff) < 0.01 ? '—' : (diff > 0 ? '+' : '') + formatMoney(diff)}
       </span>
     </div>`;
+
+    // Show subcategory rows
+    if (subChildren.length > 0) {
+      subChildren.forEach(child => {
+        const trendForChild = daysPassed > 0 ? (child.currentTotal / daysPassed) * daysInMonth : 0;
+        const childDiff = child.projectedTotal - trendForChild;
+        const hasChildOverride = child.mode !== 'trend';
+        html += `<div class="whatif-compare-row whatif-child-row" style="font-size:0.8rem">
+          <span style="padding-left:24px">${child.category.icon} ${child.category.name}${hasChildOverride ? ' <span class="text-xs text-muted">(已调整)</span>' : ''}</span>
+          <span>${formatMoney(child.currentTotal)}</span>
+          <span>${formatMoney(child.projectedRemaining)}</span>
+          <span>${formatMoney(child.projectedTotal)}</span>
+          <span style="color:${Math.abs(childDiff) < 0.01 ? 'var(--text-muted)' : (childDiff > 0 ? 'var(--danger)' : 'var(--success)')}">
+            ${Math.abs(childDiff) < 0.01 ? '—' : (childDiff > 0 ? '+' : '') + formatMoney(childDiff)}
+          </span>
+        </div>`;
+      });
+    }
   });
 
   // Hypothetical categories row
