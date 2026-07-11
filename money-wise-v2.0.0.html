@@ -8112,7 +8112,7 @@ function renderWhatIfResults(result) {
     actualSpent, totalProjected, projectedRemaining, projectedDailyAvg,
     projectedSavings, savingsAttained, hypotheticalTotal,
     trendTotal, trendDailyAvg, trendSavings,
-    rootProjections, hypotheticalProjections
+    rootProjections, hypotheticalProjections, categoryProjections
   } = result;
 
   const savingsDiff = projectedSavings - targetAmount;
@@ -8251,41 +8251,79 @@ function renderWhatIfResults(result) {
         <span>较趋势</span>
       </div>`;
 
-  Object.values(rootProjections).forEach(rp => {
-    const trendForRoot = daysPassed > 0 ? (rp.currentTotal / daysPassed) * daysInMonth : 0;
-    const diff = rp.projectedTotal - trendForRoot;
-
-    // Check if this root has actual subcategories (vs being a leaf itself)
-    const subChildren = (rp.children || []).filter(c => c.category.id !== rp.category.id);
-
-    html += `<div class="whatif-compare-row">
-      <span class="font-semibold">${rp.category.icon} ${rp.category.name}</span>
-      <span>${formatMoney(rp.currentTotal)}</span>
-      <span>${formatMoney(rp.projectedRemaining)}</span>
-      <span class="font-semibold">${formatMoney(rp.projectedTotal)}</span>
-      <span style="color:${Math.abs(diff) < 0.01 ? 'var(--text-muted)' : (diff > 0 ? 'var(--danger)' : 'var(--success)')}">
-        ${Math.abs(diff) < 0.01 ? '—' : (diff > 0 ? '+' : '') + formatMoney(diff)}
-      </span>
-    </div>`;
-
-    // Show subcategory rows
-    if (subChildren.length > 0) {
-      subChildren.forEach(child => {
-        const trendForChild = daysPassed > 0 ? (child.currentTotal / daysPassed) * daysInMonth : 0;
-        const childDiff = child.projectedTotal - trendForChild;
-        const hasChildOverride = child.mode !== 'trend';
-        html += `<div class="whatif-compare-row whatif-child-row" style="font-size:0.8rem">
-          <span style="padding-left:24px">${child.category.icon} ${child.category.name}${hasChildOverride ? ' <span class="text-xs text-muted">(已调整)</span>' : ''}</span>
-          <span>${formatMoney(child.currentTotal)}</span>
-          <span>${formatMoney(child.projectedRemaining)}</span>
-          <span>${formatMoney(child.projectedTotal)}</span>
-          <span style="color:${Math.abs(childDiff) < 0.01 ? 'var(--text-muted)' : (childDiff > 0 ? 'var(--danger)' : 'var(--success)')}">
-            ${Math.abs(childDiff) < 0.01 ? '—' : (childDiff > 0 ? '+' : '') + formatMoney(childDiff)}
-          </span>
-        </div>`;
-      });
+  // Build full category projection tree (all nesting levels)
+  const allCats = DataStore.getCategories();
+  const projMap = categoryProjections || {};
+  // Create tree nodes
+  const treeNodes = {};
+  allCats.forEach(c => {
+    treeNodes[c.id] = {
+      category: c,
+      currentTotal: 0,
+      projectedRemaining: 0,
+      projectedTotal: 0,
+      trendTotal: 0,
+      mode: 'trend',
+      children: []
+    };
+  });
+  // Fill leaf data from simulation
+  Object.values(projMap).forEach(p => {
+    const node = treeNodes[p.category.id];
+    if (node) {
+      node.currentTotal = p.currentTotal || 0;
+      node.projectedRemaining = p.projectedRemaining || 0;
+      node.projectedTotal = p.projectedTotal || 0;
+      node.mode = p.mode || 'trend';
+      node.trendTotal = daysPassed > 0 ? (p.currentDailyAvg || 0) * daysInMonth : 0;
     }
   });
+  // Build parent-child links
+  const rootNodes = [];
+  allCats.forEach(c => {
+    if (!c.parentId) {
+      rootNodes.push(treeNodes[c.id]);
+    } else if (treeNodes[c.parentId]) {
+      treeNodes[c.parentId].children.push(treeNodes[c.id]);
+    }
+  });
+  // Aggregate non-leaf nodes upward
+  function aggregateUp(node) {
+    if (node.children.length > 0) {
+      node.children.forEach(aggregateUp);
+      node.currentTotal = node.children.reduce((s, ch) => s + ch.currentTotal, 0);
+      node.projectedRemaining = node.children.reduce((s, ch) => s + ch.projectedRemaining, 0);
+      node.projectedTotal = node.currentTotal + node.projectedRemaining;
+      node.trendTotal = node.children.reduce((s, ch) => s + ch.trendTotal, 0);
+    }
+  }
+  rootNodes.forEach(aggregateUp);
+
+  // Recursive render of the tree
+  function renderTreeNodes(nodes, depth) {
+    let out = '';
+    nodes.forEach(node => {
+      const diff = node.projectedTotal - node.trendTotal;
+      const isAdjusted = node.mode !== 'trend' && node.mode !== undefined;
+      const label = isAdjusted
+        ? `${node.category.icon} ${node.category.name} <span class="text-xs text-muted">(已调整)</span>`
+        : `${node.category.icon} ${node.category.name}`;
+      out += `<div class="whatif-compare-row ${depth > 0 ? 'whatif-child-row' : ''}">
+        <span style="${depth > 0 ? `padding-left:${depth * 20 + 4}px` : ''};font-weight:${depth === 0 ? '700' : '400'}">${label}</span>
+        <span>${formatMoney(node.currentTotal)}</span>
+        <span>${formatMoney(node.projectedRemaining)}</span>
+        <span>${formatMoney(node.projectedTotal)}</span>
+        <span style="color:${Math.abs(diff) < 0.01 ? 'var(--text-muted)' : (diff > 0 ? 'var(--danger)' : 'var(--success)')}">
+          ${Math.abs(diff) < 0.01 ? '—' : (diff > 0 ? '+' : '') + formatMoney(diff)}
+        </span>
+      </div>`;
+      if (node.children.length > 0) {
+        out += renderTreeNodes(node.children, depth + 1);
+      }
+    });
+    return out;
+  }
+  html += renderTreeNodes(rootNodes, 0);
 
   // Hypothetical categories row
   hypotheticalProjections.forEach(hp => {
