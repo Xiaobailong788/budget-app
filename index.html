@@ -8985,7 +8985,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 
   var validators = {
     amount: function (v) { return typeof v === 'number' && isFinite(v) && v >= 0; },
-    date: function (v) { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v); },
+    date: function (v) { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v); },
     color: function (v) { return typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v); },
     id: function (v) { return typeof v === 'string' && v.length > 0 && v.length < 100; },
     name: function (v) { return typeof v === 'string' && v.length > 0 && v.length < 200; },
@@ -9138,6 +9138,8 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     }
     backupBeforeMerge();
     if (mode === 'replace') {
+      data.records.forEach(function (r) { r.note = sanitizeHtml(r.note || ''); });
+      data.categories.forEach(function (c) { c.name = sanitizeHtml(c.name); c.icon = sanitizeHtml(c.icon); });
       sortRecordsDesc(data.records);
       var def = DataStore._defaults();
       DataStore._data = def;
