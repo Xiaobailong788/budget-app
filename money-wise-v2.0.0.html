@@ -2990,11 +2990,11 @@ const SimulationEngine = {
     const projectedDailyAvg = totalProjected / daysInMonth;
     const savingsAttained = projectedSavings >= targetAmount;
 
-    // Current trend (for comparison)
-    const trendDailyAvg = daysPassed > 0 ? actualSpent / daysPassed : 0;
-    const trendTotal = trendDailyAvg * daysInMonth;
-    const trendSavings = netDisposable - trendTotal;
-    const trendDailyTarget = spendable / daysInMonth;
+    // Current trend (for comparison) — use StatsEngine to match Overview exactly
+    const trendTotal = StatsEngine.getPredictedTotal(month);
+    const trendDailyAvg = StatsEngine.getDailyAverage(month);
+    const unpaidBills = Math.max(0, DataStore.getBillTotal(month) - StatsEngine.getBillSpendingActual(month));
+    const trendSavings = StatsEngine.getSavingsPrediction(month) - unpaidBills;
 
     return {
       // Parameters used
