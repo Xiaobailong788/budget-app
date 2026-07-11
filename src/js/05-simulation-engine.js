@@ -1,6 +1,9 @@
 /* ============================================================
    SIMULATION ENGINE — What-If projection calculations
    ============================================================ */
+(function() {
+'use strict';
+
 const SimulationEngine = {
   /**
    * Run a what-if simulation for a given month.
@@ -248,3 +251,7 @@ const SimulationEngine = {
     return this.run(month, {});
   }
 };
+
+  // === EXPORTS ===
+  window.SimulationEngine = SimulationEngine;
+})();

@@ -1,6 +1,9 @@
 /* ============================================================
    DataStore
    ============================================================ */
+(function() {
+'use strict';
+
 const DataStore = {
   _data: null,
   _pendingDelete: null, // { id, record, timeoutId }
@@ -430,5 +433,46 @@ const DataStore = {
   clearWhatIfParams() {
     this._data.whatIfParams = null;
     this.save();
-  }
+  },
+
+  // Data hash for sync verification
+  getLastUpdateTime() {
+    const records = this._data.records;
+    if (!records.length) return '无数据';
+    let latest = '';
+    records.forEach(r => {
+      if (r.updatedAt && r.updatedAt > latest) latest = r.updatedAt;
+      if (r.createdAt && r.createdAt > latest) latest = r.createdAt;
+      if (r.date && r.date > latest) latest = r.date;
+    });
+    return latest || '无数据';
+  },
+
+  getDataHash() {
+    // Generate a simple hash from all data to detect sync mismatches
+    const data = this._data;
+    const fingerprint = JSON.stringify({
+      records: data.records.map(r => ({ id: r.id, amount: r.amount, categoryId: r.categoryId, date: r.date, note: r.note, updatedAt: r.updatedAt })),
+      categories: data.categories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId })),
+      budgets: data.budgets,
+      categoryBudgets: data.categoryBudgets,
+      savingsTarget: data.savingsTarget,
+      billCategories: data.billCategories,
+      billAmounts: data.billAmounts,
+      monthlyIncome: data.monthlyIncome,
+      percentBase: data.percentBase
+    });
+    // DJB2 hash
+    let hash = 5381;
+    for (let i = 0; i < fingerprint.length; i++) {
+      hash = ((hash << 5) + hash) + fingerprint.charCodeAt(i);
+      hash = hash & hash;
+    }
+    // Convert to base36 uppercase, take 6 chars
+    return Math.abs(hash).toString(36).toUpperCase().substring(0, 6).padStart(6, '0');
+  },
 };
+
+  // === EXPORTS ===
+  window.DataStore = DataStore;
+})();

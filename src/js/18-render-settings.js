@@ -1,6 +1,8 @@
 /* ============================================================
    RENDER: Settings Page
    ============================================================ */
+(function() {
+'use strict';
 function renderSettings() {
   const el = document.getElementById('page-settings');
   const now = new Date();
@@ -81,8 +83,33 @@ function renderSettings() {
         <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 清除所有数据</button>
       </div>
     </div>
+
+    <!-- Data Sync Verification -->
+    <div class="card mb-16" style="border-left:4px solid #818CF8">
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        <span>🔄 数据同步校验</span>
+        <button class="btn btn-sm btn-primary" onclick="refreshSyncFingerprint()" style="font-size:0.72rem">刷新</button>
+      </div>
+      <div id="syncFingerprint">
+        <div class="text-sm text-secondary" style="margin-bottom:8px">
+          对比两台设备的数据指纹，确认同步是否成功。
+        </div>
+        <div class="flex items-center gap-8" style="padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px">
+          <span class="text-xs text-muted" style="min-width:60px">指纹码</span>
+          <span id="syncFingerprintCode" style="font-family:monospace;font-size:1.3rem;font-weight:700;letter-spacing:2px;color:var(--primary)">------</span>
+        </div>
+        <div class="flex items-center gap-8" style="padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm)">
+          <span class="text-xs text-muted" style="min-width:60px">最新变更</span>
+          <span id="syncFingerprintTime" class="text-sm" style="font-weight:500">—</span>
+        </div>
+      </div>
+      <div class="text-xs text-muted" style="margin-top:6px;line-height:1.4">
+        💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
+      </div>
+    </div>
     <div style="text-align:center;padding:16px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.1.5</div>
   `;
+  setTimeout(refreshSyncFingerprint, 100);
 }
 
 function setSavingsType(type) {
@@ -189,3 +216,28 @@ function confirmClearAll() {
   showToast('✅ 所有数据已清除');
   navigateTo('overview');
 }
+
+function refreshSyncFingerprint() {
+  const codeEl = document.getElementById('syncFingerprintCode');
+  const timeEl = document.getElementById('syncFingerprintTime');
+  if (codeEl) codeEl.textContent = DataStore.getDataHash();
+  if (timeEl) {
+    const t = DataStore.getLastUpdateTime();
+    timeEl.textContent = t ? t.replace('T', ' ').substring(0, 19) : '无数据';
+  }
+}
+
+  // === EXPORTS ===
+  window.renderSettings = renderSettings;
+  window.setSavingsType = setSavingsType;
+  window.saveBudget = saveBudget;
+  window.saveSavingsTarget = saveSavingsTarget;
+  window.setPercentBase = setPercentBase;
+  window.exportJSON = exportJSON;
+  window.importJSON = importJSON;
+  window.confirmImportJSON = confirmImportJSON;
+  window.exportCSV = exportCSV;
+  window.clearAllData = clearAllData;
+  window.confirmClearAll = confirmClearAll;
+  window.refreshSyncFingerprint = refreshSyncFingerprint;
+})();

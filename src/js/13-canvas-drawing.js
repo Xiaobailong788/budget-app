@@ -1,16 +1,25 @@
 /* ============================================================
    CANVAS DRAWING HELPERS
    ============================================================ */
+(function() {
+'use strict';
 function drawRing(canvasId, progress, color, label, overspendColor) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const tc = getThemeColors();
-  const size = canvas.width;
-  const cx = size / 2, cy = size / 2, r = size * 0.38, lineW = size * 0.1;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cssSize = rect.width || 160;
+  const bufferSize = Math.round(cssSize * dpr);
+  if (canvas.width !== bufferSize || canvas.height !== bufferSize) {
+    canvas.width = bufferSize;
+    canvas.height = bufferSize;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = cssSize / 2, cy = cssSize / 2, r = cssSize * 0.38, lineW = cssSize * 0.1;
 
-  ctx.clearRect(0, 0, size, size);
-  // Background circle
+  ctx.clearRect(0, 0, cssSize, cssSize);
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.strokeStyle = tc.border;
@@ -111,3 +120,8 @@ function drawSparkline(canvasId, data) {
     ctx.fill();
   });
 }
+
+  // === EXPORTS ===
+  window.drawRing = drawRing;
+  window.drawSparkline = drawSparkline;
+})();

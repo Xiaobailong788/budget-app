@@ -1,6 +1,8 @@
 /* ============================================================
    🔮 假设分析 — What-If Simulation Page
    ============================================================ */
+(function() {
+'use strict';
 
 // Global state for this page
 let whatIfExpandStates = {};  // { 'wi-expand-{catId}': true/false } — params section
@@ -537,12 +539,22 @@ function drawWhatIfRings(result) {
 // Helper to draw a simple ring (named differently to avoid collision with existing drawRing)
 function drawSimpleRing(canvas, percent, fillColor, bgColor) {
   const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const cx = w / 2, cy = h / 2;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = rect.width || canvas.width;
+  const cssH = rect.height || canvas.height;
+  const bw = Math.round(cssW * dpr);
+  const bh = Math.round(cssH * dpr);
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width = bw;
+    canvas.height = bh;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = cssW / 2, cy = cssH / 2;
   const r = Math.min(cx, cy) - 8;
   const lineWidth = 12;
 
-  ctx.clearRect(0, 0, w, h);
+  ctx.clearRect(0, 0, cssW, cssH);
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.strokeStyle = bgColor || '#e5e7eb';
@@ -556,7 +568,6 @@ function drawSimpleRing(canvas, percent, fillColor, bgColor) {
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // Center text
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1E293B';
   ctx.font = 'bold 14px system-ui, sans-serif';
   ctx.textAlign = 'center';
@@ -724,3 +735,22 @@ function attachWhatIfListeners(month) {
     inp.addEventListener('change', runWhatIfSimulation);
   });
 }
+
+  // === EXPORTS ===
+  window.whatIfExpandStates = whatIfExpandStates;
+  window.whatIfCompareExpandStates = whatIfCompareExpandStates;
+  window.renderWhatIf = renderWhatIf;
+  window.renderWhatIfParams = renderWhatIfParams;
+  window.renderWhatIfResults = renderWhatIfResults;
+  window.drawWhatIfRings = drawWhatIfRings;
+  window.drawSimpleRing = drawSimpleRing;
+  window.toggleWhatIfExpand = toggleWhatIfExpand;
+  window.toggleWhatIfCompareExpand = toggleWhatIfCompareExpand;
+  window.whatifModeChange = whatifModeChange;
+  window.addWhatIfHypo = addWhatIfHypo;
+  window.removeWhatIfHypo = removeWhatIfHypo;
+  window.collectWhatIfParams = collectWhatIfParams;
+  window.runWhatIfSimulation = runWhatIfSimulation;
+  window.clearWhatIfSimulation = clearWhatIfSimulation;
+  window.attachWhatIfListeners = attachWhatIfListeners;
+})();

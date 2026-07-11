@@ -1,6 +1,8 @@
 /* ============================================================
    RENDER: Statistics Page
    ============================================================ */
+(function() {
+'use strict';
 let statsMonth = '';
 let statsStartDate = '';
 let statsEndDate = '';
@@ -1876,3 +1878,48 @@ function downloadChart(canvasId) {
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
+
+  // === EXPORTS ===
+  window.statsMonth = statsMonth;
+  window.statsStartDate = statsStartDate;
+  window.statsEndDate = statsEndDate;
+  window.statsDrillStack = statsDrillStack;
+  window.showMonthCompare = showMonthCompare;
+  window.getDrillCategory = getDrillCategory;
+  window.syncPieDrillBar = syncPieDrillBar;
+  window.updateDrillCharts = updateDrillCharts;
+  window.getHeatmapColor = getHeatmapColor;
+  window.getDailySavingsTarget = getDailySavingsTarget;
+  window.renderCalendarHeatmap = renderCalendarHeatmap;
+  window.showDayRecords = showDayRecords;
+  window.expandHeatmap = expandHeatmap;
+  window.expandPie = expandPie;
+  window.renderExpandPieTable = renderExpandPieTable;
+  window.toggleExpandPieRow = toggleExpandPieRow;
+  window.shrinkChart = shrinkChart;
+  window.toggleMonthCompare = toggleMonthCompare;
+  window.drawCompareBarChart = drawCompareBarChart;
+  window.renderBillToggle = renderBillToggle;
+  window.toggleBillFilter = toggleBillFilter;
+  window.isBillToggleChecked = isBillToggleChecked;
+  window.refreshPieChart = refreshPieChart;
+  window.refreshOverviewBudget = refreshOverviewBudget;
+  window.renderStats = renderStats;
+  window.changeStatsMonth = changeStatsMonth;
+  window.changeStatsCustom = changeStatsCustom;
+  window.resetStatsDrill = resetStatsDrill;
+  window.useCustomRange = useCustomRange;
+  window.getStatsCatTotals = getStatsCatTotals;
+  window.getStatsDailyTotals = getStatsDailyTotals;
+  window.getChartData = getChartData;
+  window.getChartDataForRange = getChartDataForRange;
+  window.getRawChartData = getRawChartData;
+  window.drawPieChart = drawPieChart;
+  window.lightenColor = lightenColor;
+  window.darkenColor = darkenColor;
+  window.drawLineChart = drawLineChart;
+  window.drawBarChart = drawBarChart;
+  window.drawMonthlyChart = drawMonthlyChart;
+  window.drawSavingsChart = drawSavingsChart;
+  window.downloadChart = downloadChart;
+})();

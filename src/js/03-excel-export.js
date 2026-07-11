@@ -5,6 +5,9 @@
    Format: XML Spreadsheet 2003 (SpreadsheetML) — no ZIP needed,
            opens natively in Excel / LibreOffice / Google Sheets.
    ============================================================ */
+(function() {
+'use strict';
+
 function exportToExcel() {
   const records = DataStore.getRecords();
   const cats = DataStore.getCategories();
@@ -462,3 +465,7 @@ function exportToExcel() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+  // === EXPORTS ===
+  window.exportToExcel = exportToExcel;
+})();

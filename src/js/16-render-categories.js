@@ -1,6 +1,8 @@
 /* ============================================================
    RENDER: Categories Page
    ============================================================ */
+(function() {
+'use strict';
 // Track expanded category nodes
 let expandedCategories = new Set();
 
@@ -653,3 +655,38 @@ function saveCategoryEdit(catId) {
   showToast('✅ 名称已更新');
   renderCategories();
 }
+
+  // === EXPORTS ===
+  window.expandedCategories = expandedCategories;
+  window.renderCategories = renderCategories;
+  window.getBudgetMonth = getBudgetMonth;
+  window.buildCategoryTreeHTML = buildCategoryTreeHTML;
+  window.saveCategoryBudget = saveCategoryBudget;
+  window.mergeCategory = mergeCategory;
+  window.buildMergeTargetTree = buildMergeTargetTree;
+  window.selectMergeTarget = selectMergeTarget;
+  window.confirmMergeCategory = confirmMergeCategory;
+  window.toggleCatItem = toggleCatItem;
+  window.addRootCategory = addRootCategory;
+  window.confirmAddRootCategory = confirmAddRootCategory;
+  window.addChildCategory = addChildCategory;
+  window.confirmAddChildCategory = confirmAddChildCategory;
+  window.renameCategory = renameCategory;
+  window.confirmRenameCategory = confirmRenameCategory;
+  window.EMOJI_GRID = EMOJI_GRID;
+  window.changeCategoryIcon = changeCategoryIcon;
+  window.confirmChangeIcon = confirmChangeIcon;
+  window.changeCategoryColor = changeCategoryColor;
+  window.confirmChangeColor = confirmChangeColor;
+  window.confirmCustomColor = confirmCustomColor;
+  window.moveCategory = moveCategory;
+  window.buildMoveTree = buildMoveTree;
+  window.confirmMoveCategory = confirmMoveCategory;
+  window.deleteCategoryConfirm = deleteCategoryConfirm;
+  window.showMoveBeforeDelete = showMoveBeforeDelete;
+  window.confirmDeleteCategory = confirmDeleteCategory;
+  window.buildBreadcrumb = buildBreadcrumb;
+  window.expandAndScrollTo = expandAndScrollTo;
+  window.editCategory = editCategory;
+  window.saveCategoryEdit = saveCategoryEdit;
+})();

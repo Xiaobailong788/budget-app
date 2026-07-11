@@ -1,6 +1,9 @@
 /* ============================================================
    ROUTER
    ============================================================ */
+(function() {
+'use strict';
+
 const pageTitles = {
   overview: '总览',
   add: '记账',
@@ -52,3 +55,9 @@ document.querySelectorAll('.nav-item, .sidebar-item').forEach(el => {
     }
   });
 });
+
+  // === EXPORTS ===
+  window.pageTitles = pageTitles;
+  window.currentTab = currentTab;
+  window.navigateTo = navigateTo;
+})();

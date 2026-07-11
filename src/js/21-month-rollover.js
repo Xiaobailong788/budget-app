@@ -1,6 +1,8 @@
 /* ============================================================
    MONTH ROLLOVER DETECTION
    ============================================================ */
+(function() {
+'use strict';
 function checkMonthRollover() {
   const now = new Date();
   const currentMonth = getMonthKey(now.toISOString());
@@ -47,3 +49,8 @@ function showBillRolloverReminder(lastMonth, currentMonth) {
     </div>
   `);
 }
+
+  // === EXPORTS ===
+  window.checkMonthRollover = checkMonthRollover;
+  window.showBillRolloverReminder = showBillRolloverReminder;
+})();

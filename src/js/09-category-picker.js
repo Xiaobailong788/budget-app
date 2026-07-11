@@ -1,3 +1,6 @@
+(function() {
+'use strict';
+
 let selectedCategoryId = null;
 
 function openCategoryPicker(context) {
@@ -67,4 +70,11 @@ function selectCategory(catId, context) {
   }
   closeModal();
 }
+
+  // === EXPORTS ===
+  window.selectedCategoryId = selectedCategoryId;
+  window.openCategoryPicker = openCategoryPicker;
+  window.buildCategoryTreePicker = buildCategoryTreePicker;
+  window.selectCategory = selectCategory;
+})();
 

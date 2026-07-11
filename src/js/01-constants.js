@@ -1,6 +1,9 @@
 /* ============================================================
    DATA LAYER — localStorage CRUD
    ============================================================ */
+(function() {
+'use strict';
+
 const COLORS = [
   '#6366F1','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6',
   '#F97316','#06B6D4','#84CC16','#A855F7','#E11D48','#0EA5E9','#D97706'
@@ -51,3 +54,10 @@ function getMonthKey(dateStr) {
   const d = new Date(dateStr);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
+
+  // === EXPORTS ===
+  window.COLORS = COLORS;
+  window.escHtml = escHtml;
+  window.uuid = uuid;
+  window.getMonthKey = getMonthKey;
+})();

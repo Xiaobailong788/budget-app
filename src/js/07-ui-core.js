@@ -1,6 +1,9 @@
 /* ============================================================
    UI HELPERS
    ============================================================ */
+(function() {
+'use strict';
+
 /* ===== DARK MODE ===== */
 function applyTheme(theme) {
   if (!theme) theme = localStorage.getItem('budgetTheme') || 'light';
@@ -310,3 +313,25 @@ function getRootAncestor(catId) {
   }
   return cat;
 }
+
+  // === EXPORTS ===
+  window.applyTheme = applyTheme;
+  window.toggleTheme = toggleTheme;
+  window.showToast = showToast;
+  window.showModal = showModal;
+  window.closeModal = closeModal;
+  window.openBillsCenter = openBillsCenter;
+  window.closeBillsCenter = closeBillsCenter;
+  window.saveBillIncome = saveBillIncome;
+  window.saveBillAmount = saveBillAmount;
+  window.updateBillSummary = updateBillSummary;
+  window.addNewBillRow = addNewBillRow;
+  window.deleteBillCategoryFromCenter = deleteBillCategoryFromCenter;
+  window.editBillCategory = editBillCategory;
+  window.saveBillCategoryEdit = saveBillCategoryEdit;
+  window.openBillCategoryManager = openBillCategoryManager;
+  window.formatMoney = formatMoney;
+  window.getCategoryFullPath = getCategoryFullPath;
+  window.getRootAncestorId = getRootAncestorId;
+  window.getRootAncestor = getRootAncestor;
+})();

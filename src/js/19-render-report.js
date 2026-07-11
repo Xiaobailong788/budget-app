@@ -1,6 +1,8 @@
 /* ============================================================
    RENDER: Report Page
    ============================================================ */
+(function() {
+'use strict';
 let reportMonth = '';
 
 function renderReport() {
@@ -223,3 +225,10 @@ function printReport() {
   navigateTo('report');
   setTimeout(() => { window.print(); }, 100);
 }
+
+  // === EXPORTS ===
+  window.reportMonth = reportMonth;
+  window.renderReport = renderReport;
+  window.changeReportMonth = changeReportMonth;
+  window.printReport = printReport;
+})();

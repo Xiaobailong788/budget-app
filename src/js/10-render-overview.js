@@ -1,6 +1,9 @@
 /* ============================================================
    RENDER: Overview
    ============================================================ */
+(function() {
+'use strict';
+
 function renderOverview() {
   const el = document.getElementById('page-overview');
   const now = new Date();
@@ -384,3 +387,8 @@ function refreshOverviewBudget() {
     parent.appendChild(newFormula);
   }
 }
+
+  // === EXPORTS ===
+  window.renderOverview = renderOverview;
+  window.refreshOverviewBudget = refreshOverviewBudget;
+})();

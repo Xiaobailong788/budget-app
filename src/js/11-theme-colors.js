@@ -1,4 +1,7 @@
 /* ===== THEME-AWARE COLORS ===== */
+(function() {
+'use strict';
+
 function getThemeColors() {
   const s = getComputedStyle(document.documentElement);
   return {
@@ -10,3 +13,7 @@ function getThemeColors() {
     cardBg: s.getPropertyValue('--card-bg').trim() || '#FFFFFF',
   };
 }
+
+  // === EXPORTS ===
+  window.getThemeColors = getThemeColors;
+})();

@@ -1697,6 +1697,9 @@ ul, ol { list-style: none; }
 /* ============================================================
    DATA LAYER — localStorage CRUD
    ============================================================ */
+(function() {
+'use strict';
+
 const COLORS = [
   '#6366F1','#10B981','#F59E0B','#EF4444','#8B5CF6','#EC4899','#14B8A6',
   '#F97316','#06B6D4','#84CC16','#A855F7','#E11D48','#0EA5E9','#D97706'
@@ -1747,9 +1750,19 @@ function getMonthKey(dateStr) {
   const d = new Date(dateStr);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
 }
+
+  // === EXPORTS ===
+  window.COLORS = COLORS;
+  window.escHtml = escHtml;
+  window.uuid = uuid;
+  window.getMonthKey = getMonthKey;
+})();
 /* ============================================================
    DataStore
    ============================================================ */
+(function() {
+'use strict';
+
 const DataStore = {
   _data: null,
   _pendingDelete: null, // { id, record, timeoutId }
@@ -2179,8 +2192,49 @@ const DataStore = {
   clearWhatIfParams() {
     this._data.whatIfParams = null;
     this.save();
-  }
+  },
+
+  // Data hash for sync verification
+  getLastUpdateTime() {
+    const records = this._data.records;
+    if (!records.length) return '无数据';
+    let latest = '';
+    records.forEach(r => {
+      if (r.updatedAt && r.updatedAt > latest) latest = r.updatedAt;
+      if (r.createdAt && r.createdAt > latest) latest = r.createdAt;
+      if (r.date && r.date > latest) latest = r.date;
+    });
+    return latest || '无数据';
+  },
+
+  getDataHash() {
+    // Generate a simple hash from all data to detect sync mismatches
+    const data = this._data;
+    const fingerprint = JSON.stringify({
+      records: data.records.map(r => ({ id: r.id, amount: r.amount, categoryId: r.categoryId, date: r.date, note: r.note, updatedAt: r.updatedAt })),
+      categories: data.categories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId })),
+      budgets: data.budgets,
+      categoryBudgets: data.categoryBudgets,
+      savingsTarget: data.savingsTarget,
+      billCategories: data.billCategories,
+      billAmounts: data.billAmounts,
+      monthlyIncome: data.monthlyIncome,
+      percentBase: data.percentBase
+    });
+    // DJB2 hash
+    let hash = 5381;
+    for (let i = 0; i < fingerprint.length; i++) {
+      hash = ((hash << 5) + hash) + fingerprint.charCodeAt(i);
+      hash = hash & hash;
+    }
+    // Convert to base36 uppercase, take 6 chars
+    return Math.abs(hash).toString(36).toUpperCase().substring(0, 6).padStart(6, '0');
+  },
 };
+
+  // === EXPORTS ===
+  window.DataStore = DataStore;
+})();
 /* ============================================================
    EXCEL EXPORT — Generates a real .xlsx-compatible XML Spreadsheet
    with formulas (SUM, AVERAGE, MAX, MIN, IF, etc.) so the user
@@ -2188,6 +2242,9 @@ const DataStore = {
    Format: XML Spreadsheet 2003 (SpreadsheetML) — no ZIP needed,
            opens natively in Excel / LibreOffice / Google Sheets.
    ============================================================ */
+(function() {
+'use strict';
+
 function exportToExcel() {
   const records = DataStore.getRecords();
   const cats = DataStore.getCategories();
@@ -2645,9 +2702,16 @@ function exportToExcel() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+  // === EXPORTS ===
+  window.exportToExcel = exportToExcel;
+})();
 /* ============================================================
    STATISTICS ENGINE
    ============================================================ */
+(function() {
+'use strict';
+
 const StatsEngine = {
   getRecordsInMonth(month) {
     return DataStore.getRecords().filter(r => getMonthKey(r.date || r.createdAt) === month);
@@ -2878,9 +2942,16 @@ const StatsEngine = {
     return result;
   }
 };
+
+  // === EXPORTS ===
+  window.StatsEngine = StatsEngine;
+})();
 /* ============================================================
    SIMULATION ENGINE — What-If projection calculations
    ============================================================ */
+(function() {
+'use strict';
+
 const SimulationEngine = {
   /**
    * Run a what-if simulation for a given month.
@@ -3128,9 +3199,16 @@ const SimulationEngine = {
     return this.run(month, {});
   }
 };
+
+  // === EXPORTS ===
+  window.SimulationEngine = SimulationEngine;
+})();
 /* ============================================================
    ROUTER
    ============================================================ */
+(function() {
+'use strict';
+
 const pageTitles = {
   overview: '总览',
   add: '记账',
@@ -3182,9 +3260,18 @@ document.querySelectorAll('.nav-item, .sidebar-item').forEach(el => {
     }
   });
 });
+
+  // === EXPORTS ===
+  window.pageTitles = pageTitles;
+  window.currentTab = currentTab;
+  window.navigateTo = navigateTo;
+})();
 /* ============================================================
    UI HELPERS
    ============================================================ */
+(function() {
+'use strict';
+
 /* ===== DARK MODE ===== */
 function applyTheme(theme) {
   if (!theme) theme = localStorage.getItem('budgetTheme') || 'light';
@@ -3494,6 +3581,31 @@ function getRootAncestor(catId) {
   }
   return cat;
 }
+
+  // === EXPORTS ===
+  window.applyTheme = applyTheme;
+  window.toggleTheme = toggleTheme;
+  window.showToast = showToast;
+  window.showModal = showModal;
+  window.closeModal = closeModal;
+  window.openBillsCenter = openBillsCenter;
+  window.closeBillsCenter = closeBillsCenter;
+  window.saveBillIncome = saveBillIncome;
+  window.saveBillAmount = saveBillAmount;
+  window.updateBillSummary = updateBillSummary;
+  window.addNewBillRow = addNewBillRow;
+  window.deleteBillCategoryFromCenter = deleteBillCategoryFromCenter;
+  window.editBillCategory = editBillCategory;
+  window.saveBillCategoryEdit = saveBillCategoryEdit;
+  window.openBillCategoryManager = openBillCategoryManager;
+  window.formatMoney = formatMoney;
+  window.getCategoryFullPath = getCategoryFullPath;
+  window.getRootAncestorId = getRootAncestorId;
+  window.getRootAncestor = getRootAncestor;
+})();
+(function() {
+'use strict';
+
 let selectedCategoryId = null;
 
 function openCategoryPicker(context) {
@@ -3564,9 +3676,19 @@ function selectCategory(catId, context) {
   closeModal();
 }
 
+  // === EXPORTS ===
+  window.selectedCategoryId = selectedCategoryId;
+  window.openCategoryPicker = openCategoryPicker;
+  window.buildCategoryTreePicker = buildCategoryTreePicker;
+  window.selectCategory = selectCategory;
+})();
+
 /* ============================================================
    RENDER: Overview
    ============================================================ */
+(function() {
+'use strict';
+
 function renderOverview() {
   const el = document.getElementById('page-overview');
   const now = new Date();
@@ -3950,7 +4072,15 @@ function refreshOverviewBudget() {
     parent.appendChild(newFormula);
   }
 }
+
+  // === EXPORTS ===
+  window.renderOverview = renderOverview;
+  window.refreshOverviewBudget = refreshOverviewBudget;
+})();
 /* ===== THEME-AWARE COLORS ===== */
+(function() {
+'use strict';
+
 function getThemeColors() {
   const s = getComputedStyle(document.documentElement);
   return {
@@ -3962,7 +4092,14 @@ function getThemeColors() {
     cardBg: s.getPropertyValue('--card-bg').trim() || '#FFFFFF',
   };
 }
+
+  // === EXPORTS ===
+  window.getThemeColors = getThemeColors;
+})();
 /* ===== BUDGET PROGRESS CARD ===== */
+(function() {
+'use strict';
+
 let budgetProgressSort = localStorage.getItem('budgetProgressSort') || 'usage';
 let budgetProgressView = localStorage.getItem('budgetProgressView') || 'solid';
 let budgetMonitoredIds = null; // null = show all; array of category IDs
@@ -4314,19 +4451,41 @@ function renderBudgetProgressCardInner(month) {
   console.log('[budgetProgress] rendered', rows.length, 'rows');
   return html;
 }
+
+  // === EXPORTS ===
+  window.budgetProgressSort = budgetProgressSort;
+  window.budgetProgressView = budgetProgressView;
+  window.budgetMonitoredIds = budgetMonitoredIds;
+  window.loadBudgetMonitored = loadBudgetMonitored;
+  window.refreshBudgetCards = refreshBudgetCards;
+  window.toggleBudgetView = toggleBudgetView;
+  window.showBudgetSelector = showBudgetSelector;
+  window.confirmBudgetSelection = confirmBudgetSelection;
+  window.renderBudgetProgressCard = renderBudgetProgressCard;
+  window.renderBudgetProgressCardInner = renderBudgetProgressCardInner;
+})();
 /* ============================================================
    CANVAS DRAWING HELPERS
    ============================================================ */
+(function() {
+'use strict';
 function drawRing(canvasId, progress, color, label, overspendColor) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const tc = getThemeColors();
-  const size = canvas.width;
-  const cx = size / 2, cy = size / 2, r = size * 0.38, lineW = size * 0.1;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cssSize = rect.width || 160;
+  const bufferSize = Math.round(cssSize * dpr);
+  if (canvas.width !== bufferSize || canvas.height !== bufferSize) {
+    canvas.width = bufferSize;
+    canvas.height = bufferSize;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = cssSize / 2, cy = cssSize / 2, r = cssSize * 0.38, lineW = cssSize * 0.1;
 
-  ctx.clearRect(0, 0, size, size);
-  // Background circle
+  ctx.clearRect(0, 0, cssSize, cssSize);
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.strokeStyle = tc.border;
@@ -4427,9 +4586,16 @@ function drawSparkline(canvasId, data) {
     ctx.fill();
   });
 }
+
+  // === EXPORTS ===
+  window.drawRing = drawRing;
+  window.drawSparkline = drawSparkline;
+})();
 /* ============================================================
    RENDER: Add Record Page
    ============================================================ */
+(function() {
+'use strict';
 function renderAddPage() {
   selectedCategoryId = null;
   const el = document.getElementById('page-add');
@@ -4542,9 +4708,16 @@ function submitRecord(e) {
   document.getElementById('addDateTime').value = local.toISOString().slice(0, 16);
 }
 
+  // === EXPORTS ===
+  window.renderAddPage = renderAddPage;
+  window.submitRecord = submitRecord;
+})();
+
 /* ============================================================
    RENDER: Records Page
    ============================================================ */
+(function() {
+'use strict';
 let recordsFilter = { keyword: '', categoryId: '', dateStart: '', dateEnd: '', amountMin: '', amountMax: '', overspentOnly: false };
 let recordsPage = 0;
 let compactRecordsView = JSON.parse(localStorage.getItem('budgetCompactView') || 'false');
@@ -5200,9 +5373,44 @@ function submitEditRecord(e, id) {
   renderRecords();
 }
 
+  // === EXPORTS ===
+  window.recordsFilter = recordsFilter;
+  window.recordsPage = recordsPage;
+  window.compactRecordsView = compactRecordsView;
+  window.recordsPerPage = recordsPerPage;
+  window.batchMode = batchMode;
+  window.selectedRecordIds = selectedRecordIds;
+  window.renderRecords = renderRecords;
+  window.toggleRecordsView = toggleRecordsView;
+  window.getFilteredRecords = getFilteredRecords;
+  window.toggleOverspentFilter = toggleOverspentFilter;
+  window.applyRecordsFilter = applyRecordsFilter;
+  window.openCategoryFilterPicker = openCategoryFilterPicker;
+  window.buildCategoryTreeFilterPicker = buildCategoryTreeFilterPicker;
+  window.selectCategoryFilter = selectCategoryFilter;
+  window.clearRecordsFilter = clearRecordsFilter;
+  window.renderRecordsList = renderRecordsList;
+  window.toggleBatchMode = toggleBatchMode;
+  window.toggleRecordSelection = toggleRecordSelection;
+  window.updateBatchCount = updateBatchCount;
+  window.batchCancel = batchCancel;
+  window.batchDelete = batchDelete;
+  window.confirmBatchDelete = confirmBatchDelete;
+  window.batchChangeCategory = batchChangeCategory;
+  window.buildBatchCategoryTree = buildBatchCategoryTree;
+  window.confirmBatchChangeCategory = confirmBatchChangeCategory;
+  window.deleteRecordConfirm = deleteRecordConfirm;
+  window.confirmDeleteRecord = confirmDeleteRecord;
+  window.undoDelete = undoDelete;
+  window.openEditRecord = openEditRecord;
+  window.submitEditRecord = submitEditRecord;
+})();
+
 /* ============================================================
    RENDER: Categories Page
    ============================================================ */
+(function() {
+'use strict';
 // Track expanded category nodes
 let expandedCategories = new Set();
 
@@ -5855,9 +6063,46 @@ function saveCategoryEdit(catId) {
   showToast('✅ 名称已更新');
   renderCategories();
 }
+
+  // === EXPORTS ===
+  window.expandedCategories = expandedCategories;
+  window.renderCategories = renderCategories;
+  window.getBudgetMonth = getBudgetMonth;
+  window.buildCategoryTreeHTML = buildCategoryTreeHTML;
+  window.saveCategoryBudget = saveCategoryBudget;
+  window.mergeCategory = mergeCategory;
+  window.buildMergeTargetTree = buildMergeTargetTree;
+  window.selectMergeTarget = selectMergeTarget;
+  window.confirmMergeCategory = confirmMergeCategory;
+  window.toggleCatItem = toggleCatItem;
+  window.addRootCategory = addRootCategory;
+  window.confirmAddRootCategory = confirmAddRootCategory;
+  window.addChildCategory = addChildCategory;
+  window.confirmAddChildCategory = confirmAddChildCategory;
+  window.renameCategory = renameCategory;
+  window.confirmRenameCategory = confirmRenameCategory;
+  window.EMOJI_GRID = EMOJI_GRID;
+  window.changeCategoryIcon = changeCategoryIcon;
+  window.confirmChangeIcon = confirmChangeIcon;
+  window.changeCategoryColor = changeCategoryColor;
+  window.confirmChangeColor = confirmChangeColor;
+  window.confirmCustomColor = confirmCustomColor;
+  window.moveCategory = moveCategory;
+  window.buildMoveTree = buildMoveTree;
+  window.confirmMoveCategory = confirmMoveCategory;
+  window.deleteCategoryConfirm = deleteCategoryConfirm;
+  window.showMoveBeforeDelete = showMoveBeforeDelete;
+  window.confirmDeleteCategory = confirmDeleteCategory;
+  window.buildBreadcrumb = buildBreadcrumb;
+  window.expandAndScrollTo = expandAndScrollTo;
+  window.editCategory = editCategory;
+  window.saveCategoryEdit = saveCategoryEdit;
+})();
 /* ============================================================
    RENDER: Statistics Page
    ============================================================ */
+(function() {
+'use strict';
 let statsMonth = '';
 let statsStartDate = '';
 let statsEndDate = '';
@@ -7733,9 +7978,56 @@ function downloadChart(canvasId) {
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
+
+  // === EXPORTS ===
+  window.statsMonth = statsMonth;
+  window.statsStartDate = statsStartDate;
+  window.statsEndDate = statsEndDate;
+  window.statsDrillStack = statsDrillStack;
+  window.showMonthCompare = showMonthCompare;
+  window.getDrillCategory = getDrillCategory;
+  window.syncPieDrillBar = syncPieDrillBar;
+  window.updateDrillCharts = updateDrillCharts;
+  window.getHeatmapColor = getHeatmapColor;
+  window.getDailySavingsTarget = getDailySavingsTarget;
+  window.renderCalendarHeatmap = renderCalendarHeatmap;
+  window.showDayRecords = showDayRecords;
+  window.expandHeatmap = expandHeatmap;
+  window.expandPie = expandPie;
+  window.renderExpandPieTable = renderExpandPieTable;
+  window.toggleExpandPieRow = toggleExpandPieRow;
+  window.shrinkChart = shrinkChart;
+  window.toggleMonthCompare = toggleMonthCompare;
+  window.drawCompareBarChart = drawCompareBarChart;
+  window.renderBillToggle = renderBillToggle;
+  window.toggleBillFilter = toggleBillFilter;
+  window.isBillToggleChecked = isBillToggleChecked;
+  window.refreshPieChart = refreshPieChart;
+  window.refreshOverviewBudget = refreshOverviewBudget;
+  window.renderStats = renderStats;
+  window.changeStatsMonth = changeStatsMonth;
+  window.changeStatsCustom = changeStatsCustom;
+  window.resetStatsDrill = resetStatsDrill;
+  window.useCustomRange = useCustomRange;
+  window.getStatsCatTotals = getStatsCatTotals;
+  window.getStatsDailyTotals = getStatsDailyTotals;
+  window.getChartData = getChartData;
+  window.getChartDataForRange = getChartDataForRange;
+  window.getRawChartData = getRawChartData;
+  window.drawPieChart = drawPieChart;
+  window.lightenColor = lightenColor;
+  window.darkenColor = darkenColor;
+  window.drawLineChart = drawLineChart;
+  window.drawBarChart = drawBarChart;
+  window.drawMonthlyChart = drawMonthlyChart;
+  window.drawSavingsChart = drawSavingsChart;
+  window.downloadChart = downloadChart;
+})();
 /* ============================================================
    RENDER: Settings Page
    ============================================================ */
+(function() {
+'use strict';
 function renderSettings() {
   const el = document.getElementById('page-settings');
   const now = new Date();
@@ -7816,8 +8108,33 @@ function renderSettings() {
         <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 清除所有数据</button>
       </div>
     </div>
+
+    <!-- Data Sync Verification -->
+    <div class="card mb-16" style="border-left:4px solid #818CF8">
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">
+        <span>🔄 数据同步校验</span>
+        <button class="btn btn-sm btn-primary" onclick="refreshSyncFingerprint()" style="font-size:0.72rem">刷新</button>
+      </div>
+      <div id="syncFingerprint">
+        <div class="text-sm text-secondary" style="margin-bottom:8px">
+          对比两台设备的数据指纹，确认同步是否成功。
+        </div>
+        <div class="flex items-center gap-8" style="padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px">
+          <span class="text-xs text-muted" style="min-width:60px">指纹码</span>
+          <span id="syncFingerprintCode" style="font-family:monospace;font-size:1.3rem;font-weight:700;letter-spacing:2px;color:var(--primary)">------</span>
+        </div>
+        <div class="flex items-center gap-8" style="padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm)">
+          <span class="text-xs text-muted" style="min-width:60px">最新变更</span>
+          <span id="syncFingerprintTime" class="text-sm" style="font-weight:500">—</span>
+        </div>
+      </div>
+      <div class="text-xs text-muted" style="margin-top:6px;line-height:1.4">
+        💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
+      </div>
+    </div>
     <div style="text-align:center;padding:16px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.1.5</div>
   `;
+  setTimeout(refreshSyncFingerprint, 100);
 }
 
 function setSavingsType(type) {
@@ -7924,9 +8241,36 @@ function confirmClearAll() {
   showToast('✅ 所有数据已清除');
   navigateTo('overview');
 }
+
+function refreshSyncFingerprint() {
+  const codeEl = document.getElementById('syncFingerprintCode');
+  const timeEl = document.getElementById('syncFingerprintTime');
+  if (codeEl) codeEl.textContent = DataStore.getDataHash();
+  if (timeEl) {
+    const t = DataStore.getLastUpdateTime();
+    timeEl.textContent = t ? t.replace('T', ' ').substring(0, 19) : '无数据';
+  }
+}
+
+  // === EXPORTS ===
+  window.renderSettings = renderSettings;
+  window.setSavingsType = setSavingsType;
+  window.saveBudget = saveBudget;
+  window.saveSavingsTarget = saveSavingsTarget;
+  window.setPercentBase = setPercentBase;
+  window.exportJSON = exportJSON;
+  window.importJSON = importJSON;
+  window.confirmImportJSON = confirmImportJSON;
+  window.exportCSV = exportCSV;
+  window.clearAllData = clearAllData;
+  window.confirmClearAll = confirmClearAll;
+  window.refreshSyncFingerprint = refreshSyncFingerprint;
+})();
 /* ============================================================
    RENDER: Report Page
    ============================================================ */
+(function() {
+'use strict';
 let reportMonth = '';
 
 function renderReport() {
@@ -8149,9 +8493,18 @@ function printReport() {
   navigateTo('report');
   setTimeout(() => { window.print(); }, 100);
 }
+
+  // === EXPORTS ===
+  window.reportMonth = reportMonth;
+  window.renderReport = renderReport;
+  window.changeReportMonth = changeReportMonth;
+  window.printReport = printReport;
+})();
 /* ============================================================
    🔮 假设分析 — What-If Simulation Page
    ============================================================ */
+(function() {
+'use strict';
 
 // Global state for this page
 let whatIfExpandStates = {};  // { 'wi-expand-{catId}': true/false } — params section
@@ -8688,12 +9041,22 @@ function drawWhatIfRings(result) {
 // Helper to draw a simple ring (named differently to avoid collision with existing drawRing)
 function drawSimpleRing(canvas, percent, fillColor, bgColor) {
   const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const cx = w / 2, cy = h / 2;
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = rect.width || canvas.width;
+  const cssH = rect.height || canvas.height;
+  const bw = Math.round(cssW * dpr);
+  const bh = Math.round(cssH * dpr);
+  if (canvas.width !== bw || canvas.height !== bh) {
+    canvas.width = bw;
+    canvas.height = bh;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = cssW / 2, cy = cssH / 2;
   const r = Math.min(cx, cy) - 8;
   const lineWidth = 12;
 
-  ctx.clearRect(0, 0, w, h);
+  ctx.clearRect(0, 0, cssW, cssH);
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.strokeStyle = bgColor || '#e5e7eb';
@@ -8707,7 +9070,6 @@ function drawSimpleRing(canvas, percent, fillColor, bgColor) {
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // Center text
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1E293B';
   ctx.font = 'bold 14px system-ui, sans-serif';
   ctx.textAlign = 'center';
@@ -8875,9 +9237,30 @@ function attachWhatIfListeners(month) {
     inp.addEventListener('change', runWhatIfSimulation);
   });
 }
+
+  // === EXPORTS ===
+  window.whatIfExpandStates = whatIfExpandStates;
+  window.whatIfCompareExpandStates = whatIfCompareExpandStates;
+  window.renderWhatIf = renderWhatIf;
+  window.renderWhatIfParams = renderWhatIfParams;
+  window.renderWhatIfResults = renderWhatIfResults;
+  window.drawWhatIfRings = drawWhatIfRings;
+  window.drawSimpleRing = drawSimpleRing;
+  window.toggleWhatIfExpand = toggleWhatIfExpand;
+  window.toggleWhatIfCompareExpand = toggleWhatIfCompareExpand;
+  window.whatifModeChange = whatifModeChange;
+  window.addWhatIfHypo = addWhatIfHypo;
+  window.removeWhatIfHypo = removeWhatIfHypo;
+  window.collectWhatIfParams = collectWhatIfParams;
+  window.runWhatIfSimulation = runWhatIfSimulation;
+  window.clearWhatIfSimulation = clearWhatIfSimulation;
+  window.attachWhatIfListeners = attachWhatIfListeners;
+})();
 /* ============================================================
    MONTH ROLLOVER DETECTION
    ============================================================ */
+(function() {
+'use strict';
 function checkMonthRollover() {
   const now = new Date();
   const currentMonth = getMonthKey(now.toISOString());
@@ -8924,9 +9307,16 @@ function showBillRolloverReminder(lastMonth, currentMonth) {
     </div>
   `);
 }
+
+  // === EXPORTS ===
+  window.checkMonthRollover = checkMonthRollover;
+  window.showBillRolloverReminder = showBillRolloverReminder;
+})();
 /* ============================================================
    INITIALIZATION
    ============================================================ */
+(function() {
+'use strict';
 DataStore.init();
 checkMonthRollover();
 
@@ -8971,6 +9361,10 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     return this;
   };
   }
+
+  // === EXPORTS ===
+  window.handleHash = handleHash;
+})();
 /* ============================================================
    LAN SYNC — WebRTC P2P (zero server, manual signaling)
    ============================================================ */

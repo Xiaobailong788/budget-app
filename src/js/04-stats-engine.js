@@ -1,6 +1,9 @@
 /* ============================================================
    STATISTICS ENGINE
    ============================================================ */
+(function() {
+'use strict';
+
 const StatsEngine = {
   getRecordsInMonth(month) {
     return DataStore.getRecords().filter(r => getMonthKey(r.date || r.createdAt) === month);
@@ -231,3 +234,7 @@ const StatsEngine = {
     return result;
   }
 };
+
+  // === EXPORTS ===
+  window.StatsEngine = StatsEngine;
+})();

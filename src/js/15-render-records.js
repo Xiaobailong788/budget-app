@@ -1,6 +1,8 @@
 /* ============================================================
    RENDER: Records Page
    ============================================================ */
+(function() {
+'use strict';
 let recordsFilter = { keyword: '', categoryId: '', dateStart: '', dateEnd: '', amountMin: '', amountMax: '', overspentOnly: false };
 let recordsPage = 0;
 let compactRecordsView = JSON.parse(localStorage.getItem('budgetCompactView') || 'false');
@@ -655,4 +657,37 @@ function submitEditRecord(e, id) {
   showToast('✅ 记录已更新');
   renderRecords();
 }
+
+  // === EXPORTS ===
+  window.recordsFilter = recordsFilter;
+  window.recordsPage = recordsPage;
+  window.compactRecordsView = compactRecordsView;
+  window.recordsPerPage = recordsPerPage;
+  window.batchMode = batchMode;
+  window.selectedRecordIds = selectedRecordIds;
+  window.renderRecords = renderRecords;
+  window.toggleRecordsView = toggleRecordsView;
+  window.getFilteredRecords = getFilteredRecords;
+  window.toggleOverspentFilter = toggleOverspentFilter;
+  window.applyRecordsFilter = applyRecordsFilter;
+  window.openCategoryFilterPicker = openCategoryFilterPicker;
+  window.buildCategoryTreeFilterPicker = buildCategoryTreeFilterPicker;
+  window.selectCategoryFilter = selectCategoryFilter;
+  window.clearRecordsFilter = clearRecordsFilter;
+  window.renderRecordsList = renderRecordsList;
+  window.toggleBatchMode = toggleBatchMode;
+  window.toggleRecordSelection = toggleRecordSelection;
+  window.updateBatchCount = updateBatchCount;
+  window.batchCancel = batchCancel;
+  window.batchDelete = batchDelete;
+  window.confirmBatchDelete = confirmBatchDelete;
+  window.batchChangeCategory = batchChangeCategory;
+  window.buildBatchCategoryTree = buildBatchCategoryTree;
+  window.confirmBatchChangeCategory = confirmBatchChangeCategory;
+  window.deleteRecordConfirm = deleteRecordConfirm;
+  window.confirmDeleteRecord = confirmDeleteRecord;
+  window.undoDelete = undoDelete;
+  window.openEditRecord = openEditRecord;
+  window.submitEditRecord = submitEditRecord;
+})();
 

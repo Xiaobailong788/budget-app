@@ -1,6 +1,8 @@
 /* ============================================================
    INITIALIZATION
    ============================================================ */
+(function() {
+'use strict';
 DataStore.init();
 checkMonthRollover();
 
@@ -45,3 +47,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     return this;
   };
   }
+
+  // === EXPORTS ===
+  window.handleHash = handleHash;
+})();

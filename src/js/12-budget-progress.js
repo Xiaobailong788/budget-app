@@ -1,4 +1,7 @@
 /* ===== BUDGET PROGRESS CARD ===== */
+(function() {
+'use strict';
+
 let budgetProgressSort = localStorage.getItem('budgetProgressSort') || 'usage';
 let budgetProgressView = localStorage.getItem('budgetProgressView') || 'solid';
 let budgetMonitoredIds = null; // null = show all; array of category IDs
@@ -350,3 +353,16 @@ function renderBudgetProgressCardInner(month) {
   console.log('[budgetProgress] rendered', rows.length, 'rows');
   return html;
 }
+
+  // === EXPORTS ===
+  window.budgetProgressSort = budgetProgressSort;
+  window.budgetProgressView = budgetProgressView;
+  window.budgetMonitoredIds = budgetMonitoredIds;
+  window.loadBudgetMonitored = loadBudgetMonitored;
+  window.refreshBudgetCards = refreshBudgetCards;
+  window.toggleBudgetView = toggleBudgetView;
+  window.showBudgetSelector = showBudgetSelector;
+  window.confirmBudgetSelection = confirmBudgetSelection;
+  window.renderBudgetProgressCard = renderBudgetProgressCard;
+  window.renderBudgetProgressCardInner = renderBudgetProgressCardInner;
+})();

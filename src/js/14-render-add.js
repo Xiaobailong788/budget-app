@@ -1,6 +1,8 @@
 /* ============================================================
    RENDER: Add Record Page
    ============================================================ */
+(function() {
+'use strict';
 function renderAddPage() {
   selectedCategoryId = null;
   const el = document.getElementById('page-add');
@@ -112,4 +114,9 @@ function submitRecord(e) {
   const local = new Date(now.getTime() - offset * 60000);
   document.getElementById('addDateTime').value = local.toISOString().slice(0, 16);
 }
+
+  // === EXPORTS ===
+  window.renderAddPage = renderAddPage;
+  window.submitRecord = submitRecord;
+})();
 
