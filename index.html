@@ -9061,12 +9061,18 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     pc.oniceconnectionstatechange = function () {
       if (pc.iceConnectionState === 'failed') {
         if (onErrorCallback) onErrorCallback('连接失败，请确认同一网络');
-        resetConnection();
+      } else if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        if (typeof callbacks.onConnect === 'function') callbacks.onConnect();
       }
     };
     return pc.createOffer()
       .then(function (o) { return pc.setLocalDescription(o); })
-      .then(function () { return pc.localDescription.sdp; })
+      .then(function () {
+        return new Promise(function (r) {
+          if (pc.iceGatheringState === 'complete') r(pc.localDescription.sdp);
+          else pc.onicecandidate = function (e) { if (!e.candidate) r(pc.localDescription.sdp); };
+        });
+      })
       .then(function (sdp) { return compressStr(sdp); });
   }
 
@@ -9088,7 +9094,6 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     pc.oniceconnectionstatechange = function () {
       if (pc.iceConnectionState === 'failed') {
         if (onErrorCallback) onErrorCallback('连接失败，请确认同一网络');
-        resetConnection();
       }
     };
     pc.ondatachannel = function (e) {
@@ -9101,7 +9106,12 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
       return pc.setRemoteDescription({ type: 'offer', sdp: sdp })
         .then(function () { return pc.createAnswer(); })
         .then(function (a) { return pc.setLocalDescription(a); })
-        .then(function () { return pc.localDescription.sdp; })
+        .then(function () {
+          return new Promise(function (r) {
+            if (pc.iceGatheringState === 'complete') r(pc.localDescription.sdp);
+            else pc.onicecandidate = function (e) { if (!e.candidate) r(pc.localDescription.sdp); };
+          });
+        })
         .then(function (sdp2) { return compressStr(sdp2); });
     });
   }
@@ -9192,9 +9202,9 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     var self = this;
     this._showHostWaiting();
     createHost({
-      onStateChange: function (s) {
+      onConnect: function () {
         var el = document.getElementById('syncStatus');
-        if (el && s === 'connected') el.innerHTML = '✅ 连接成功，正在发送数据...';
+        if (el) el.innerHTML = '✅ 连接已建立，正在发送数据...';
       },
       onError: function (msg) {
         var el = document.getElementById('syncStatus');
@@ -9245,9 +9255,9 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
       if (status) { status.innerHTML = '❌ 请先粘贴连接码'; status.style.color = 'var(--danger)'; }
       return;
     }
-    if (status) { status.innerHTML = '⏳ 正在建立连接...'; status.style.color = ''; }
+    if (status) { status.innerHTML = '⏳ 建立连接中，请等待...'; status.style.color = ''; }
     acceptAnswer(input.value.trim()).then(function () {
-      if (status) status.innerHTML = '✅ 连接成功，数据已发送';
+      if (status) status.innerHTML = '⏳ 连接握手完成，等待数据通道打开...';
     }).catch(function (err) {
       if (status) { status.innerHTML = '❌ 连接失败：' + err.message; status.style.color = 'var(--danger)'; }
     });
