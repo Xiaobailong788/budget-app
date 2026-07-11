@@ -1,4 +1,4 @@
-# 记账软件 · Budget App v1.1.0
+# 记账软件 · Budget App v2.1.5
 
 > Personal Budget Tracker — Zero-dependency single-page HTML app. Fully offline, runs entirely in your browser.
 
@@ -97,8 +97,11 @@ Interactive Canvas charts — elastic animated pie chart with hover pop-out and 
 ### 📄 月度报告 Report
 Print-optimized monthly summary featuring budget and savings rings, a category breakdown table, a spending sparkline, and natural language savings prediction.
 
+### 🔮 假设分析 What-If
+Adjust future spending assumptions per category with modes: keep trend, set daily limit, fix remaining total, percentage change, adjust by amount, or zero out. Compare projections against current trends with visual savings bars and ring charts. Supports hypothetical new categories and global adjustments.
+
 ### ⚙️ 设置 Settings
-Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fixed amount, percentage, or both). Export and import data via JSON (replace or merge), CSV, or Excel (XML Spreadsheet 2003 with 5 sheets and live formulas). Clear all data option available.
+Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fixed amount, percentage, or both). Export and import data via JSON (replace or merge), CSV, or Excel (XML Spreadsheet 2003 with 5 sheets and live formulas). Clear all data option available. LAN sync via WebRTC (same Wi-Fi, zero server).
 
 ### 📱 手机版 Mobile Companion
 轻量级手机专用版本 `money-wise-mobile.html`，支持完整的记账增删改查、分类管理、JSON 导入导出。
@@ -109,6 +112,7 @@ Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fix
 ### 🔥 Highlights
 
 - **Zero external dependencies** — Pure HTML, CSS, and JavaScript. No CDN, no frameworks, no libraries.
+- **Modular source structure** — 12 CSS + 22 JS files organized by domain in `src/`, built into a single deployable HTML via `build.sh`.
 - **Elastic animated pie chart** — Smooth hover pop-out effects and full drill-down navigation.
 - **Calendar heatmap** — Spending ratio visualized with a 6-color gradient across the month.
 - **Soft delete with 5-second undo** — Accidentally deleted a record? Undo it within 5 seconds.
@@ -119,13 +123,29 @@ Dark/light mode toggle, monthly budget configuration, 3-mode savings target (fix
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (用户)
 
-1. Download `money-wise-v1.1.0.html` (主应用) 或 `money-wise-mobile.html` (手机版)
+1. Download `index.html` (主应用) 或 `money-wise-mobile.html` (手机版)
 2. 主应用在电脑浏览器打开，手机版在手机浏览器打开
 3. Start tracking your expenses — everything is saved automatically in your browser
 
 No installation, no server, no internet connection required after download.
+
+---
+
+## 🛠️ Developer Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/Xiaobailong788/budget-app.git
+cd budget-app
+
+# Build index.html from source files
+bash build.sh
+
+# Open index.html in your browser
+# Edit src/css/*.css and src/js/*.js, then rebuild
+```
 
 ---
 
@@ -143,7 +163,9 @@ No installation, no server, no internet connection required after download.
 
 **月度报告 (Report)** — Generate a print-friendly summary of any month. Use it for personal review or archiving.
 
-**设置 (Settings)** — Configure your monthly budget, choose a savings target mode, toggle dark mode, and manage your data through JSON, CSV, or Excel export/import.
+**假设分析 (What-If)** — Run spending simulations by adjusting per-category assumptions. Compare projected savings against current trends with visual charts and detailed breakdowns.
+
+**设置 (Settings)** — Configure your monthly budget, choose a savings target mode, toggle dark mode, and manage your data through JSON, CSV, or Excel export/import. Use LAN sync to transfer data between devices on the same Wi-Fi.
 
 ---
 
@@ -154,6 +176,8 @@ No installation, no server, no internet connection required after download.
 - **Charts**: Canvas 2D API with requestAnimationFrame
 - **Storage**: Browser localStorage
 - **Export**: Native JSON, CSV, XML Spreadsheet 2003 (SpreadsheetML)
+- **Sync**: WebRTC P2P (LAN sync, zero server)
+- **Build**: Simple bash script (concatenation)
 - **Dependencies**: None — zero external libraries
 
 ---
@@ -162,13 +186,40 @@ No installation, no server, no internet connection required after download.
 
 ```
 budget-app/
-├── money-wise-v1.1.0.html   # 主应用：完整记账功能 (~6,759 lines)
+├── index.html               # 构建产物（生成，直接用于浏览器 / GitHub Pages）
+├── build.sh                 # 构建脚本：拼接 src/ → index.html
+├── src/
+│   ├── index.html           # HTML 骨架（含 <!--build:css--> / <!--build:js--> 标记）
+│   ├── css/                 # 12 个 CSS 文件（变量、布局、组件、动画、响应式…）
+│   └── js/                  # 22 个 JS 文件（按功能域拆分）
+│       ├── 01-constants.js       # 颜色表、默认分类
+│       ├── 02-datastore.js       # DataStore（localStorage CRUD）
+│       ├── 03-excel-export.js    # Excel XML 导出
+│       ├── 04-stats-engine.js    # 统计引擎
+│       ├── 05-simulation-engine.js # 假设分析引擎
+│       ├── 06-router.js          # 页面导航
+│       ├── 07-ui-core.js         # 主题、Toast、Modal、工具函数
+│       ├── 09-category-picker.js # 分类选择器
+│       ├── 10-render-overview.js # 总览页
+│       ├── 11-theme-colors.js    # Canvas 主题色
+│       ├── 12-budget-progress.js # 预算进度卡片
+│       ├── 13-canvas-drawing.js  # 环形图、迷你折线
+│       ├── 14-render-add.js      # 记账页
+│       ├── 15-render-records.js  # 流水页
+│       ├── 16-render-categories.js # 分类页
+│       ├── 17-stats-charts.js    # 统计页 + 全部图表绘制
+│       ├── 18-render-settings.js # 设置页
+│       ├── 19-render-report.js   # 月度报告
+│       ├── 20-what-if.js         # 假设分析
+│       ├── 21-month-rollover.js  # 月初结转
+│       ├── 22-init.js            # 初始化
+│       └── 23-lan-sync.js        # WebRTC 局域网同步
 ├── money-wise-mobile.html   # 手机版：轻量记账，支持导入导出JSON (~1,384 lines)
+├── STRUCTURE.md             # 完整函数地图（供 AI Agent 使用）
 ├── features/                # Feature documentation
 ├── technical/               # Technical development logs (local only)
 ├── user/                    # User-facing changelogs (local only)
-├── logs/                    # Consolidated project logs (local only)
-└── README.md                # This file
+└── logs/                    # Consolidated project logs (local only)
 ```
 
 ---
