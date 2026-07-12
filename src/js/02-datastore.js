@@ -10,14 +10,22 @@ const DataStore = {
   __log: [],            // Diagnostic log entries
 
   _log(action, detail) {
-    this.__log.push({
+    const entry = {
       t: new Date().toISOString(),
       a: action,
       d: detail,
       recordsCount: this._data ? this._data.records.length : -1,
       pendingId: this._pendingDelete ? this._pendingDelete.id : null
-    });
+    };
+    this.__log.push(entry);
     if (this.__log.length > 500) this.__log.shift(); // cap at 500
+    // Also persist to localStorage so log survives page reload
+    try {
+      const persisted = JSON.parse(localStorage.getItem('budgetAppLog') || '[]');
+      persisted.push(entry);
+      if (persisted.length > 500) persisted.splice(0, persisted.length - 500);
+      localStorage.setItem('budgetAppLog', JSON.stringify(persisted));
+    } catch(e) { /* ignore */ }
   },
 
   getDiagnosticLog() { return this.__log.slice(); },
@@ -41,9 +49,14 @@ const DataStore = {
   },
 
   init() {
-    this.__log = []; // fresh log on init
+    // Restore diagnostic log from localStorage (survives page reload)
+    try {
+      this.__log = JSON.parse(localStorage.getItem('budgetAppLog') || '[]');
+      if (!Array.isArray(this.__log)) this.__log = [];
+    } catch(e) { this.__log = []; }
+    const restored = this.__log.length;
     const raw = localStorage.getItem('budgetAppData');
-    this._log('init', 'raw=' + (raw ? raw.length + 'chars' : 'null'));
+    this._log('init', 'raw=' + (raw ? raw.length + 'chars' : 'null') + ' restoredLog=' + restored);
   
     if (raw) {
       try {

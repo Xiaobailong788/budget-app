@@ -115,7 +115,7 @@ function renderSettings() {
       </div>
       <div class="flex gap-8" style="margin-bottom:8px">
         <button class="btn btn-sm btn-primary" onclick="exportDiagnosticLog()" style="font-size:0.72rem">📥 导出日志</button>
-        <button class="btn btn-sm btn-ghost" onclick="DataStore.clearDiagnosticLog();renderSettings();" style="font-size:0.72rem">🗑️ 清除</button>
+        <button class="btn btn-sm btn-ghost" onclick="DataStore.clearDiagnosticLog();localStorage.removeItem('budgetAppLog');renderSettings();" style="font-size:0.72rem">🗑️ 清除</button>
       </div>
       <div id="diagnosticLogPreview" style="max-height:120px;overflow-y:auto;font-family:monospace;font-size:0.6rem;background:var(--bg);padding:8px;border-radius:var(--radius-sm);border:1px solid var(--border);line-height:1.6;word-break:break-all">
         ${renderLogPreview()}

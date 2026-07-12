@@ -1786,14 +1786,22 @@ const DataStore = {
   __log: [],            // Diagnostic log entries
 
   _log(action, detail) {
-    this.__log.push({
+    const entry = {
       t: new Date().toISOString(),
       a: action,
       d: detail,
       recordsCount: this._data ? this._data.records.length : -1,
       pendingId: this._pendingDelete ? this._pendingDelete.id : null
-    });
+    };
+    this.__log.push(entry);
     if (this.__log.length > 500) this.__log.shift(); // cap at 500
+    // Also persist to localStorage so log survives page reload
+    try {
+      const persisted = JSON.parse(localStorage.getItem('budgetAppLog') || '[]');
+      persisted.push(entry);
+      if (persisted.length > 500) persisted.splice(0, persisted.length - 500);
+      localStorage.setItem('budgetAppLog', JSON.stringify(persisted));
+    } catch(e) { /* ignore */ }
   },
 
   getDiagnosticLog() { return this.__log.slice(); },
@@ -1817,9 +1825,14 @@ const DataStore = {
   },
 
   init() {
-    this.__log = []; // fresh log on init
+    // Restore diagnostic log from localStorage (survives page reload)
+    try {
+      this.__log = JSON.parse(localStorage.getItem('budgetAppLog') || '[]');
+      if (!Array.isArray(this.__log)) this.__log = [];
+    } catch(e) { this.__log = []; }
+    const restored = this.__log.length;
     const raw = localStorage.getItem('budgetAppData');
-    this._log('init', 'raw=' + (raw ? raw.length + 'chars' : 'null'));
+    this._log('init', 'raw=' + (raw ? raw.length + 'chars' : 'null') + ' restoredLog=' + restored);
   
     if (raw) {
       try {
@@ -8287,7 +8300,7 @@ function renderSettings() {
       </div>
       <div class="flex gap-8" style="margin-bottom:8px">
         <button class="btn btn-sm btn-primary" onclick="exportDiagnosticLog()" style="font-size:0.72rem">📥 导出日志</button>
-        <button class="btn btn-sm btn-ghost" onclick="DataStore.clearDiagnosticLog();renderSettings();" style="font-size:0.72rem">🗑️ 清除</button>
+        <button class="btn btn-sm btn-ghost" onclick="DataStore.clearDiagnosticLog();localStorage.removeItem('budgetAppLog');renderSettings();" style="font-size:0.72rem">🗑️ 清除</button>
       </div>
       <div id="diagnosticLogPreview" style="max-height:120px;overflow-y:auto;font-family:monospace;font-size:0.6rem;background:var(--bg);padding:8px;border-radius:var(--radius-sm);border:1px solid var(--border);line-height:1.6;word-break:break-all">
         ${renderLogPreview()}
