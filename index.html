@@ -6461,6 +6461,9 @@ function showDayRecords(dateStr) {
     <div style="font-size:0.9rem;font-weight:600">📅 ${dateStr}</div>
     <div style="font-size:0.85rem;font-weight:600">合计: ${formatMoney(total)}</div>
   </div>`;
+  html += `<div style="display:flex;gap:6px;margin-bottom:6px">
+    <button class="btn btn-ghost btn-sm" onclick="clearRecordsFilter()" style="font-size:0.65rem;padding:2px 8px">🔄 重置流水筛选</button>
+  </div>`;
   
   records.forEach(r => {
     const cat = catMap[r.categoryId] || { name: '未知', icon: '❓', color: '#94A3B8' };
@@ -6471,6 +6474,8 @@ function showDayRecords(dateStr) {
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat.name}</span>
       ${r.note ? `<span class="text-xs text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px">📝 ${escHtml(r.note)}</span>` : ''}
       <span style="font-weight:600;white-space:nowrap">${formatMoney(r.amount)}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:0.65rem;opacity:0.5;flex-shrink:0"
+        onclick="event.stopPropagation();showRecordRaw('${r.id}')" title="查看原始数据">🔍</button>
       <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:0.7rem;opacity:0.5;flex-shrink:0"
         onclick="event.stopPropagation();deleteRecordConfirm('${r.id}')" title="删除">🗑️</button>
     </div>`;
@@ -8479,24 +8484,30 @@ function renderDataInspector() {
   }
   html += '</div>';
   
-  // Stats engine audit
-  html += '<details style="margin-bottom:8px">';
+  // Stats engine audit with month selector
+  html += '<details style="margin-bottom:8px" open>';
   html += '<summary style="cursor:pointer;font-weight:600;font-size:0.85rem;padding:4px 0">📊 统计引擎审计 (点击展开)</summary>';
   html += '<div style="padding:8px;background:var(--bg);border-radius:8px;margin-top:4px">';
-  html += '<p class="text-xs text-muted mb-8">统计引擎计算的记录列表 — 检查是否有不应被计入的记录</p>';
+  html += '<p class="text-xs text-muted mb-8">查看任意月份统计引擎实际使用的记录列表</p>';
   
-  const now = new Date();
-  const month = getMonthKey(now.toISOString());
+  const currentAuditMonth = getMonthKey(new Date().toISOString());
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+    '<label class="text-xs text-secondary">月份</label>' +
+    '<input type="month" id="auditMonth" class="input-field" style="width:160px" value="' + currentAuditMonth + '" onchange="refreshStatsAudit()">' +
+    '<button class="btn btn-sm btn-ghost" onclick="refreshStatsAudit()" style="font-size:0.72rem">🔄</button>' +
+  '</div>';
   
+  html += '<div id="statsAuditContainer">';
   if (typeof StatsEngine !== 'undefined') {
-    const records = StatsEngine.getRecordsInMonth(month);
-    if (records.length > 0) {
-      html += '<div class="text-xs font-semibold mb-4">' + month + ' 月记录 (' + records.length + ' 条):</div>';
+    const auditRecords = StatsEngine.getRecordsInMonth(currentAuditMonth);
+    const auditTotal = auditRecords.reduce((s, r) => s + r.amount, 0);
+    if (auditRecords.length > 0) {
+      html += '<div class="text-xs text-secondary mb-4">' + currentAuditMonth + ' 月: ' + auditRecords.length + ' 条记录, 合计 ' + formatMoney(auditTotal) + '</div>';
       html += '<div style="max-height:200px;overflow-y:auto;font-size:0.7rem;font-family:monospace">';
-      records.forEach(r => {
+      auditRecords.forEach(r => {
         const cat = DataStore.getCategory(r.categoryId);
         html += '<div style="padding:2px 4px;border-bottom:1px solid var(--border);display:flex;gap:4px">' +
-          '<span style="color:var(--text-muted);min-width:80px">' + r.id.substring(0, 8) + '</span>' +
+          '<span style="color:var(--text-muted);min-width:80px" title="' + r.id + '">' + r.id.substring(0, 8) + '</span>' +
           '<span style="min-width:60px">RM' + r.amount.toFixed(2) + '</span>' +
           '<span style="min-width:60px">' + (cat ? cat.icon + cat.name : '?') + '</span>' +
           '<span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis">' + (r.note || '') + '</span>' +
@@ -8508,6 +8519,56 @@ function renderDataInspector() {
       html += '<div class="text-sm text-muted">本月暂无记录</div>';
     }
   }
+  html += '</div>'; // end statsAuditContainer
+  
+  html += '</div></details>';
+  
+  // Full unfiltered records dump
+  html += '<details style="margin-bottom:8px">';
+  html += '<summary style="cursor:pointer;font-weight:600;font-size:0.85rem;padding:4px 0">📋 全量记录原始数据 (无过滤) (点击展开)</summary>';
+  html += '<div style="padding:8px;background:var(--bg);border-radius:8px;margin-top:4px">';
+  html += '<p class="text-xs text-muted mb-8">直接从 DataStore.getRecords() 读取，无任何过滤。用于排查流水页看不到的记录。</p>';
+  
+  const allRecords = DataStore.getRecords();
+  html += '<div class="text-xs font-semibold mb-4">总计 ' + allRecords.length + ' 条记录</div>';
+  
+  if (allRecords.length > 0) {
+    html += '<div style="max-height:400px;overflow-y:auto;font-size:0.65rem;font-family:monospace;border:1px solid var(--border);border-radius:8px">';
+    html += '<div style="display:flex;padding:4px 6px;font-weight:600;border-bottom:2px solid var(--border);position:sticky;top:0;background:var(--bg)">';
+    html += '<span style="width:70px">ID</span>';
+    html += '<span style="width:45px">金额</span>';
+    html += '<span style="width:55px">分类</span>';
+    html += '<span style="width:80px">日期</span>';
+    html += '<span style="width:70px">创建时间</span>';
+    html += '<span style="width:15px">📌</span>';
+    html += '<span style="flex:1">备注</span>';
+    html += '</div>';
+    
+    allRecords.forEach(r => {
+      const cat = DataStore.getCategory(r.categoryId);
+      const monthKey2 = getMonthKey(r.date || r.createdAt);
+      // Check if this record is in the current audit month's result
+      const auditMonthEl = document.getElementById('auditMonth');
+      const auditMonthVal = auditMonthEl ? auditMonthEl.value : '';
+      const inAudit = auditMonthVal ? StatsEngine.getRecordsInMonth(auditMonthVal).some(ra => ra.id === r.id) : true;
+      
+      html += '<div style="display:flex;padding:3px 6px;border-bottom:1px solid var(--border);align-items:center' + (!inAudit ? ';background:rgba(239,68,68,0.05)' : '') + '">';
+      html += '<span style="width:70px;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="' + r.id + '">' + r.id.substring(0, 6) + '</span>';
+      html += '<span style="width:45px;font-weight:500">' + formatMoney(r.amount) + '</span>';
+      html += '<span style="width:55px;overflow:hidden;text-overflow:ellipsis" title="catId=' + r.categoryId + '">' + (cat ? cat.icon + cat.name.substring(0,3) : '❓' + r.categoryId.substring(0,4)) + '</span>';
+      html += '<span style="width:80px;color:var(--text-muted)">' + (r.date ? r.date.substring(0, 10) : '-') + '</span>';
+      html += '<span style="width:70px;color:var(--text-muted)">' + (r.createdAt ? r.createdAt.substring(0, 10) : '-') + '</span>';
+      html += '<span style="width:15px;color:var(--text-muted)">' + (r.excludeFromAvg ? '📌' : '') + '</span>';
+      html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)">' + (r.note || '') + '</span>';
+      html += '<button class="btn btn-ghost" style="padding:1px 4px;font-size:0.6rem;flex-shrink:0;opacity:0.5" onclick="showRecordRaw(\'' + r.id + '\')" title="查看原始数据">🔍</button>';
+      html += '</div>';
+    });
+    
+    html += '</div>';
+  } else {
+    html += '<div class="text-sm text-muted">暂无记录</div>';
+  }
+  
   html += '</div></details>';
   
   // Operation log
@@ -8591,6 +8652,42 @@ function repairData() {
   }
 }
 
+function refreshStatsAudit() {
+  const container = document.getElementById('statsAuditContainer');
+  if (!container) return;
+  const monthInput = document.getElementById('auditMonth');
+  if (!monthInput) return;
+  const month = monthInput.value;
+  if (!month) return;
+  
+  if (typeof StatsEngine === 'undefined') {
+    container.innerHTML = '<div class="text-sm text-muted">StatsEngine 未加载</div>';
+    return;
+  }
+  
+  const records = StatsEngine.getRecordsInMonth(month);
+  const total = records.reduce((s, r) => s + r.amount, 0);
+  
+  if (records.length > 0) {
+    let auditHtml = '<div class="text-xs text-secondary mb-4">' + month + ' 月: ' + records.length + ' 条记录, 合计 ' + formatMoney(total) + '</div>';
+    auditHtml += '<div style="max-height:200px;overflow-y:auto;font-size:0.7rem;font-family:monospace">';
+    records.forEach(r => {
+      const cat = DataStore.getCategory(r.categoryId);
+      auditHtml += '<div style="padding:2px 4px;border-bottom:1px solid var(--border);display:flex;gap:4px">' +
+        '<span style="color:var(--text-muted);min-width:80px" title="' + r.id + '">' + r.id.substring(0, 8) + '</span>' +
+        '<span style="min-width:60px">RM' + r.amount.toFixed(2) + '</span>' +
+        '<span style="min-width:60px">' + (cat ? cat.icon + cat.name : '?') + '</span>' +
+        '<span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis">' + (r.note || '') + '</span>' +
+        '<span style="color:var(--text-muted);min-width:80px">' + (r.date || '') + '</span>' +
+      '</div>';
+    });
+    auditHtml += '</div>';
+    container.innerHTML = auditHtml;
+  } else {
+    container.innerHTML = '<div class="text-sm text-muted">该月暂无记录</div>';
+  }
+}
+
   // === EXPORTS ===
   window.renderSettings = renderSettings;
   window.renderDataInspector = renderDataInspector;
@@ -8608,6 +8705,7 @@ function repairData() {
   window.confirmClearAll = confirmClearAll;
   window.refreshSyncFingerprint = refreshSyncFingerprint;
   window.repairData = repairData;
+  window.refreshStatsAudit = refreshStatsAudit;
 })();
 /* ============================================================
    RENDER: Report Page
@@ -10414,6 +10512,60 @@ window.DataStore.getStorageInfo = DIAG.getStorageInfo.bind(DIAG);
 window.DataStore.compareWithStorage = DIAG.compareWithStorage.bind(DIAG);
 window.DataStore.getDiagnosticLog = function() { return DIAG.getLog(); };
 window.DataStore.clearDiagnosticLog = function() { DIAG.clearLog(); };
+
+// Show raw record data in a modal
+window.showRecordRaw = function showRecordRaw(id) {
+  const record = DataStore.getRecord(id);
+  if (!record) {
+    showToast('❌ 记录不存在: ' + id, 'error');
+    return;
+  }
+  
+  // Get the category info
+  const cat = DataStore.getCategory(record.categoryId);
+  
+  // Test what getMonthKey returns for this record
+  const monthKey = getMonthKey(record.date || record.createdAt);
+  const datePrefix = (record.date || record.createdAt).slice(0, 10);
+  
+  // Check if this record appears in StatsEngine audit
+  const inStatsEngine = StatsEngine.getRecordsInMonth(monthKey).some(r => r.id === id);
+  
+  // Check if this record appears in getFilteredRecords
+  let inFilteredRecords = false;
+  try {
+    const filtered = window.getFilteredRecords ? getFilteredRecords() : [];
+    inFilteredRecords = filtered.some(r => r.id === id);
+  } catch(e) { /* ignore */ }
+  
+  // Build raw data display
+  const recordJSON = JSON.stringify(record, null, 2);
+  const catInfo = cat ? { id: cat.id, name: cat.name, icon: cat.icon, color: cat.color, parentId: cat.parentId } : null;
+  
+  const html = `
+    <div class="modal-title">🔍 记录原始数据</div>
+    <div style="max-height:70vh;overflow-y:auto;font-family:monospace;font-size:0.75rem;line-height:1.6">
+      <div style="margin-bottom:12px;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        <div class="font-semibold" style="margin-bottom:6px">📋 记录状态</div>
+        <div>在统计引擎审计中: ${inStatsEngine ? '✅ 是' : '❌ 否'}</div>
+        <div>在流水页过滤结果中: ${inFilteredRecords ? '✅ 是' : '❌ 否'}</div>
+        <div>getMonthKey(日期) = ${monthKey}</div>
+        <div>日期前10字符: "${datePrefix}"</div>
+        <div>分类: ${cat ? cat.icon + ' ' + cat.name + ' (id=' + cat.id + ', parentId=' + cat.parentId + ')' : '❌ 已删除 (id=' + record.categoryId + ')'}</div>
+        ${cat && cat.parentId ? '<div style="color:var(--warning)">⚠️ 注意：该记录分类有父级，不是根分类</div>' : ''}
+        ${record.excludeFromAvg ? '<div>📌 excludeFromAvg = true</div>' : ''}
+      </div>
+      <div style="font-weight:600;margin-bottom:4px">完整 JSON:</div>
+      <pre style="background:var(--bg);padding:8px;border-radius:8px;border:1px solid var(--border);overflow-x:auto;white-space:pre-wrap;word-break:break-all">${escHtml(recordJSON)}</pre>
+    </div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="closeModal()">关闭</button>
+      <button class="btn btn-outline" onclick="closeModal();openEditRecord('${id}')">✏️ 编辑</button>
+      <button class="btn btn-danger" onclick="closeModal();deleteRecordConfirm('${id}')">🗑️ 删除</button>
+    </div>
+  `;
+  showModal(html);
+};
 
 })();
 

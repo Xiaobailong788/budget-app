@@ -242,4 +242,58 @@ window.DataStore.compareWithStorage = DIAG.compareWithStorage.bind(DIAG);
 window.DataStore.getDiagnosticLog = function() { return DIAG.getLog(); };
 window.DataStore.clearDiagnosticLog = function() { DIAG.clearLog(); };
 
+// Show raw record data in a modal
+window.showRecordRaw = function showRecordRaw(id) {
+  const record = DataStore.getRecord(id);
+  if (!record) {
+    showToast('❌ 记录不存在: ' + id, 'error');
+    return;
+  }
+  
+  // Get the category info
+  const cat = DataStore.getCategory(record.categoryId);
+  
+  // Test what getMonthKey returns for this record
+  const monthKey = getMonthKey(record.date || record.createdAt);
+  const datePrefix = (record.date || record.createdAt).slice(0, 10);
+  
+  // Check if this record appears in StatsEngine audit
+  const inStatsEngine = StatsEngine.getRecordsInMonth(monthKey).some(r => r.id === id);
+  
+  // Check if this record appears in getFilteredRecords
+  let inFilteredRecords = false;
+  try {
+    const filtered = window.getFilteredRecords ? getFilteredRecords() : [];
+    inFilteredRecords = filtered.some(r => r.id === id);
+  } catch(e) { /* ignore */ }
+  
+  // Build raw data display
+  const recordJSON = JSON.stringify(record, null, 2);
+  const catInfo = cat ? { id: cat.id, name: cat.name, icon: cat.icon, color: cat.color, parentId: cat.parentId } : null;
+  
+  const html = `
+    <div class="modal-title">🔍 记录原始数据</div>
+    <div style="max-height:70vh;overflow-y:auto;font-family:monospace;font-size:0.75rem;line-height:1.6">
+      <div style="margin-bottom:12px;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        <div class="font-semibold" style="margin-bottom:6px">📋 记录状态</div>
+        <div>在统计引擎审计中: ${inStatsEngine ? '✅ 是' : '❌ 否'}</div>
+        <div>在流水页过滤结果中: ${inFilteredRecords ? '✅ 是' : '❌ 否'}</div>
+        <div>getMonthKey(日期) = ${monthKey}</div>
+        <div>日期前10字符: "${datePrefix}"</div>
+        <div>分类: ${cat ? cat.icon + ' ' + cat.name + ' (id=' + cat.id + ', parentId=' + cat.parentId + ')' : '❌ 已删除 (id=' + record.categoryId + ')'}</div>
+        ${cat && cat.parentId ? '<div style="color:var(--warning)">⚠️ 注意：该记录分类有父级，不是根分类</div>' : ''}
+        ${record.excludeFromAvg ? '<div>📌 excludeFromAvg = true</div>' : ''}
+      </div>
+      <div style="font-weight:600;margin-bottom:4px">完整 JSON:</div>
+      <pre style="background:var(--bg);padding:8px;border-radius:8px;border:1px solid var(--border);overflow-x:auto;white-space:pre-wrap;word-break:break-all">${escHtml(recordJSON)}</pre>
+    </div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="closeModal()">关闭</button>
+      <button class="btn btn-outline" onclick="closeModal();openEditRecord('${id}')">✏️ 编辑</button>
+      <button class="btn btn-danger" onclick="closeModal();deleteRecordConfirm('${id}')">🗑️ 删除</button>
+    </div>
+  `;
+  showModal(html);
+};
+
 })();

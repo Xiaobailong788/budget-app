@@ -225,6 +225,9 @@ function showDayRecords(dateStr) {
     <div style="font-size:0.9rem;font-weight:600">📅 ${dateStr}</div>
     <div style="font-size:0.85rem;font-weight:600">合计: ${formatMoney(total)}</div>
   </div>`;
+  html += `<div style="display:flex;gap:6px;margin-bottom:6px">
+    <button class="btn btn-ghost btn-sm" onclick="clearRecordsFilter()" style="font-size:0.65rem;padding:2px 8px">🔄 重置流水筛选</button>
+  </div>`;
   
   records.forEach(r => {
     const cat = catMap[r.categoryId] || { name: '未知', icon: '❓', color: '#94A3B8' };
@@ -235,6 +238,8 @@ function showDayRecords(dateStr) {
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat.name}</span>
       ${r.note ? `<span class="text-xs text-muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px">📝 ${escHtml(r.note)}</span>` : ''}
       <span style="font-weight:600;white-space:nowrap">${formatMoney(r.amount)}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:0.65rem;opacity:0.5;flex-shrink:0"
+        onclick="event.stopPropagation();showRecordRaw('${r.id}')" title="查看原始数据">🔍</button>
       <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:0.7rem;opacity:0.5;flex-shrink:0"
         onclick="event.stopPropagation();deleteRecordConfirm('${r.id}')" title="删除">🗑️</button>
     </div>`;

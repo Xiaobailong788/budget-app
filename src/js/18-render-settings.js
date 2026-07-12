@@ -306,24 +306,30 @@ function renderDataInspector() {
   }
   html += '</div>';
   
-  // Stats engine audit
-  html += '<details style="margin-bottom:8px">';
+  // Stats engine audit with month selector
+  html += '<details style="margin-bottom:8px" open>';
   html += '<summary style="cursor:pointer;font-weight:600;font-size:0.85rem;padding:4px 0">📊 统计引擎审计 (点击展开)</summary>';
   html += '<div style="padding:8px;background:var(--bg);border-radius:8px;margin-top:4px">';
-  html += '<p class="text-xs text-muted mb-8">统计引擎计算的记录列表 — 检查是否有不应被计入的记录</p>';
+  html += '<p class="text-xs text-muted mb-8">查看任意月份统计引擎实际使用的记录列表</p>';
   
-  const now = new Date();
-  const month = getMonthKey(now.toISOString());
+  const currentAuditMonth = getMonthKey(new Date().toISOString());
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+    '<label class="text-xs text-secondary">月份</label>' +
+    '<input type="month" id="auditMonth" class="input-field" style="width:160px" value="' + currentAuditMonth + '" onchange="refreshStatsAudit()">' +
+    '<button class="btn btn-sm btn-ghost" onclick="refreshStatsAudit()" style="font-size:0.72rem">🔄</button>' +
+  '</div>';
   
+  html += '<div id="statsAuditContainer">';
   if (typeof StatsEngine !== 'undefined') {
-    const records = StatsEngine.getRecordsInMonth(month);
-    if (records.length > 0) {
-      html += '<div class="text-xs font-semibold mb-4">' + month + ' 月记录 (' + records.length + ' 条):</div>';
+    const auditRecords = StatsEngine.getRecordsInMonth(currentAuditMonth);
+    const auditTotal = auditRecords.reduce((s, r) => s + r.amount, 0);
+    if (auditRecords.length > 0) {
+      html += '<div class="text-xs text-secondary mb-4">' + currentAuditMonth + ' 月: ' + auditRecords.length + ' 条记录, 合计 ' + formatMoney(auditTotal) + '</div>';
       html += '<div style="max-height:200px;overflow-y:auto;font-size:0.7rem;font-family:monospace">';
-      records.forEach(r => {
+      auditRecords.forEach(r => {
         const cat = DataStore.getCategory(r.categoryId);
         html += '<div style="padding:2px 4px;border-bottom:1px solid var(--border);display:flex;gap:4px">' +
-          '<span style="color:var(--text-muted);min-width:80px">' + r.id.substring(0, 8) + '</span>' +
+          '<span style="color:var(--text-muted);min-width:80px" title="' + r.id + '">' + r.id.substring(0, 8) + '</span>' +
           '<span style="min-width:60px">RM' + r.amount.toFixed(2) + '</span>' +
           '<span style="min-width:60px">' + (cat ? cat.icon + cat.name : '?') + '</span>' +
           '<span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis">' + (r.note || '') + '</span>' +
@@ -335,6 +341,56 @@ function renderDataInspector() {
       html += '<div class="text-sm text-muted">本月暂无记录</div>';
     }
   }
+  html += '</div>'; // end statsAuditContainer
+  
+  html += '</div></details>';
+  
+  // Full unfiltered records dump
+  html += '<details style="margin-bottom:8px">';
+  html += '<summary style="cursor:pointer;font-weight:600;font-size:0.85rem;padding:4px 0">📋 全量记录原始数据 (无过滤) (点击展开)</summary>';
+  html += '<div style="padding:8px;background:var(--bg);border-radius:8px;margin-top:4px">';
+  html += '<p class="text-xs text-muted mb-8">直接从 DataStore.getRecords() 读取，无任何过滤。用于排查流水页看不到的记录。</p>';
+  
+  const allRecords = DataStore.getRecords();
+  html += '<div class="text-xs font-semibold mb-4">总计 ' + allRecords.length + ' 条记录</div>';
+  
+  if (allRecords.length > 0) {
+    html += '<div style="max-height:400px;overflow-y:auto;font-size:0.65rem;font-family:monospace;border:1px solid var(--border);border-radius:8px">';
+    html += '<div style="display:flex;padding:4px 6px;font-weight:600;border-bottom:2px solid var(--border);position:sticky;top:0;background:var(--bg)">';
+    html += '<span style="width:70px">ID</span>';
+    html += '<span style="width:45px">金额</span>';
+    html += '<span style="width:55px">分类</span>';
+    html += '<span style="width:80px">日期</span>';
+    html += '<span style="width:70px">创建时间</span>';
+    html += '<span style="width:15px">📌</span>';
+    html += '<span style="flex:1">备注</span>';
+    html += '</div>';
+    
+    allRecords.forEach(r => {
+      const cat = DataStore.getCategory(r.categoryId);
+      const monthKey2 = getMonthKey(r.date || r.createdAt);
+      // Check if this record is in the current audit month's result
+      const auditMonthEl = document.getElementById('auditMonth');
+      const auditMonthVal = auditMonthEl ? auditMonthEl.value : '';
+      const inAudit = auditMonthVal ? StatsEngine.getRecordsInMonth(auditMonthVal).some(ra => ra.id === r.id) : true;
+      
+      html += '<div style="display:flex;padding:3px 6px;border-bottom:1px solid var(--border);align-items:center' + (!inAudit ? ';background:rgba(239,68,68,0.05)' : '') + '">';
+      html += '<span style="width:70px;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)" title="' + r.id + '">' + r.id.substring(0, 6) + '</span>';
+      html += '<span style="width:45px;font-weight:500">' + formatMoney(r.amount) + '</span>';
+      html += '<span style="width:55px;overflow:hidden;text-overflow:ellipsis" title="catId=' + r.categoryId + '">' + (cat ? cat.icon + cat.name.substring(0,3) : '❓' + r.categoryId.substring(0,4)) + '</span>';
+      html += '<span style="width:80px;color:var(--text-muted)">' + (r.date ? r.date.substring(0, 10) : '-') + '</span>';
+      html += '<span style="width:70px;color:var(--text-muted)">' + (r.createdAt ? r.createdAt.substring(0, 10) : '-') + '</span>';
+      html += '<span style="width:15px;color:var(--text-muted)">' + (r.excludeFromAvg ? '📌' : '') + '</span>';
+      html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted)">' + (r.note || '') + '</span>';
+      html += '<button class="btn btn-ghost" style="padding:1px 4px;font-size:0.6rem;flex-shrink:0;opacity:0.5" onclick="showRecordRaw(\'' + r.id + '\')" title="查看原始数据">🔍</button>';
+      html += '</div>';
+    });
+    
+    html += '</div>';
+  } else {
+    html += '<div class="text-sm text-muted">暂无记录</div>';
+  }
+  
   html += '</div></details>';
   
   // Operation log
@@ -418,6 +474,42 @@ function repairData() {
   }
 }
 
+function refreshStatsAudit() {
+  const container = document.getElementById('statsAuditContainer');
+  if (!container) return;
+  const monthInput = document.getElementById('auditMonth');
+  if (!monthInput) return;
+  const month = monthInput.value;
+  if (!month) return;
+  
+  if (typeof StatsEngine === 'undefined') {
+    container.innerHTML = '<div class="text-sm text-muted">StatsEngine 未加载</div>';
+    return;
+  }
+  
+  const records = StatsEngine.getRecordsInMonth(month);
+  const total = records.reduce((s, r) => s + r.amount, 0);
+  
+  if (records.length > 0) {
+    let auditHtml = '<div class="text-xs text-secondary mb-4">' + month + ' 月: ' + records.length + ' 条记录, 合计 ' + formatMoney(total) + '</div>';
+    auditHtml += '<div style="max-height:200px;overflow-y:auto;font-size:0.7rem;font-family:monospace">';
+    records.forEach(r => {
+      const cat = DataStore.getCategory(r.categoryId);
+      auditHtml += '<div style="padding:2px 4px;border-bottom:1px solid var(--border);display:flex;gap:4px">' +
+        '<span style="color:var(--text-muted);min-width:80px" title="' + r.id + '">' + r.id.substring(0, 8) + '</span>' +
+        '<span style="min-width:60px">RM' + r.amount.toFixed(2) + '</span>' +
+        '<span style="min-width:60px">' + (cat ? cat.icon + cat.name : '?') + '</span>' +
+        '<span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis">' + (r.note || '') + '</span>' +
+        '<span style="color:var(--text-muted);min-width:80px">' + (r.date || '') + '</span>' +
+      '</div>';
+    });
+    auditHtml += '</div>';
+    container.innerHTML = auditHtml;
+  } else {
+    container.innerHTML = '<div class="text-sm text-muted">该月暂无记录</div>';
+  }
+}
+
   // === EXPORTS ===
   window.renderSettings = renderSettings;
   window.renderDataInspector = renderDataInspector;
@@ -435,4 +527,5 @@ function repairData() {
   window.confirmClearAll = confirmClearAll;
   window.refreshSyncFingerprint = refreshSyncFingerprint;
   window.repairData = repairData;
+  window.refreshStatsAudit = refreshStatsAudit;
 })();
