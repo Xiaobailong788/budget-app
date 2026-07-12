@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
-  <title>记账软件 v2.3.1</title>
+  <title>记账软件 v2.3.2</title>
   <style>
 /* ===== CSS DESIGN SYSTEM ===== */
 :root {
@@ -1886,8 +1886,16 @@ const DataStore = {
   },
 
   save() {
-    localStorage.setItem('budgetAppData', JSON.stringify(this._data));
-    this._log('save', 'records=' + this._data.records.length);
+    try {
+      localStorage.setItem('budgetAppData', JSON.stringify(this._data));
+      this._log('save', 'records=' + this._data.records.length);
+    } catch(e) {
+      this._log('save_error', e.message);
+      // Try to notify user via toast if available
+      if (typeof showToast === 'function') {
+        showToast('❌ 数据保存失败: ' + e.message, 'error');
+      }
+    }
   },
 
   // Records
@@ -1979,7 +1987,7 @@ const DataStore = {
     this._log('_finalizeDelete', 'id=' + id + ' pending=' + (this._pendingDelete ? this._pendingDelete.id : 'null'));
     if (this._pendingDelete && this._pendingDelete.id === id) {
       this._pendingDelete = null;
-      this.save(); // Ensure persistence
+      // No need to save() — record was already removed from _data during softDeleteRecord
     }
   },
 
@@ -4049,26 +4057,6 @@ function renderOverview() {
           <div class="flex items-center gap-8">
             <span class="font-bold">${formatMoney(item.total)}</span>
             <span class="text-sm text-muted">${monthTotal > 0 ? (item.total/monthTotal*100).toFixed(1)+'%' : ''}</span>
-    </div>
-  </div>`;
-
-  // === 支出对比 (ring charts with clearer labels) ===
-  html += `<div class="card mb-16">
-    <div class="card-title">📊 支出对比</div>
-    <p class="text-xs text-muted" style="margin-bottom:12px">总支出占收入比例 — 圆圈越大，花得越多。</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">当前趋势 · 预测总支出</div>
-        <canvas class="whatif-ring" id="wi-ring-trend" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(trendTotal)}</div>
-        <div class="text-xs text-muted">占收入 ${income > 0 ? ((trendTotal / income) * 100).toFixed(1) : 0}%</div>
-      </div>
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">假设调整 · 预测总支出</div>
-        <canvas class="whatif-ring" id="wi-ring-proj" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(totalProjectedInclBills)}</div>
-        <div class="text-xs text-muted">占收入 ${income > 0 ? ((totalProjectedInclBills / income) * 100).toFixed(1) : 0}%</div>
-      </div>
     </div>
   </div>`;
       }).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无支出记录</div></div>'}
@@ -8266,6 +8254,7 @@ function renderSettings() {
         <button class="btn btn-outline btn-block" onclick="exportCSV()">📊 导出 CSV</button>
         <button class="btn btn-primary btn-block" onclick="if(window.LANSync)LANSync.open();else showToast('lan-sync.js 未加载','error')">📶 局域网同步</button>
         <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 清除所有数据</button>
+        <button class="btn btn-primary btn-block" onclick="repairData()">🔧 数据修复 (重新加载+清理)</button>
       </div>
     </div>
 
@@ -8466,6 +8455,50 @@ function exportDiagnosticLog() {
   showToast('✅ 日志已导出', 'success');
 }
 
+function repairData() {
+  // Check if DataStore._data and localStorage are in sync
+  try {
+    const raw = localStorage.getItem('budgetAppData');
+    if (!raw) {
+      showToast('✅ 没有需要修复的数据', 'success');
+      return;
+    }
+    const lsData = JSON.parse(raw);
+    const memRecords = DataStore.getRecords().length;
+    const lsRecords = (lsData.records || []).length;
+    
+    // Check 1: if localStorage has records that memory doesn't (stale in-memory)
+    // We reload from localStorage which is the source of truth
+    const success = DataStore.reload();
+    if (success) {
+      // Also clear any pending delete state which might be stale
+      const pending = DataStore.getPendingDelete();
+      if (pending) {
+        DataStore._finalizeDelete(pending.id);
+      }
+      showToast('✅ 数据已从 localStorage 重新加载 (' + lsRecords + ' 条记录)', 'success');
+    }
+    
+    // Check 2: verify pending delete is not stuck
+    const pendingCheck = DataStore.getPendingDelete();
+    if (pendingCheck) {
+      DataStore._finalizeDelete(pendingCheck.id);
+    }
+    
+    // Re-render all pages
+    if (typeof renderOverview === 'function') renderOverview();
+    if (typeof renderAddPage === 'function') renderAddPage();
+    if (typeof renderRecords === 'function') renderRecords();
+    if (typeof renderCategories === 'function') renderCategories();
+    if (typeof renderStats === 'function') renderStats();
+    if (typeof renderReport === 'function') renderReport();
+    if (typeof renderSettings === 'function') renderSettings();
+    if (typeof renderWhatIf === 'function') renderWhatIf();
+  } catch(e) {
+    showToast('❌ 修复失败: ' + e.message, 'error');
+  }
+}
+
   // === EXPORTS ===
   window.renderSettings = renderSettings;
   window.exportDiagnosticLog = exportDiagnosticLog;
@@ -8480,6 +8513,7 @@ function exportDiagnosticLog() {
   window.clearAllData = clearAllData;
   window.confirmClearAll = confirmClearAll;
   window.refreshSyncFingerprint = refreshSyncFingerprint;
+  window.repairData = repairData;
 })();
 /* ============================================================
    RENDER: Report Page
@@ -9503,7 +9537,9 @@ function checkMonthRollover() {
     const currentAmounts = DataStore.getBillAmounts(currentMonth);
 
     if (Object.keys(currentAmounts).length === 0 && Object.keys(lastAmounts).length > 0) {
-      DataStore._data.billAmounts[currentMonth] = JSON.parse(JSON.stringify(lastAmounts));
+      Object.entries(lastAmounts).forEach(([billId, amount]) => {
+        DataStore.setBillAmount(currentMonth, billId, amount);
+      });
 
       const lastIncome = DataStore.getMonthlyIncome(lastMonth);
       if (lastIncome > 0 && DataStore.getMonthlyIncome(currentMonth) === 0) {

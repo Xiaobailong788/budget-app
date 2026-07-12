@@ -271,26 +271,6 @@ function renderOverview() {
             <span class="text-sm text-muted">${monthTotal > 0 ? (item.total/monthTotal*100).toFixed(1)+'%' : ''}</span>
     </div>
   </div>`;
-
-  // === 支出对比 (ring charts with clearer labels) ===
-  html += `<div class="card mb-16">
-    <div class="card-title">📊 支出对比</div>
-    <p class="text-xs text-muted" style="margin-bottom:12px">总支出占收入比例 — 圆圈越大，花得越多。</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">当前趋势 · 预测总支出</div>
-        <canvas class="whatif-ring" id="wi-ring-trend" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(trendTotal)}</div>
-        <div class="text-xs text-muted">占收入 ${income > 0 ? ((trendTotal / income) * 100).toFixed(1) : 0}%</div>
-      </div>
-      <div style="text-align:center">
-        <div class="text-xs text-muted mb-8">假设调整 · 预测总支出</div>
-        <canvas class="whatif-ring" id="wi-ring-proj" width="140" height="140"></canvas>
-        <div class="text-sm font-bold">${formatMoney(totalProjectedInclBills)}</div>
-        <div class="text-xs text-muted">占收入 ${income > 0 ? ((totalProjectedInclBills / income) * 100).toFixed(1) : 0}%</div>
-      </div>
-    </div>
-  </div>`;
       }).join('') : '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无支出记录</div></div>'}
     </div>
 

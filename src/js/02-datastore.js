@@ -110,8 +110,16 @@ const DataStore = {
   },
 
   save() {
-    localStorage.setItem('budgetAppData', JSON.stringify(this._data));
-    this._log('save', 'records=' + this._data.records.length);
+    try {
+      localStorage.setItem('budgetAppData', JSON.stringify(this._data));
+      this._log('save', 'records=' + this._data.records.length);
+    } catch(e) {
+      this._log('save_error', e.message);
+      // Try to notify user via toast if available
+      if (typeof showToast === 'function') {
+        showToast('❌ 数据保存失败: ' + e.message, 'error');
+      }
+    }
   },
 
   // Records
@@ -203,7 +211,7 @@ const DataStore = {
     this._log('_finalizeDelete', 'id=' + id + ' pending=' + (this._pendingDelete ? this._pendingDelete.id : 'null'));
     if (this._pendingDelete && this._pendingDelete.id === id) {
       this._pendingDelete = null;
-      this.save(); // Ensure persistence
+      // No need to save() — record was already removed from _data during softDeleteRecord
     }
   },
 

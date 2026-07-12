@@ -18,7 +18,9 @@ function checkMonthRollover() {
     const currentAmounts = DataStore.getBillAmounts(currentMonth);
 
     if (Object.keys(currentAmounts).length === 0 && Object.keys(lastAmounts).length > 0) {
-      DataStore._data.billAmounts[currentMonth] = JSON.parse(JSON.stringify(lastAmounts));
+      Object.entries(lastAmounts).forEach(([billId, amount]) => {
+        DataStore.setBillAmount(currentMonth, billId, amount);
+      });
 
       const lastIncome = DataStore.getMonthlyIncome(lastMonth);
       if (lastIncome > 0 && DataStore.getMonthlyIncome(currentMonth) === 0) {

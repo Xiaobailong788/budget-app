@@ -81,6 +81,7 @@ function renderSettings() {
         <button class="btn btn-outline btn-block" onclick="exportCSV()">📊 导出 CSV</button>
         <button class="btn btn-primary btn-block" onclick="if(window.LANSync)LANSync.open();else showToast('lan-sync.js 未加载','error')">📶 局域网同步</button>
         <button class="btn btn-danger btn-block" onclick="clearAllData()">🗑️ 清除所有数据</button>
+        <button class="btn btn-primary btn-block" onclick="repairData()">🔧 数据修复 (重新加载+清理)</button>
       </div>
     </div>
 
@@ -281,6 +282,50 @@ function exportDiagnosticLog() {
   showToast('✅ 日志已导出', 'success');
 }
 
+function repairData() {
+  // Check if DataStore._data and localStorage are in sync
+  try {
+    const raw = localStorage.getItem('budgetAppData');
+    if (!raw) {
+      showToast('✅ 没有需要修复的数据', 'success');
+      return;
+    }
+    const lsData = JSON.parse(raw);
+    const memRecords = DataStore.getRecords().length;
+    const lsRecords = (lsData.records || []).length;
+    
+    // Check 1: if localStorage has records that memory doesn't (stale in-memory)
+    // We reload from localStorage which is the source of truth
+    const success = DataStore.reload();
+    if (success) {
+      // Also clear any pending delete state which might be stale
+      const pending = DataStore.getPendingDelete();
+      if (pending) {
+        DataStore._finalizeDelete(pending.id);
+      }
+      showToast('✅ 数据已从 localStorage 重新加载 (' + lsRecords + ' 条记录)', 'success');
+    }
+    
+    // Check 2: verify pending delete is not stuck
+    const pendingCheck = DataStore.getPendingDelete();
+    if (pendingCheck) {
+      DataStore._finalizeDelete(pendingCheck.id);
+    }
+    
+    // Re-render all pages
+    if (typeof renderOverview === 'function') renderOverview();
+    if (typeof renderAddPage === 'function') renderAddPage();
+    if (typeof renderRecords === 'function') renderRecords();
+    if (typeof renderCategories === 'function') renderCategories();
+    if (typeof renderStats === 'function') renderStats();
+    if (typeof renderReport === 'function') renderReport();
+    if (typeof renderSettings === 'function') renderSettings();
+    if (typeof renderWhatIf === 'function') renderWhatIf();
+  } catch(e) {
+    showToast('❌ 修复失败: ' + e.message, 'error');
+  }
+}
+
   // === EXPORTS ===
   window.renderSettings = renderSettings;
   window.exportDiagnosticLog = exportDiagnosticLog;
@@ -295,4 +340,5 @@ function exportDiagnosticLog() {
   window.clearAllData = clearAllData;
   window.confirmClearAll = confirmClearAll;
   window.refreshSyncFingerprint = refreshSyncFingerprint;
+  window.repairData = repairData;
 })();
