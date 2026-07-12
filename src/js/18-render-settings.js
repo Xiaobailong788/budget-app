@@ -108,24 +108,12 @@ function renderSettings() {
         💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
       </div>
     </div>
-    <!-- Diagnostics Card -->
-    <div class="card mb-16">
-      <div class="card-title">🔍 诊断日志</div>
-      <div class="text-xs text-muted" style="margin-bottom:8px;line-height:1.4">
-        记录所有数据操作（增删改查、保存、刷新），导出后发送给开发者排查问题。
-      </div>
-      <div class="flex gap-8" style="margin-bottom:8px">
-        <button class="btn btn-sm btn-primary" onclick="exportDiagnosticLog()" style="font-size:0.72rem">📥 导出日志</button>
-        <button class="btn btn-sm btn-ghost" onclick="DataStore.clearDiagnosticLog();localStorage.removeItem('budgetAppLog');renderSettings();" style="font-size:0.72rem">🗑️ 清除</button>
-      </div>
-      <div id="diagnosticLogPreview" style="max-height:120px;overflow-y:auto;font-family:monospace;font-size:0.6rem;background:var(--bg);padding:8px;border-radius:var(--radius-sm);border:1px solid var(--border);line-height:1.6;word-break:break-all">
-        ${renderLogPreview()}
-      </div>
-    </div>
+    <!-- Data Inspector (Diagnostics) -->
+    ${renderDataInspector()}
     <div style="text-align:center;padding:12px 0 4px">
       <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" style="font-size:0.8rem">🔄 刷新页面数据</button>
     </div>
-    <div style="text-align:center;padding:8px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.1</div>
+    <div style="text-align:center;padding:8px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.2</div>
   `;
   setTimeout(refreshSyncFingerprint, 100);
 }
@@ -262,7 +250,7 @@ function exportDiagnosticLog() {
   }
   let text = '=== Budget App Diagnostic Log ===\n';
   text += 'Exported: ' + new Date().toISOString() + '\n';
-  text += 'Version: v2.3.1\n';
+  text += 'Version: v2.3.2\n';
   text += 'Records: ' + DataStore.getRecords().length + '\n';
   text += 'Pending Delete: ' + (DataStore.getPendingDelete() ? DataStore.getPendingDelete().id : 'none') + '\n';
   text += 'LocalStorage: ' + (localStorage.getItem('budgetAppData') || '').length + ' bytes\n';
@@ -280,6 +268,110 @@ function exportDiagnosticLog() {
   a.click();
   URL.revokeObjectURL(url);
   showToast('✅ 日志已导出', 'success');
+}
+
+function renderDataInspector() {
+  const compare = typeof DataStore.compareWithStorage === 'function' ? DataStore.compareWithStorage() : null;
+  const storage = typeof DataStore.getStorageInfo === 'function' ? DataStore.getStorageInfo() : null;
+  const log = typeof DataStore.getDiagnosticLog === 'function' ? DataStore.getDiagnosticLog() : [];
+  
+  let html = '<div class="card mb-16">';
+  html += '<div class="card-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+  html += '<span>🔬 数据诊断</span>';
+  html += '<button class="btn btn-sm btn-primary" onclick="renderDataInspector()" style="font-size:0.72rem">🔄 刷新</button>';
+  html += '<button class="btn btn-sm btn-ghost" onclick="exportDiagnosticReport()" style="font-size:0.72rem">📥 导出报告</button>';
+  html += '</div>';
+  
+  // Comparison table
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+  if (compare) {
+    html += '<div style="padding:8px;border-radius:8px;background:' + (compare.match ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)') + ';border:1px solid ' + (compare.match ? 'var(--success)' : 'var(--danger)') + '">' +
+      '<div class="text-xs text-secondary">数据一致性</div>' +
+      '<div class="font-bold" style="color:' + (compare.match ? 'var(--success)' : 'var(--danger)') + '">' + (compare.match ? '✅ 一致' : '⚠️ 不一致') + '</div>' +
+      '<div class="text-xs text-muted">内存: ' + compare.memRecords + ' 条 | LS: ' + compare.lsRecords + ' 条</div>' +
+      (compare.inLSNotMem.length > 0 ? '<div class="text-xs" style="color:var(--danger)">LS有多余: ' + compare.inLSNotMem.length + ' 条</div>' : '') +
+    '</div>';
+  }
+  if (storage) {
+    html += '<div style="padding:8px;border-radius:8px;background:var(--bg);border:1px solid var(--border)">' +
+      '<div class="text-xs text-secondary">存储用量</div>' +
+      '<div class="font-bold">' + (storage.localStorage.totalSize / 1024).toFixed(1) + ' KB</div>' +
+      '<div class="text-xs text-muted">待删除: ' + (storage.pendingDelete ? storage.pendingDelete.substring(0, 8) + '...' : '无') + '</div>' +
+    '</div>';
+    html += '<div style="padding:8px;border-radius:8px;background:var(--bg);border:1px solid var(--border)">' +
+      '<div class="text-xs text-secondary">localStorage</div>' +
+      '<div class="font-bold text-sm">appData: ' + (storage.localStorage.appDataSize / 1024).toFixed(1) + ' KB</div>' +
+      '<div class="text-xs text-muted">log: ' + (storage.localStorage.logSize / 1024).toFixed(1) + ' KB</div>' +
+    '</div>';
+  }
+  html += '</div>';
+  
+  // Stats engine audit
+  html += '<details style="margin-bottom:8px">';
+  html += '<summary style="cursor:pointer;font-weight:600;font-size:0.85rem;padding:4px 0">📊 统计引擎审计 (点击展开)</summary>';
+  html += '<div style="padding:8px;background:var(--bg);border-radius:8px;margin-top:4px">';
+  html += '<p class="text-xs text-muted mb-8">统计引擎计算的记录列表 — 检查是否有不应被计入的记录</p>';
+  
+  const now = new Date();
+  const month = getMonthKey(now.toISOString());
+  
+  if (typeof StatsEngine !== 'undefined') {
+    const records = StatsEngine.getRecordsInMonth(month);
+    if (records.length > 0) {
+      html += '<div class="text-xs font-semibold mb-4">' + month + ' 月记录 (' + records.length + ' 条):</div>';
+      html += '<div style="max-height:200px;overflow-y:auto;font-size:0.7rem;font-family:monospace">';
+      records.forEach(r => {
+        const cat = DataStore.getCategory(r.categoryId);
+        html += '<div style="padding:2px 4px;border-bottom:1px solid var(--border);display:flex;gap:4px">' +
+          '<span style="color:var(--text-muted);min-width:80px">' + r.id.substring(0, 8) + '</span>' +
+          '<span style="min-width:60px">RM' + r.amount.toFixed(2) + '</span>' +
+          '<span style="min-width:60px">' + (cat ? cat.icon + cat.name : '?') + '</span>' +
+          '<span style="color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis">' + (r.note || '') + '</span>' +
+          '<span style="color:var(--text-muted);min-width:80px">' + (r.date || '') + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="text-sm text-muted">本月暂无记录</div>';
+    }
+  }
+  html += '</div></details>';
+  
+  // Operation log
+  const logCount = Math.min(log.length, 50);
+  html += '<details>';
+  html += '<summary style="cursor:pointer;font-weight:600;font-size:0.85rem;padding:4px 0">📝 操作日志 (最近 ' + logCount + ' 条)</summary>';
+  html += '<div style="max-height:250px;overflow-y:auto;font-size:0.6rem;font-family:monospace;background:var(--bg);padding:8px;border-radius:8px;margin-top:4px;border:1px solid var(--border);line-height:1.6">';
+  if (log.length === 0) {
+    html += '<span style="color:var(--text-muted)">（无记录）</span>';
+  } else {
+    log.slice(-50).reverse().forEach(e => {
+      const time = e.t.substring(11, 23);
+      const warn = e.discrepancy ? '⚠️' : '';
+      html += '<div>' + warn + time + ' [' + e.op + '] mem=' + e.memRecords + ' ls=' + e.lsRecords + '</div>';
+    });
+  }
+  html += '</div></details>';
+  
+  html += '</div>';
+  
+  return html;
+}
+
+function exportDiagnosticReport() {
+  if (typeof DIAG === 'undefined' || typeof DIAG.exportDiagnosticReport !== 'function') {
+    showToast('⚠️ 诊断系统未加载', 'error');
+    return;
+  }
+  const report = DIAG.exportDiagnosticReport();
+  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'budget-diagnostic-report-' + new Date().toISOString().substring(0, 10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ 诊断报告已导出');
 }
 
 function repairData() {
@@ -328,6 +420,8 @@ function repairData() {
 
   // === EXPORTS ===
   window.renderSettings = renderSettings;
+  window.renderDataInspector = renderDataInspector;
+  window.exportDiagnosticReport = exportDiagnosticReport;
   window.exportDiagnosticLog = exportDiagnosticLog;
   window.setSavingsType = setSavingsType;
   window.saveBudget = saveBudget;
