@@ -110,7 +110,7 @@ function renderSettings() {
     <div style="text-align:center;padding:12px 0 4px">
       <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" style="font-size:0.8rem">🔄 刷新页面数据</button>
     </div>
-    <div style="text-align:center;padding:8px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.0</div>
+    <div style="text-align:center;padding:8px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.1</div>
   `;
   setTimeout(refreshSyncFingerprint, 100);
 }
