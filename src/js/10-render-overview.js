@@ -5,6 +5,7 @@
 'use strict';
 
 function renderOverview() {
+  logEvent('renderOverview', 'start');
   const el = document.getElementById('page-overview');
   const now = new Date();
   const month = getMonthKey(now.toISOString());

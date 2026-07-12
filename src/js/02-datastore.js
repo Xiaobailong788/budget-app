@@ -7,6 +7,21 @@
 const DataStore = {
   _data: null,
   _pendingDelete: null, // { id, record, timeoutId }
+  __log: [],            // Diagnostic log entries
+
+  _log(action, detail) {
+    this.__log.push({
+      t: new Date().toISOString(),
+      a: action,
+      d: detail,
+      recordsCount: this._data ? this._data.records.length : -1,
+      pendingId: this._pendingDelete ? this._pendingDelete.id : null
+    });
+    if (this.__log.length > 500) this.__log.shift(); // cap at 500
+  },
+
+  getDiagnosticLog() { return this.__log.slice(); },
+  clearDiagnosticLog() { this.__log = []; },
 
   _defaults() {
     return {
@@ -26,7 +41,10 @@ const DataStore = {
   },
 
   init() {
+    this.__log = []; // fresh log on init
     const raw = localStorage.getItem('budgetAppData');
+    this._log('init', 'raw=' + (raw ? raw.length + 'chars' : 'null'));
+  
     if (raw) {
       try {
         this._data = JSON.parse(raw);
@@ -80,6 +98,7 @@ const DataStore = {
 
   save() {
     localStorage.setItem('budgetAppData', JSON.stringify(this._data));
+    this._log('save', 'records=' + this._data.records.length);
   },
 
   // Records
@@ -104,6 +123,7 @@ const DataStore = {
   },
 
   deleteRecord(id) {
+    this._log('deleteRecord', 'id=' + id);
     // If this record is pending delete, just finalize it early
     if (this._pendingDelete && this._pendingDelete.id === id) {
       clearTimeout(this._pendingDelete.timeoutId);
@@ -123,7 +143,8 @@ const DataStore = {
   // Undo-capable delete: moves to pending buffer, scheduled for permanent removal
   softDeleteRecord(id) {
     const record = this.getRecord(id);
-    if (!record) return null;
+    if (!record) { this._log('softDeleteRecord', 'id=' + id + ' NOT_FOUND'); return null; }
+    this._log('softDeleteRecord', 'id=' + id + ' pending=' + (this._pendingDelete ? this._pendingDelete.id : 'null'));
     // Cancel any existing pending delete
     if (this._pendingDelete) {
       clearTimeout(this._pendingDelete.timeoutId);
@@ -154,7 +175,8 @@ const DataStore = {
 
   // Undo a pending delete
   undoDelete() {
-    if (!this._pendingDelete) return false;
+    if (!this._pendingDelete) { this._log('undoDelete', 'NOTHING_PENDING'); return false; }
+    this._log('undoDelete', 'id=' + this._pendingDelete.id);
     clearTimeout(this._pendingDelete.timeoutId);
     // Restore the record at the beginning of the list
     this._data.records.unshift(this._pendingDelete.record);
@@ -165,6 +187,7 @@ const DataStore = {
 
   // Finalize: permanently erase (already removed from list, just clear pending state)
   _finalizeDelete(id) {
+    this._log('_finalizeDelete', 'id=' + id + ' pending=' + (this._pendingDelete ? this._pendingDelete.id : 'null'));
     if (this._pendingDelete && this._pendingDelete.id === id) {
       this._pendingDelete = null;
       this.save(); // Ensure persistence
@@ -180,16 +203,20 @@ const DataStore = {
     if (raw) {
       try {
         this._data = JSON.parse(raw);
+        this._log('reload', 'OK records=' + this._data.records.length);
         return true;
       } catch(e) {
+        this._log('reload', 'PARSE_ERROR ' + e.message);
         return false;
       }
     }
     this._data = this._defaults();
+    this._log('reload', 'NO_DATA defaulted');
     return true;
   },
 
   forceDeleteRecord(id) {
+    this._log('forceDeleteRecord', 'id=' + id);
     if (this._pendingDelete && this._pendingDelete.id === id) {
       clearTimeout(this._pendingDelete.timeoutId);
       this._pendingDelete = null;
@@ -200,6 +227,7 @@ const DataStore = {
       this.save();
       return true;
     }
+    this._log('forceDeleteRecord', 'id=' + id + ' NOT_FOUND');
     return false;
   },
 
@@ -503,4 +531,7 @@ const DataStore = {
 
   // === EXPORTS ===
   window.DataStore = DataStore;
+  window.logEvent = function(action, detail) {
+    DataStore._log(action, detail);
+  };
 })();

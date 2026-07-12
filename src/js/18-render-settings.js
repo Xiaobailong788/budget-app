@@ -107,6 +107,20 @@ function renderSettings() {
         💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
       </div>
     </div>
+    <!-- Diagnostics Card -->
+    <div class="card mb-16">
+      <div class="card-title">🔍 诊断日志</div>
+      <div class="text-xs text-muted" style="margin-bottom:8px;line-height:1.4">
+        记录所有数据操作（增删改查、保存、刷新），导出后发送给开发者排查问题。
+      </div>
+      <div class="flex gap-8" style="margin-bottom:8px">
+        <button class="btn btn-sm btn-primary" onclick="exportDiagnosticLog()" style="font-size:0.72rem">📥 导出日志</button>
+        <button class="btn btn-sm btn-ghost" onclick="DataStore.clearDiagnosticLog();renderSettings();" style="font-size:0.72rem">🗑️ 清除</button>
+      </div>
+      <div id="diagnosticLogPreview" style="max-height:120px;overflow-y:auto;font-family:monospace;font-size:0.6rem;background:var(--bg);padding:8px;border-radius:var(--radius-sm);border:1px solid var(--border);line-height:1.6;word-break:break-all">
+        ${renderLogPreview()}
+      </div>
+    </div>
     <div style="text-align:center;padding:12px 0 4px">
       <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" style="font-size:0.8rem">🔄 刷新页面数据</button>
     </div>
@@ -230,8 +244,46 @@ function refreshSyncFingerprint() {
   }
 }
 
+function renderLogPreview() {
+  const log = DataStore.getDiagnosticLog();
+  if (!log || log.length === 0) return '<span style="color:var(--text-muted)">（无记录）</span>';
+  return log.slice(-20).reverse().map(e => {
+    const time = e.t.substring(11, 23);
+    return `<div>${time} [${e.a}] ${e.d}  | 记录:${e.recordsCount} 待删:${e.pendingId || '—'}</div>`;
+  }).join('');
+}
+
+function exportDiagnosticLog() {
+  const log = DataStore.getDiagnosticLog();
+  if (!log || log.length === 0) {
+    showToast('⚠️ 暂无日志可导出', 'warning');
+    return;
+  }
+  let text = '=== Budget App Diagnostic Log ===\n';
+  text += 'Exported: ' + new Date().toISOString() + '\n';
+  text += 'Version: v2.3.1\n';
+  text += 'Records: ' + DataStore.getRecords().length + '\n';
+  text += 'Pending Delete: ' + (DataStore.getPendingDelete() ? DataStore.getPendingDelete().id : 'none') + '\n';
+  text += 'LocalStorage: ' + (localStorage.getItem('budgetAppData') || '').length + ' bytes\n';
+  text += 'Theme: ' + (document.documentElement.getAttribute('data-theme') || 'light') + '\n';
+  text += 'User Agent: ' + navigator.userAgent + '\n';
+  text += '\n--- Event Log ---\n';
+  log.forEach(e => {
+    text += `[${e.t}] ${e.a} | ${e.d} | records=${e.recordsCount} pending=${e.pendingId || '—'}\n`;
+  });
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'budget-diagnostic-log-' + new Date().toISOString().substring(0, 10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ 日志已导出', 'success');
+}
+
   // === EXPORTS ===
   window.renderSettings = renderSettings;
+  window.exportDiagnosticLog = exportDiagnosticLog;
   window.setSavingsType = setSavingsType;
   window.saveBudget = saveBudget;
   window.saveSavingsTarget = saveSavingsTarget;

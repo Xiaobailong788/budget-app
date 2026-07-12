@@ -11,6 +11,7 @@ let batchMode = false;
 let selectedRecordIds = new Set();
 
 function renderRecords() {
+  logEvent('renderRecords', 'start');
   const el = document.getElementById('page-records');
   const cats = DataStore.getCategories();
 
@@ -542,6 +543,7 @@ function deleteRecordConfirm(id) {
 }
 
 function confirmDeleteRecord(id) {
+  logEvent('confirmDeleteRecord', 'id=' + id);
   const record = DataStore.softDeleteRecord(id);
   closeModal();
   if (record) {
@@ -566,6 +568,7 @@ function confirmDeleteRecord(id) {
 }
 
 function confirmHardDeleteRecord(id) {
+  logEvent('confirmHardDeleteRecord', 'id=' + id);
   closeModal();
   const success = DataStore.forceDeleteRecord(id);
   if (success) {
