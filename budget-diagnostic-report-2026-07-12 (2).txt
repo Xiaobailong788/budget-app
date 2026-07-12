@@ -1,0 +1,85 @@
+=== Budget App Diagnostic Report ===
+Generated: 2026-07-12T02:50:28.260Z
+Version: v2.3.2
+
+--- Memory vs LocalStorage ---
+Memory records: 28
+LocalStorage records: 28
+Match: YES ✅
+
+--- Storage Info ---
+localStorage total: 22723 bytes
+budgetAppData: 7749 bytes
+budgetAppLog: 3764 bytes
+Pending delete: none
+
+--- Categories ---
+Total categories: 32
+
+--- Operation Log (last 50) ---
+[02:49:01.709] compareWithStorage | mem=28 ls=28
+  args: {"match":true,"inLSNotMem":0,"inMemNotLS":0}
+[02:49:03.329] DataStore.reload | mem=28 ls=28
+  args: []
+[02:49:03.336] compareWithStorage | mem=28 ls=28
+  args: {"match":true,"inLSNotMem":0,"inMemNotLS":0}
+[02:49:44.198] DataStore.save | mem=28 ls=28
+  args: []
+[02:49:44.199] DataStore.updateRecord | mem=28 ls=28
+  args: ["mrgd2lzu7j301w",{"amount":99911,"categoryId":"cat-child-1-3","date":"2026-07-11T20:49","note":"","excludeFromAvg":false,"updatedAt":"2026-07-12T02:49:44.198Z"}]
+[02:50:08.824] compareWithStorage | mem=28 ls=28
+  args: {"match":true,"inLSNotMem":0,"inMemNotLS":0}
+[02:50:28.260] compareWithStorage | mem=28 ls=28
+  args: {"match":true,"inLSNotMem":0,"inMemNotLS":0}
+
+--- Full Record List (memory) ---
+  mreulttsal5e4t | 2026-07-01T12:22 | RM5 | 午餐 | 
+  mreume365qxjvu | 2026-07-01T12:24 | RM1.6 | 饮料/咖啡 | 
+  mreumvlcy59m8q | 2026-07-01T21:24 | RM15.5 | 日用品 | 
+  mreuomdz23ds9y | 2026-07-01T21:26 | RM4.75 | 宵夜 | 
+  mreupj3gc4dvrx | 2026-07-02T10:26 | RM19.4 | 餐饮 | 
+  mreupwmagaev48 | 2026-07-02T19:27 | RM7.4 | 午餐 | 
+  mreuq7htmihqmc | 2026-07-02T19:27 | RM9 | 晚餐 | 
+  mreuqmxuytvw4z | 2026-07-02T19:27 | RM0.1 | 其他 | 
+  mreuqvqbudmkxg | 2026-07-03T19:28 | RM9 | 午餐 | 
+  mreur2qndwzr2d | 2026-07-03T19:28 | RM9 | 晚餐 | 
+  mreurbewbry212 | 2026-07-04T19:28 | RM5 | 午餐 | 
+  mreurmebobw0hj | 2026-07-04T19:28 | RM3.1 | 游戏 | 
+  mreus6f627rhcw | 2026-07-04T19:28 | RM16.02 | 晚餐 | 
+  mreuskmuib71oi | 2026-07-05T19:29 | RM8.65 | API | 
+  mreusyqcm3lhp4 | 2026-07-05T19:29 | RM7.5 | 晚餐 | 
+  mreut85xt2f24p | 2026-07-05T19:29 | RM1.6 | 饮料/咖啡 | 
+  mreutu4lxn2rz1 | 2026-07-05T19:30 | RM15.5 | 其他 | 洗衣
+  mreuu4j5v85izi | 2026-07-06T19:30 | RM7 | 午餐 | 
+  mreuuym9eopli0 | 2026-07-07T19:30 | RM3.9 | 午餐 | 
+  mreuv92pnho6gr | 2026-07-07T19:31 | RM7.5 | 晚餐 | 
+  mreuvki0u67c5d | 2026-07-08T19:31 | RM6.2 | 晚餐 | 
+  mreuvuousx8zkl | 2026-07-08T19:32 | RM1.6 | 饮料/咖啡 | 
+  mreuwf6z9404ak | 2026-07-08T19:32 | RM2.5 | 餐饮 | 小吃食
+  mreux4c66zz1mf | 2026-07-08T19:32 | RM6 | 晚餐 | 
+  mreuxfgmwiel55 | 2026-07-09T19:33 | RM8 | 晚餐 | 
+  mreuxt1k8dousj | 2026-07-10T19:33 | RM8.66 | API | 
+  mreuxz8aytgu4z | 2026-07-10T19:33 | RM5 | 午餐 | 
+  mrgd2lzu7j301w | 2026-07-11T20:49 | RM99911 | 晚餐 | 
+
+JSON
+
+📋 记录状态
+在统计引擎审计中: ✅ 是
+在流水页过滤结果中: ✅ 是
+getMonthKey(日期) = 2026-07
+日期前10字符: "2026-07-11"
+分类: 🍽️ 晚餐 (id=cat-child-1-3, parentId=cat-root-1)
+⚠️ 注意：该记录分类有父级，不是根分类
+完整 JSON:
+{
+  "amount": 99911,
+  "categoryId": "cat-child-1-3",
+  "date": "2026-07-11T20:49",
+  "note": "",
+  "createdAt": "2026-07-11T12:49:08.826Z",
+  "id": "mrgd2lzu7j301w",
+  "excludeFromAvg": false,
+  "updatedAt": "2026-07-12T02:49:44.198Z"
+}
+========== END REPORT ==========
