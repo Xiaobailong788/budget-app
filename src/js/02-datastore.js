@@ -167,12 +167,40 @@ const DataStore = {
   _finalizeDelete(id) {
     if (this._pendingDelete && this._pendingDelete.id === id) {
       this._pendingDelete = null;
-      // Record is already removed from list, just clean up
+      this.save(); // Ensure persistence
     }
   },
 
   getPendingDelete() {
     return this._pendingDelete;
+  },
+
+  reload() {
+    const raw = localStorage.getItem('budgetAppData');
+    if (raw) {
+      try {
+        this._data = JSON.parse(raw);
+        return true;
+      } catch(e) {
+        return false;
+      }
+    }
+    this._data = this._defaults();
+    return true;
+  },
+
+  forceDeleteRecord(id) {
+    if (this._pendingDelete && this._pendingDelete.id === id) {
+      clearTimeout(this._pendingDelete.timeoutId);
+      this._pendingDelete = null;
+    }
+    const len = this._data.records.length;
+    this._data.records = this._data.records.filter(r => r.id !== id);
+    if (this._data.records.length < len) {
+      this.save();
+      return true;
+    }
+    return false;
   },
 
   // Categories

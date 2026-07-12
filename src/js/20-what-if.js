@@ -559,21 +559,28 @@ function drawSimpleRing(canvas, percent, fillColor, bgColor) {
   const r = Math.min(cx, cy) - 8;
   const lineWidth = 12;
 
+  // Read theme-aware colors from CSS
+  const styles = getComputedStyle(document.documentElement);
+  const themeBorder = styles.getPropertyValue('--border').trim() || '#e5e7eb';
+  const themePrimary = styles.getPropertyValue('--primary').trim() || '#6366F1';
+  const themeSuccess = styles.getPropertyValue('--success').trim() || '#10B981';
+  const themeText = styles.getPropertyValue('--text-primary').trim() || '#1E293B';
+
   ctx.clearRect(0, 0, cssW, cssH);
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.strokeStyle = bgColor || '#e5e7eb';
+  ctx.strokeStyle = bgColor || themeBorder;
   ctx.lineWidth = lineWidth;
   ctx.stroke();
 
   ctx.beginPath();
   ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(percent, 1));
-  ctx.strokeStyle = fillColor || '#6366F1';
+  ctx.strokeStyle = fillColor || (percent > 0.5 ? themePrimary : themeSuccess);
   ctx.lineWidth = lineWidth;
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1E293B';
+  ctx.fillStyle = themeText;
   ctx.font = 'bold 14px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

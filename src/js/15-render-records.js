@@ -57,6 +57,7 @@ function renderRecords() {
           ${batchMode ? '✅ 完成选择' : '☑️ 选择'}
         </button>
         <button class="btn btn-primary btn-sm" onclick="exportToExcel()">📥 导出 Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" title="从 localStorage 重新读取数据并刷新页面">🔄 刷新数据</button>
         <button class="view-toggle-btn ${compactRecordsView ? 'active' : ''}" onclick="toggleRecordsView()" title="${compactRecordsView ? '切换为卡片视图' : '切换为紧凑视图'}">
           ${compactRecordsView ? '📋 卡片视图' : '📄 紧凑视图'}
         </button>
@@ -520,17 +521,22 @@ function confirmBatchChangeCategory(catId) {
 function deleteRecordConfirm(id) {
   const record = DataStore.getRecord(id);
   if (!record) return;
+  const cat = DataStore.getCategory(record.categoryId);
   showModal(`
     <div class="modal-title">确认删除</div>
     <p style="color:var(--text-secondary);margin-bottom:16px">确定要删除这条记录吗？</p>
-    <div class="flex items-center gap-8 mb-16" style="padding:12px;background:var(--bg);border-radius:var(--radius-sm)">
-      <span>${formatMoney(record.amount)}</span>
-      <span class="text-muted">|</span>
-      <span class="text-secondary">${escHtml(record.note || '无备注')}</span>
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span>${cat ? cat.icon : '❓'}</span>
+        <span>${cat ? escHtml(cat.name) : '未知分类'}</span>
+        <span style="margin-left:auto;font-weight:700">${formatMoney(record.amount)}</span>
+      </div>
+      ${record.note ? '<div style="font-size:0.85rem;color:var(--text-muted)">' + escHtml(record.note) + '</div>' : ''}
     </div>
-    <div class="modal-actions">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
-      <button class="btn btn-danger" onclick="confirmDeleteRecord('${id}')">删除</button>
+      <button class="btn btn-outline" onclick="confirmDeleteRecord('${id}')">软删除（可撤销）</button>
+      <button class="btn btn-danger" onclick="confirmHardDeleteRecord('${id}')">立即删除</button>
     </div>
   `);
 }
@@ -555,6 +561,17 @@ function confirmDeleteRecord(id) {
         setTimeout(() => toast.remove(), 300);
       }
     }, 5000);
+  }
+  renderRecords();
+}
+
+function confirmHardDeleteRecord(id) {
+  closeModal();
+  const success = DataStore.forceDeleteRecord(id);
+  if (success) {
+    showToast('🗑️ 已永久删除', 'success');
+  } else {
+    showToast('❌ 删除失败：记录不存在', 'error');
   }
   renderRecords();
 }
@@ -661,7 +678,25 @@ function submitEditRecord(e, id) {
   renderRecords();
 }
 
+function refreshPageData() {
+  const success = DataStore.reload();
+  if (success) {
+    showToast('✅ 数据已刷新', 'success');
+  } else {
+    showToast('❌ 数据刷新失败', 'error');
+  }
+  // Re-render all page sections that might be visible
+  renderRecords();
+  const currentTab = window.currentTab;
+  if (currentTab === 'records') {
+    renderRecords();
+  } else if (currentTab === 'overview') {
+    renderOverview();
+  }
+}
+
   // === EXPORTS ===
+  window.refreshPageData = refreshPageData;
   window.recordsFilter = recordsFilter;
   window.recordsPage = recordsPage;
   window.compactRecordsView = compactRecordsView;
@@ -689,6 +724,7 @@ function submitEditRecord(e, id) {
   window.confirmBatchChangeCategory = confirmBatchChangeCategory;
   window.deleteRecordConfirm = deleteRecordConfirm;
   window.confirmDeleteRecord = confirmDeleteRecord;
+  window.confirmHardDeleteRecord = confirmHardDeleteRecord;
   window.undoDelete = undoDelete;
   window.openEditRecord = openEditRecord;
   window.submitEditRecord = submitEditRecord;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
-  <title>记账软件 v2.2.0</title>
+  <title>记账软件 v2.3.0</title>
   <style>
 /* ===== CSS DESIGN SYSTEM ===== */
 :root {
@@ -22,6 +22,8 @@
   --text-primary: #1E293B;
   --text-secondary: #64748B;
   --text-muted: #94A3B8;
+  --bg-secondary: #F1F5F9;
+  --bg-hover: #E2E8F0;
   --border: #E2E8F0;
   --radius-sm: 8px;
   --radius: 12px;
@@ -54,6 +56,8 @@
   --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
+  --bg-secondary: #1E293B;
+  --bg-hover: #0F172A;
   --border: #334155;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
   --shadow: 0 1px 3px rgba(0,0,0,0.4);
@@ -69,6 +73,18 @@
 [data-theme="dark"] .bottom-nav { border-top-color: #334155; }
 [data-theme="dark"] .sidebar { border-right-color: #334155; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+[data-theme="dark"] .whatif-value-input,
+[data-theme="dark"] .whatif-mode-select {
+  background: #1E293B;
+  color: #F1F5F9;
+  border-color: #475569;
+}
+[data-theme="dark"] .whatif-cat-row {
+  color: #F1F5F9;
+}
+[data-theme="dark"] .savings-bar-baseline {
+  background: #64748B;
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1927,12 +1943,40 @@ const DataStore = {
   _finalizeDelete(id) {
     if (this._pendingDelete && this._pendingDelete.id === id) {
       this._pendingDelete = null;
-      // Record is already removed from list, just clean up
+      this.save(); // Ensure persistence
     }
   },
 
   getPendingDelete() {
     return this._pendingDelete;
+  },
+
+  reload() {
+    const raw = localStorage.getItem('budgetAppData');
+    if (raw) {
+      try {
+        this._data = JSON.parse(raw);
+        return true;
+      } catch(e) {
+        return false;
+      }
+    }
+    this._data = this._defaults();
+    return true;
+  },
+
+  forceDeleteRecord(id) {
+    if (this._pendingDelete && this._pendingDelete.id === id) {
+      clearTimeout(this._pendingDelete.timeoutId);
+      this._pendingDelete = null;
+    }
+    const len = this._data.records.length;
+    this._data.records = this._data.records.filter(r => r.id !== id);
+    if (this._data.records.length < len) {
+      this.save();
+      return true;
+    }
+    return false;
   },
 
   // Categories
@@ -4781,6 +4825,7 @@ function renderRecords() {
           ${batchMode ? '✅ 完成选择' : '☑️ 选择'}
         </button>
         <button class="btn btn-primary btn-sm" onclick="exportToExcel()">📥 导出 Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" title="从 localStorage 重新读取数据并刷新页面">🔄 刷新数据</button>
         <button class="view-toggle-btn ${compactRecordsView ? 'active' : ''}" onclick="toggleRecordsView()" title="${compactRecordsView ? '切换为卡片视图' : '切换为紧凑视图'}">
           ${compactRecordsView ? '📋 卡片视图' : '📄 紧凑视图'}
         </button>
@@ -5244,17 +5289,22 @@ function confirmBatchChangeCategory(catId) {
 function deleteRecordConfirm(id) {
   const record = DataStore.getRecord(id);
   if (!record) return;
+  const cat = DataStore.getCategory(record.categoryId);
   showModal(`
     <div class="modal-title">确认删除</div>
     <p style="color:var(--text-secondary);margin-bottom:16px">确定要删除这条记录吗？</p>
-    <div class="flex items-center gap-8 mb-16" style="padding:12px;background:var(--bg);border-radius:var(--radius-sm)">
-      <span>${formatMoney(record.amount)}</span>
-      <span class="text-muted">|</span>
-      <span class="text-secondary">${escHtml(record.note || '无备注')}</span>
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span>${cat ? cat.icon : '❓'}</span>
+        <span>${cat ? escHtml(cat.name) : '未知分类'}</span>
+        <span style="margin-left:auto;font-weight:700">${formatMoney(record.amount)}</span>
+      </div>
+      ${record.note ? '<div style="font-size:0.85rem;color:var(--text-muted)">' + escHtml(record.note) + '</div>' : ''}
     </div>
-    <div class="modal-actions">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="closeModal()">取消</button>
-      <button class="btn btn-danger" onclick="confirmDeleteRecord('${id}')">删除</button>
+      <button class="btn btn-outline" onclick="confirmDeleteRecord('${id}')">软删除（可撤销）</button>
+      <button class="btn btn-danger" onclick="confirmHardDeleteRecord('${id}')">立即删除</button>
     </div>
   `);
 }
@@ -5279,6 +5329,17 @@ function confirmDeleteRecord(id) {
         setTimeout(() => toast.remove(), 300);
       }
     }, 5000);
+  }
+  renderRecords();
+}
+
+function confirmHardDeleteRecord(id) {
+  closeModal();
+  const success = DataStore.forceDeleteRecord(id);
+  if (success) {
+    showToast('🗑️ 已永久删除', 'success');
+  } else {
+    showToast('❌ 删除失败：记录不存在', 'error');
   }
   renderRecords();
 }
@@ -5385,7 +5446,25 @@ function submitEditRecord(e, id) {
   renderRecords();
 }
 
+function refreshPageData() {
+  const success = DataStore.reload();
+  if (success) {
+    showToast('✅ 数据已刷新', 'success');
+  } else {
+    showToast('❌ 数据刷新失败', 'error');
+  }
+  // Re-render all page sections that might be visible
+  renderRecords();
+  const currentTab = window.currentTab;
+  if (currentTab === 'records') {
+    renderRecords();
+  } else if (currentTab === 'overview') {
+    renderOverview();
+  }
+}
+
   // === EXPORTS ===
+  window.refreshPageData = refreshPageData;
   window.recordsFilter = recordsFilter;
   window.recordsPage = recordsPage;
   window.compactRecordsView = compactRecordsView;
@@ -5413,6 +5492,7 @@ function submitEditRecord(e, id) {
   window.confirmBatchChangeCategory = confirmBatchChangeCategory;
   window.deleteRecordConfirm = deleteRecordConfirm;
   window.confirmDeleteRecord = confirmDeleteRecord;
+  window.confirmHardDeleteRecord = confirmHardDeleteRecord;
   window.undoDelete = undoDelete;
   window.openEditRecord = openEditRecord;
   window.submitEditRecord = submitEditRecord;
@@ -8156,7 +8236,7 @@ function renderSettings() {
         💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
       </div>
     </div>
-    <div style="text-align:center;padding:16px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.2.0</div>
+    <div style="text-align:center;padding:16px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.0</div>
   `;
   setTimeout(refreshSyncFingerprint, 100);
 }
@@ -9085,21 +9165,28 @@ function drawSimpleRing(canvas, percent, fillColor, bgColor) {
   const r = Math.min(cx, cy) - 8;
   const lineWidth = 12;
 
+  // Read theme-aware colors from CSS
+  const styles = getComputedStyle(document.documentElement);
+  const themeBorder = styles.getPropertyValue('--border').trim() || '#e5e7eb';
+  const themePrimary = styles.getPropertyValue('--primary').trim() || '#6366F1';
+  const themeSuccess = styles.getPropertyValue('--success').trim() || '#10B981';
+  const themeText = styles.getPropertyValue('--text-primary').trim() || '#1E293B';
+
   ctx.clearRect(0, 0, cssW, cssH);
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.strokeStyle = bgColor || '#e5e7eb';
+  ctx.strokeStyle = bgColor || themeBorder;
   ctx.lineWidth = lineWidth;
   ctx.stroke();
 
   ctx.beginPath();
   ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(percent, 1));
-  ctx.strokeStyle = fillColor || '#6366F1';
+  ctx.strokeStyle = fillColor || (percent > 0.5 ? themePrimary : themeSuccess);
   ctx.lineWidth = lineWidth;
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#1E293B';
+  ctx.fillStyle = themeText;
   ctx.font = 'bold 14px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

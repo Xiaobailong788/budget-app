@@ -14,6 +14,8 @@
   --text-primary: #1E293B;
   --text-secondary: #64748B;
   --text-muted: #94A3B8;
+  --bg-secondary: #F1F5F9;
+  --bg-hover: #E2E8F0;
   --border: #E2E8F0;
   --radius-sm: 8px;
   --radius: 12px;
@@ -46,6 +48,8 @@
   --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
+  --bg-secondary: #1E293B;
+  --bg-hover: #0F172A;
   --border: #334155;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
   --shadow: 0 1px 3px rgba(0,0,0,0.4);
@@ -61,6 +65,18 @@
 [data-theme="dark"] .bottom-nav { border-top-color: #334155; }
 [data-theme="dark"] .sidebar { border-right-color: #334155; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+[data-theme="dark"] .whatif-value-input,
+[data-theme="dark"] .whatif-mode-select {
+  background: #1E293B;
+  color: #F1F5F9;
+  border-color: #475569;
+}
+[data-theme="dark"] .whatif-cat-row {
+  color: #F1F5F9;
+}
+[data-theme="dark"] .savings-bar-baseline {
+  background: #64748B;
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
