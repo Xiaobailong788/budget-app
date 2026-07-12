@@ -107,7 +107,10 @@ function renderSettings() {
         💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
       </div>
     </div>
-    <div style="text-align:center;padding:16px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.0</div>
+    <div style="text-align:center;padding:12px 0 4px">
+      <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" style="font-size:0.8rem">🔄 刷新页面数据</button>
+    </div>
+    <div style="text-align:center;padding:8px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.0</div>
   `;
   setTimeout(refreshSyncFingerprint, 100);
 }

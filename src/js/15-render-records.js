@@ -679,20 +679,28 @@ function submitEditRecord(e, id) {
 }
 
 function refreshPageData() {
+  // Force-reload ALL data from localStorage, clearing any stale in-memory state
   const success = DataStore.reload();
+  // Also clear any pending soft-delete state
+  const pending = DataStore.getPendingDelete();
+  if (pending) {
+    DataStore._finalizeDelete(pending.id);
+  }
   if (success) {
     showToast('✅ 数据已刷新', 'success');
   } else {
     showToast('❌ 数据刷新失败', 'error');
   }
-  // Re-render all page sections that might be visible
+  // Re-render ALL pages to ensure every view reflects current data
+  if (typeof renderOverview === 'function') renderOverview();
+  if (typeof renderAddPage === 'function') renderAddPage();
+  if (typeof renderCategories === 'function') renderCategories();
+  if (typeof renderStats === 'function') renderStats();
+  if (typeof renderReport === 'function') renderReport();
+  if (typeof renderSettings === 'function') renderSettings();
+  if (typeof renderWhatIf === 'function') renderWhatIf();
+  // Finally re-render the records page (current context)
   renderRecords();
-  const currentTab = window.currentTab;
-  if (currentTab === 'records') {
-    renderRecords();
-  } else if (currentTab === 'overview') {
-    renderOverview();
-  }
 }
 
   // === EXPORTS ===

@@ -5447,20 +5447,28 @@ function submitEditRecord(e, id) {
 }
 
 function refreshPageData() {
+  // Force-reload ALL data from localStorage, clearing any stale in-memory state
   const success = DataStore.reload();
+  // Also clear any pending soft-delete state
+  const pending = DataStore.getPendingDelete();
+  if (pending) {
+    DataStore._finalizeDelete(pending.id);
+  }
   if (success) {
     showToast('✅ 数据已刷新', 'success');
   } else {
     showToast('❌ 数据刷新失败', 'error');
   }
-  // Re-render all page sections that might be visible
+  // Re-render ALL pages to ensure every view reflects current data
+  if (typeof renderOverview === 'function') renderOverview();
+  if (typeof renderAddPage === 'function') renderAddPage();
+  if (typeof renderCategories === 'function') renderCategories();
+  if (typeof renderStats === 'function') renderStats();
+  if (typeof renderReport === 'function') renderReport();
+  if (typeof renderSettings === 'function') renderSettings();
+  if (typeof renderWhatIf === 'function') renderWhatIf();
+  // Finally re-render the records page (current context)
   renderRecords();
-  const currentTab = window.currentTab;
-  if (currentTab === 'records') {
-    renderRecords();
-  } else if (currentTab === 'overview') {
-    renderOverview();
-  }
 }
 
   // === EXPORTS ===
@@ -8236,7 +8244,10 @@ function renderSettings() {
         💡 两台设备数据完全一致时指纹码相同。导入/导出/同步后请点击「刷新」重新计算。
       </div>
     </div>
-    <div style="text-align:center;padding:16px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.0</div>
+    <div style="text-align:center;padding:12px 0 4px">
+      <button class="btn btn-ghost btn-sm" onclick="refreshPageData()" style="font-size:0.8rem">🔄 刷新页面数据</button>
+    </div>
+    <div style="text-align:center;padding:8px 0 8px;font-size:0.65rem;color:var(--text-muted);opacity:0.5">v2.3.0</div>
   `;
   setTimeout(refreshSyncFingerprint, 100);
 }
